@@ -1,6 +1,7 @@
 import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Sidebar from './_components/Sidebar'
+import PageTransition from './_components/PageTransition'
 
 export default async function TenantLayout({
   children,
@@ -28,7 +29,7 @@ export default async function TenantLayout({
       />
       {/* Desktop: offset sidebar. Mobile: offset top bar + bottom nav */}
       <main className="flex-1 md:ml-56 mt-14 md:mt-0 mb-16 md:mb-0 p-4 md:p-6">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
     </div>
   )

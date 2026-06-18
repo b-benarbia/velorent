@@ -50,6 +50,11 @@ input::placeholder, textarea::placeholder {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -85,20 +90,6 @@ input::placeholder, textarea::placeholder {
   50%       { transform: translateY(-4px); }
 }
 
-/* View transitions ── cross-fade entre pages */
-::view-transition-old(root) {
-  animation: 180ms ease-out both fade-out;
-}
-::view-transition-new(root) {
-  animation: 220ms var(--spring) both fade-in-up;
-}
-
-@keyframes fade-out {
-  to { opacity: 0; transform: translateY(-4px); }
-}
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(6px); }
-}
 
 /* ────────────────────────────────────────
    PAGE ENTRANCE — cascade stagger
