@@ -9,6 +9,7 @@ interface Bike {
   name: string
   code: string
   dailyRate: number
+  status: string
 }
 
 const BIKE_TYPE_LABEL: Record<string, string> = {
