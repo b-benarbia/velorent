@@ -206,6 +206,11 @@ a, button {
   border-radius: inherit;
 }
 
+/* ── Safe area iOS (encoche / home indicator) ── */
+.safe-area-pb {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
 /* ── Grid pattern utility ── */
 .grid-pattern {
   background-image:

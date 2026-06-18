@@ -592,7 +592,7 @@ export default function NewRentalPage() {
             <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
               Durée de location
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {DURATIONS.map(dur => {
                 const price = selectedBikes.length > 0
                   ? selectedBikes.reduce<number | undefined>((acc, bike) => {
@@ -746,7 +746,7 @@ export default function NewRentalPage() {
           {/* Mode paiement */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-2">Mode de paiement</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { value: 'CASH',     label: 'Espèces',  Icon: Banknote },
                 { value: 'CARD',     label: 'Carte',    Icon: CreditCard },

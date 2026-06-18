@@ -71,7 +71,7 @@ export default async function BikesPage({
       </div>
 
       {/* Global stats */}
-      <div className="grid grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         <div className="bg-white border border-slate-200 rounded-2xl p-4 text-center">
           <p className="text-2xl font-semibold text-slate-900 tracking-tight">{stats.total}</p>
           <p className="text-xs text-slate-400 mt-1 font-medium">Total</p>
