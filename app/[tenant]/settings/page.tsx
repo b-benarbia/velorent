@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import {
   Bike, Zap, Mountain, Package, Heart, Flag, Gauge,
   Shield, BatteryCharging, ShoppingBasket,
-  Info, Users, Eye, EyeOff,
+  Info, Users, Eye, EyeOff, CheckCircle2,
 } from 'lucide-react'
 
 interface StaffMember {
@@ -256,8 +256,9 @@ export default function SettingsPage() {
         )}
 
         {success && (
-          <div style={{ padding: '12px 20px', background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', fontSize: 13, color: '#166534', fontWeight: 600 }}>
-            ✅ {success}
+          <div style={{ padding: '12px 20px', background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', fontSize: 13, color: '#166534', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CheckCircle2 size={15} color="#16a34a" />
+            {success}
           </div>
         )}
 
