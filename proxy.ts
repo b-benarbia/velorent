@@ -27,6 +27,7 @@ export default async function proxy(request: NextRequest) {
     response.headers.set('x-tenant-slug', payload.tenantSlug as string)
     response.headers.set('x-user-id', payload.userId as string)
     response.headers.set('x-user-role', payload.role as string)
+    response.headers.set('x-pathname', pathname)
     return response
   } catch {
     if (pathname.startsWith('/api/')) {

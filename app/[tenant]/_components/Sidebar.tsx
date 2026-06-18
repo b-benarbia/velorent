@@ -11,7 +11,6 @@ import {
   Settings,
   LogOut,
   Search,
-  UserCog,
 } from 'lucide-react'
 import CommandPalette from './CommandPalette'
 
@@ -41,7 +40,6 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
 
   const nav = [
     ...NAV_ITEMS,
-    { key: 'staff', label: 'Mode Staff', icon: UserCog, section: 'Accès', badgeKey: null },
     ...(role === 'OWNER' ? [{ key: 'settings', label: 'Paramètres', icon: Settings, section: 'Accès', badgeKey: null }] : []),
   ]
 
