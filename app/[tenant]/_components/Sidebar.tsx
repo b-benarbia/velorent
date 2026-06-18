@@ -10,28 +10,37 @@ import {
   Receipt,
   Settings,
   LogOut,
+  Search,
 } from 'lucide-react'
+import CommandPalette from './CommandPalette'
 
 const NAV_ITEMS = [
-  { key: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard, section: 'Principal' },
-  { key: 'rentals',      label: 'Locations',     icon: Bike,            section: 'Principal' },
-  { key: 'reservations', label: 'Réservations',  icon: CalendarDays,    section: 'Principal' },
-  { key: 'bikes',        label: 'Flotte',        icon: Wrench,          section: 'Gestion' },
-  { key: 'accounting',   label: 'Compta',        icon: Receipt,         section: 'Gestion' },
+  { key: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard, section: 'Principal', badgeKey: null },
+  { key: 'rentals',      label: 'Locations',     icon: Bike,            section: 'Principal', badgeKey: 'rentals' },
+  { key: 'reservations', label: 'Réservations',  icon: CalendarDays,    section: 'Principal', badgeKey: 'reservations' },
+  { key: 'bikes',        label: 'Flotte',        icon: Wrench,          section: 'Gestion',   badgeKey: null },
+  { key: 'accounting',   label: 'Compta',        icon: Receipt,         section: 'Gestion',   badgeKey: null },
 ]
 
 interface SidebarProps {
   tenant: string
   tenantSlug: string
   role: string
+  activeRentalsCount: number
+  pendingReservationsCount: number
 }
 
-export default function Sidebar({ tenant, tenantSlug, role }: SidebarProps) {
+export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, pendingReservationsCount }: SidebarProps) {
   const pathname = usePathname()
+
+  const badges: Record<string, number> = {
+    rentals: activeRentalsCount,
+    reservations: pendingReservationsCount,
+  }
 
   const nav = [
     ...NAV_ITEMS,
-    ...(role === 'OWNER' ? [{ key: 'settings', label: 'Paramètres', icon: Settings, section: 'Accès' }] : []),
+    ...(role === 'OWNER' ? [{ key: 'settings', label: 'Paramètres', icon: Settings, section: 'Accès', badgeKey: null }] : []),
   ]
 
   const mobileNav = nav.slice(0, 5)
@@ -45,6 +54,8 @@ export default function Sidebar({ tenant, tenantSlug, role }: SidebarProps) {
 
   return (
     <>
+      <CommandPalette tenant={tenant} />
+
       {/* ── DESKTOP SIDEBAR ── */}
       <aside
         className="hidden md:flex w-56 flex-col fixed h-full z-10 overflow-hidden"
@@ -72,8 +83,24 @@ export default function Sidebar({ tenant, tenantSlug, role }: SidebarProps) {
           </div>
         </div>
 
+        {/* Cmd+K search trigger */}
+        <div className="relative px-3 pt-3 pb-1">
+          <button
+            onClick={() => {
+              const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
+              window.dispatchEvent(event)
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors group"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: '#475569' }}
+          >
+            <Search size={12} style={{ color: '#334155' }} />
+            <span className="flex-1 text-left">Rechercher...</span>
+            <kbd className="text-[10px] font-mono" style={{ color: '#1e3a5f' }}>⌘K</kbd>
+          </button>
+        </div>
+
         {/* Nav */}
-        <nav className="relative flex-1 px-3 py-4 overflow-y-auto">
+        <nav className="relative flex-1 px-3 py-3 overflow-y-auto">
           {sections.map((section, si) => (
             <div key={section.label} className={si > 0 ? 'mt-5' : ''}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.1em] px-2 mb-1.5" style={{ color: '#1e3a5f' }}>
@@ -84,6 +111,7 @@ export default function Sidebar({ tenant, tenantSlug, role }: SidebarProps) {
                   const href = `/${tenant}/${item.key}`
                   const isActive = pathname.startsWith(href)
                   const Icon = item.icon
+                  const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0
                   return (
                     <Link
                       key={item.key}
@@ -107,9 +135,20 @@ export default function Sidebar({ tenant, tenantSlug, role }: SidebarProps) {
                         style={{ color: isActive ? '#6366F1' : '#334155' }}
                         className="transition-colors duration-150 group-hover:text-slate-300"
                       />
-                      <span className={`transition-colors duration-150 ${isActive ? '' : 'group-hover:text-slate-300'}`}>
+                      <span className={`flex-1 transition-colors duration-150 ${isActive ? '' : 'group-hover:text-slate-300'}`}>
                         {item.label}
                       </span>
+                      {badgeCount > 0 && (
+                        <span
+                          className="text-[10px] font-semibold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1"
+                          style={{
+                            background: isActive ? 'rgba(99,102,241,0.3)' : 'rgba(99,102,241,0.15)',
+                            color: isActive ? '#a5b4fc' : '#6366F1',
+                          }}
+                        >
+                          {badgeCount > 99 ? '99+' : badgeCount}
+                        </span>
+                      )}
                     </Link>
                   )
                 })}
@@ -185,15 +224,24 @@ export default function Sidebar({ tenant, tenantSlug, role }: SidebarProps) {
             const href = `/${tenant}/${item.key}`
             const isActive = pathname.startsWith(href)
             const Icon = item.icon
+            const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0
             return (
               <Link
                 key={item.key}
                 href={href}
-                className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all"
+                className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all relative"
                 style={{ color: isActive ? '#6366F1' : '#334155' }}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
                 <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                {badgeCount > 0 && (
+                  <span
+                    className="absolute top-1 right-1 text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5"
+                    style={{ background: '#6366F1', color: '#fff' }}
+                  >
+                    {badgeCount > 9 ? '9+' : badgeCount}
+                  </span>
+                )}
               </Link>
             )
           })}
