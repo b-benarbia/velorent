@@ -1,0 +1,389 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// TENANT — Un enregistrement par shop
+// ─────────────────────────────────────────────
+model Tenant {
+  id        String   @id @default(uuid())
+  slug      String   @unique // ex: "bikealao-maritim"
+  name      String   // ex: "BikeAlao Marítim"
+  address   String?
+  phone     String?
+  email     String?
+  website   String?
+  logoUrl   String?
+
+  // Abonnement
+  plan          Plan      @default(TRIAL)
+  planExpiresAt DateTime?
+
+  // Config comptable
+  taxRate       Decimal   @default(21.00) // TVA espagnole
+  currency      String    @default("EUR")
+
+  // Config dépôt par type de véhicule (en JSON)
+  // ex: {"city": 50, "electric": 100, "escooter": 100}
+  depositConfig Json      @default("{}")
+
+  // Config assurance
+  // ex: {"valencia": 2, "outside_20km": 5, "road": 0}
+  insuranceConfig Json    @default("{}")
+
+  pricingGrid     Json    @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users        User[]
+  bikes        Bike[]
+  customers    Customer[]
+  rentals      Rental[]
+  reservations Reservation[]
+  invoices     Invoice[]
+  partners     Partner[]
+
+  accessories  Accessory[]
+
+  @@map("tenants")
+}
+
+enum Plan {
+  TRIAL
+  BASIC
+  PRO
+}
+
+// ─────────────────────────────────────────────
+// USER — Staff du shop
+// ─────────────────────────────────────────────
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(STAFF)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  rentals Rental[] @relation("CreatedBy")
+
+  @@map("users")
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+// ─────────────────────────────────────────────
+// BIKE — Flotte du shop
+// ─────────────────────────────────────────────
+model Bike {
+  id           String      @id @default(uuid())
+  tenantId     String
+  code         String      // ex: "VLC-042" (affiché sur le QR code)
+  name         String      // ex: "Trek FX3 - Bleu"
+  type         BikeType
+  status       BikeStatus  @default(AVAILABLE)
+  dailyRate    Decimal
+  hourlyRate   Decimal?
+  serialNumber String?
+  imageUrl     String?
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  rentals      Rental[]
+  reservations Reservation[]
+
+  @@unique([tenantId, code])
+  @@map("bikes")
+}
+
+enum BikeType {
+  CITY
+  ELECTRIC
+  MOUNTAIN
+  CARGO
+  KIDS
+  ESCOOTER
+  ROAD
+}
+
+enum BikeStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  RETIRED
+}
+
+// ─────────────────────────────────────────────
+// CUSTOMER — Clients du shop
+// ─────────────────────────────────────────────
+model Customer {
+  id             String       @id @default(uuid())
+  tenantId       String
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  // Pièce d'identité (obligatoire selon contrat BikeAlao)
+  documentType   DocumentType?
+  documentNumber String?
+  documentPhotoUrl String?    // Photo du document stockée
+  nationality    String?
+  address        String?
+  hotelName      String?      // Si client d'hôtel partenaire
+  notes          String?      // Blacklist, préférences, incidents
+  createdAt      DateTime     @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  rentals      Rental[]
+  reservations Reservation[]
+
+  @@map("customers")
+}
+
+enum DocumentType {
+  DNI
+  NIE
+  OTHER
+  PASSPORT
+  ID_CARD
+  DRIVING_LICENSE
+}
+
+// ─────────────────────────────────────────────
+// RENTAL — Location active ou terminée
+// ─────────────────────────────────────────────
+model Rental {
+  id         String       @id @default(uuid())
+  tenantId   String
+  customerId String
+  bikeId     String
+  createdById String      // Staff qui a ouvert la location
+
+  status     RentalStatus @default(ACTIVE)
+
+  // Dates
+  startAt          DateTime
+  expectedReturnAt DateTime?
+  endAt            DateTime?  // null si en cours
+
+  // Tarif snapshot (immuable — capturé au moment de la location)
+  rateSnapshot     Json       // {daily: 15, hourly: null, currency: "EUR"}
+
+  // Assurance
+  insuranceZone    InsuranceZone?
+  insuranceDailyRate Decimal?  // 2€ ou 5€ selon zone
+
+  // Accessoires loués
+  // ex: [{"type": "helmet", "qty": 1}, {"type": "baby_seat", "qty": 1}]
+  accessories      Json       @default("[]")
+
+  // Caution
+  depositAmount    Decimal
+  depositReturned  Boolean    @default(false)
+
+  // Équipement (du contrat BikeAlao)
+  lockNumber       String?    // Numéro du cadenas
+  lightFrontNumber String?    // Numéro lumière avant
+  lightRearNumber  String?    // Numéro lumière arrière
+
+  // Paiement
+  paymentMethod    PaymentMethod
+  amountPaid       Decimal?   // Montant payé à l'ouverture
+  totalAmount      Decimal?   // Calculé à la clôture
+
+  // Frais de dommages à la clôture
+  // ex: [{"type": "wheel", "amount": 20}, {"type": "lock_key", "amount": 50}]
+  damageCharges    Json       @default("[]")
+
+  // Contrat
+  contractPdfUrl   String?    // URL du PDF généré
+  contractSigned   Boolean    @default(false)
+  openingSignature String?    // Base64 PNG signature ouverture
+  closingSignature String?    // Base64 PNG signature retour
+  staffSignature   String?    // Base64 PNG signature staff au retour
+
+  // Source
+  source           RentalSource @default(WALKIN)
+  reservationId    String?    // Si venu d'une réservation online
+  partnerId        String?    // Si venu d'un hôtel partenaire
+
+  documentPhoto    String?    // Base64 photo pièce identité
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  bike        Bike        @relation(fields: [bikeId], references: [id])
+  createdBy   User        @relation("CreatedBy", fields: [createdById], references: [id])
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+  partner     Partner?    @relation(fields: [partnerId], references: [id])
+  invoice     Invoice?
+
+  @@map("rentals")
+}
+
+enum RentalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  OVERDUE      // Retard de retour
+}
+
+enum InsuranceZone {
+  VALENCIA       // 2€/jour
+  OUTSIDE_20KM   // 5€/jour
+  ROAD           // Route — assurance spéciale
+  NONE           // Sans assurance (rare)
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+  HOTEL        // Facturé à l'hôtel partenaire
+}
+
+enum RentalSource {
+  WALKIN
+  WHATSAPP
+  REGIODO      // Leur app de réservation actuelle
+  ONLINE       // Widget VeloRent
+  HOTEL        // Hôtel partenaire
+  PHONE
+}
+
+// ─────────────────────────────────────────────
+// RESERVATION — Réservations online
+// ─────────────────────────────────────────────
+model Reservation {
+  id            String            @id @default(uuid())
+  tenantId      String
+  bikeId        String?           // null = "n'importe quel vélo du type"
+  bikeType      BikeType?
+  customerId    String?
+  customerEmail   String            // Pour notifications avant confirmation
+  customerName    String
+  customerPhone   String?
+  customerAddress String?           // Adresse postale du client
+
+  status        ReservationStatus @default(PENDING)
+  source        RentalSource      @default(ONLINE)
+
+  startAt       DateTime
+  endAt         DateTime
+
+  // Acompte Stripe (optionnel)
+  amountPaid              Decimal? @default(0)
+  stripePaymentIntentId   String?
+
+  partnerId     String?           // Si réservation via hôtel
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  bike     Bike?     @relation(fields: [bikeId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  partner  Partner?  @relation(fields: [partnerId], references: [id])
+  rentals  Rental[]
+
+  @@map("reservations")
+}
+
+enum ReservationStatus {
+  PENDING       // En attente de confirmation
+  CONFIRMED     // Confirmée
+  CHECKED_IN    // Client arrivé, location ouverte
+  CANCELLED
+  NO_SHOW
+}
+
+// ─────────────────────────────────────────────
+// INVOICE — Factures & export comptable
+// ─────────────────────────────────────────────
+model Invoice {
+  id         String   @id @default(uuid())
+  tenantId   String
+  rentalId   String   @unique
+  number     String   // ex: "2026-0042"
+  issuedAt   DateTime @default(now())
+  amountHt   Decimal
+  taxRate    Decimal
+  amountTtc  Decimal
+  currency   String   @default("EUR")
+  pdfUrl     String?
+  exportedAt DateTime? // Date du dernier export comptable
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@map("invoices")
+}
+
+// ─────────────────────────────────────────────
+// PARTNER — Hôtels et partenaires
+// ─────────────────────────────────────────────
+model Partner {
+  id           String  @id @default(uuid())
+  tenantId     String
+  name         String  // ex: "Hotel Neptuno Valencia"
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  address      String?
+  // Tarif spécial partenaire (optionnel)
+  discountPct  Decimal @default(0)
+  notes        String?
+  isActive     Boolean @default(true)
+  createdAt    DateTime @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  rentals      Rental[]
+  reservations Reservation[]
+
+  @@map("partners")
+}
+
+// ─────────────────────────────────────────────
+// ACCESSORY — Inventaire des accessoires
+// ─────────────────────────────────────────────
+enum AccessoryType {
+  LOCK
+  HELMET
+  CHARGER
+  BASKET
+  CHILD_SEAT
+  OTHER
+}
+
+model Accessory {
+  id        String        @id @default(uuid())
+  tenantId  String
+  type      AccessoryType
+  name      String
+  code      String?       // ex: "K-42" pour un cadenas
+  status    String        @default("AVAILABLE")
+  notes     String?
+  createdAt DateTime      @default(now())
+
+  tenant  Tenant            @relation(fields: [tenantId], references: [id])
+
+  @@map("accessories")
+}
+
