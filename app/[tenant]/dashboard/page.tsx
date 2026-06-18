@@ -1,7 +1,7 @@
 import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { AlertTriangle, Clock } from 'lucide-react'
+import { AlertTriangle, Clock, Plus } from 'lucide-react'
 import AutoRefresh from '../_components/AutoRefresh'
 
 export default async function DashboardPage({
@@ -50,26 +50,31 @@ export default async function DashboardPage({
   return (
     <div className="max-w-4xl mx-auto">
       <AutoRefresh />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-slate-400 mt-0.5">
             {now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
         <Link
           href={`/${tenant}/rentals/new`}
-          className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+          style={{ background: '#6366F1' }}
         >
-          + Nouvelle location
+          <Plus size={15} /> Nouvelle location
         </Link>
       </div>
 
       {/* Overdue alert */}
       {overdueRentals.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
-          <p className="font-semibold text-red-700 mb-2 flex items-center gap-2"><AlertTriangle size={16} /> {overdueRentals.length} vélo{overdueRentals.length > 1 ? 's' : ''} en retard</p>
+        <div className="border rounded-xl p-4 mb-5" style={{ background: '#fff5f5', borderColor: '#fecaca' }}>
+          <p className="font-semibold text-red-700 mb-2 flex items-center gap-2">
+            <AlertTriangle size={15} />
+            {overdueRentals.length} vélo{overdueRentals.length > 1 ? 's' : ''} en retard
+          </p>
           <div className="space-y-1">
             {overdueRentals.map(r => (
               <Link key={r.id} href={`/${tenant}/rentals/${r.id}`} className="block text-sm text-red-600 hover:underline">
@@ -81,59 +86,59 @@ export default async function DashboardPage({
       )}
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-        <Link href={`/${tenant}/rentals`} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">En cours</p>
-          <p className="text-3xl font-bold text-blue-600">{activeRentals.length}</p>
-          <p className="text-xs text-gray-500 mt-1">location{activeRentals.length !== 1 ? 's' : ''}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <Link href={`/${tenant}/rentals`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 transition-colors block">
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">En cours</p>
+          <p className="text-3xl font-semibold tracking-tight" style={{ color: '#6366F1' }}>{activeRentals.length}</p>
+          <p className="text-xs text-slate-400 mt-1">location{activeRentals.length !== 1 ? 's' : ''}</p>
         </Link>
 
-        <Link href={`/${tenant}/bikes`} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-green-300 transition-colors">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Disponibles</p>
-          <p className="text-3xl font-bold text-green-600">{bikesAvailable}</p>
-          <p className="text-xs text-gray-500 mt-1">sur {bikesTotal} vélo{bikesTotal !== 1 ? 's' : ''}</p>
+        <Link href={`/${tenant}/bikes`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-emerald-300 transition-colors block">
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">Disponibles</p>
+          <p className="text-3xl font-semibold tracking-tight text-emerald-500">{bikesAvailable}</p>
+          <p className="text-xs text-slate-400 mt-1">sur {bikesTotal} véhicule{bikesTotal !== 1 ? 's' : ''}</p>
         </Link>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Aujourd'hui</p>
-          <p className="text-2xl font-bold text-gray-900">{todayRevenue.toFixed(2)} €</p>
-          <p className="text-xs text-gray-500 mt-1">{todayInvoices._count} clôturée{todayInvoices._count !== 1 ? 's' : ''}</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">Aujourd'hui</p>
+          <p className="text-2xl font-semibold tracking-tight text-slate-900">{todayRevenue.toFixed(2)} €</p>
+          <p className="text-xs text-slate-400 mt-1">{todayInvoices._count} clôturée{todayInvoices._count !== 1 ? 's' : ''}</p>
         </div>
 
-        <div className={`border rounded-xl p-4 ${overdueRentals.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">En retard</p>
-          <p className={`text-3xl font-bold ${overdueRentals.length > 0 ? 'text-red-600' : 'text-gray-300'}`}>{overdueRentals.length}</p>
-          <p className="text-xs text-gray-500 mt-1">non rendu{overdueRentals.length !== 1 ? 's' : ''}</p>
+        <div className={`border rounded-2xl p-4 ${overdueRentals.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">En retard</p>
+          <p className={`text-3xl font-semibold tracking-tight ${overdueRentals.length > 0 ? 'text-red-500' : 'text-slate-200'}`}>{overdueRentals.length}</p>
+          <p className="text-xs text-slate-400 mt-1">non rendu{overdueRentals.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
-      {/* Month revenue */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl p-5 mb-5 flex items-center justify-between">
+      {/* Month revenue — indigo flat card */}
+      <div className="rounded-2xl p-5 mb-5 flex items-center justify-between" style={{ background: '#6366F1' }}>
         <div>
-          <p className="text-blue-200 text-xs font-medium uppercase tracking-wide mb-1">CA — {monthName}</p>
-          <p className="text-3xl font-bold">{monthRevenue.toFixed(2)} €</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>CA — {monthName}</p>
+          <p className="text-3xl font-semibold text-white tracking-tight">{monthRevenue.toFixed(2)} €</p>
         </div>
         <div className="text-right">
-          <p className="text-blue-200 text-xs mb-1">Locations clôturées</p>
-          <p className="text-2xl font-bold">{monthInvoices._count}</p>
+          <p className="text-[11px] mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Locations clôturées</p>
+          <p className="text-2xl font-semibold text-white">{monthInvoices._count}</p>
         </div>
       </div>
 
       {/* Active rentals list */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">Locations en cours ({activeRentals.length})</h2>
-          <Link href={`/${tenant}/rentals`} className="text-xs text-blue-600 hover:underline">Voir toutes →</Link>
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900 text-sm">Locations en cours ({activeRentals.length})</h2>
+          <Link href={`/${tenant}/rentals`} className="text-xs font-medium hover:underline" style={{ color: '#6366F1' }}>Voir toutes →</Link>
         </div>
 
         {activeRentals.length === 0 ? (
-          <div className="p-10 text-center text-gray-400">
-            <div className="flex justify-center mb-2"><Clock size={28} className="text-gray-300" /></div>
-            <p className="text-sm">Aucune location active</p>
-            <Link href={`/${tenant}/rentals/new`} className="text-blue-600 text-xs hover:underline mt-1 block">Créer une location</Link>
+          <div className="p-10 text-center">
+            <div className="flex justify-center mb-2"><Clock size={28} className="text-slate-200" /></div>
+            <p className="text-sm text-slate-400">Aucune location active</p>
+            <Link href={`/${tenant}/rentals/new`} className="text-xs hover:underline mt-1 block" style={{ color: '#6366F1' }}>Créer une location</Link>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-slate-50">
             {activeRentals.map(rental => {
               const elapsedMs = now.getTime() - new Date(rental.startAt).getTime()
               const hours = Math.floor(elapsedMs / 3600000)
@@ -144,21 +149,21 @@ export default async function DashboardPage({
                 <Link
                   key={rental.id}
                   href={`/${tenant}/rentals/${rental.id}`}
-                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}
+                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOverdue ? 'bg-red-500' : 'bg-green-400'}`} />
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOverdue ? 'bg-red-400' : 'bg-emerald-400'}`} />
                     <div>
-                      <p className="font-medium text-sm text-gray-900">{rental.customer.firstName} {rental.customer.lastName}</p>
-                      <p className="text-xs text-gray-500">{rental.bike.name} · <span className="font-mono">{rental.bike.code}</span></p>
+                      <p className="font-medium text-sm text-slate-900">{rental.customer.firstName} {rental.customer.lastName}</p>
+                      <p className="text-xs text-slate-400">{rental.bike.name} · <span className="font-mono">{rental.bike.code}</span></p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-semibold ${isOverdue ? 'text-red-600' : 'text-gray-700'}`}>
-                      {durationLabel} {isOverdue ? <AlertTriangle size={13} className="inline ml-1 text-red-500" /> : ''}
+                    <p className={`text-sm font-semibold ${isOverdue ? 'text-red-500' : 'text-slate-700'}`}>
+                      {durationLabel} {isOverdue ? <AlertTriangle size={13} className="inline ml-1 text-red-400" /> : ''}
                     </p>
                     {rental.expectedReturnAt && (
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-slate-400">
                         Retour {new Date(rental.expectedReturnAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
