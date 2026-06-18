@@ -3,13 +3,34 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { AlertTriangle, Check, FileText } from 'lucide-react'
+import { AlertTriangle, Check, FileText, Phone, Bike, Clock, CreditCard, Shield, ArrowLeft, PenLine } from 'lucide-react'
 
 interface Rental {
   id: string; status: string; startAt: string; expectedReturnAt: string | null
   depositAmount: number; amountPaid: number | null; paymentMethod: string; notes: string | null
   bike: { id: string; name: string; code: string; dailyRate: number }
   customer: { id: string; firstName: string; lastName: string; phone: string | null }
+}
+
+const PAYMENT_LABEL: Record<string, string> = {
+  CASH: 'Espèces', CARD: 'Carte', BIZUM: 'Bizum', TRANSFER: 'Virement',
+}
+
+function initCanvas(canvas: HTMLCanvasElement, color: string) {
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+  ctx.strokeStyle = color
+  ctx.lineWidth = 2
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+}
+
+function getPos(e: React.TouchEvent | React.MouseEvent, canvas: HTMLCanvasElement) {
+  const rect = canvas.getBoundingClientRect()
+  if ('touches' in e) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }
+  return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top }
 }
 
 export default function RentalDetailPage() {
@@ -35,58 +56,35 @@ export default function RentalDetailPage() {
   }, [id])
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000)
+    const timer = setInterval(() => setNow(new Date()), 30000)
     return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
     if (rental?.status === 'ACTIVE') {
       setTimeout(() => {
-        for (const ref of [canvasRef, staffCanvasRef]) {
-          const canvas = ref.current
-          if (!canvas) continue
-          const ctx = canvas.getContext('2d')
-          if (!ctx) continue
-          canvas.width = canvas.offsetWidth * window.devicePixelRatio
-          canvas.height = canvas.offsetHeight * window.devicePixelRatio
-          ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-          ctx.strokeStyle = '#1e40af'
-          ctx.lineWidth = 2
-          ctx.lineCap = 'round'
-          ctx.lineJoin = 'round'
-        }
+        if (canvasRef.current) initCanvas(canvasRef.current, '#6366F1')
+        if (staffCanvasRef.current) initCanvas(staffCanvasRef.current, '#6366F1')
       }, 100)
     }
   }, [rental])
 
-  const getPos = (e: React.TouchEvent | React.MouseEvent, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect()
-    if ('touches' in e) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top }
-  }
-
   const startDraw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault()
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
     isDrawing.current = true
     const pos = getPos(e, canvas)
-    ctx.beginPath()
-    ctx.moveTo(pos.x, pos.y)
+    ctx.beginPath(); ctx.moveTo(pos.x, pos.y)
   }, [])
 
   const draw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault()
     if (!isDrawing.current) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
     const pos = getPos(e, canvas)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.stroke()
+    ctx.lineTo(pos.x, pos.y); ctx.stroke()
     setHasSigned(true)
   }, [])
 
@@ -94,179 +92,345 @@ export default function RentalDetailPage() {
 
   const startStaffDraw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault()
-    const canvas = staffCanvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const canvas = staffCanvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
     isStaffDrawing.current = true
     const pos = getPos(e, canvas)
-    ctx.beginPath()
-    ctx.moveTo(pos.x, pos.y)
+    ctx.beginPath(); ctx.moveTo(pos.x, pos.y)
   }, [])
 
   const drawStaff = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault()
     if (!isStaffDrawing.current) return
-    const canvas = staffCanvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const canvas = staffCanvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
     const pos = getPos(e, canvas)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.stroke()
+    ctx.lineTo(pos.x, pos.y); ctx.stroke()
     setHasStaffSigned(true)
   }, [])
 
   const stopStaffDraw = useCallback(() => { isStaffDrawing.current = false }, [])
 
-  const clearStaffSignature = () => {
-    const canvas = staffCanvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
-    setHasStaffSigned(false)
-  }
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
-    setHasSigned(false)
+  const clearCanvas = (ref: React.RefObject<HTMLCanvasElement | null>, setSigned: (v: boolean) => void) => {
+    const canvas = ref.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    ctx.clearRect(0, 0, canvas.offsetWidth * window.devicePixelRatio, canvas.offsetHeight * window.devicePixelRatio)
+    setSigned(false)
   }
 
   async function handleReturn() {
-    setLoading(true)
-    setError('')
-    const closingSignature = canvasRef.current?.toDataURL('image/png') ?? ''
-    const staffSignature = staffCanvasRef.current?.toDataURL('image/png') ?? ''
-
+    setLoading(true); setError('')
     const res = await fetch(`/api/rentals/${id}/close`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ closingSignature, staffSignature }),
+      body: JSON.stringify({
+        closingSignature: canvasRef.current?.toDataURL('image/png') ?? '',
+        staffSignature: staffCanvasRef.current?.toDataURL('image/png') ?? '',
+      }),
     })
     const data = await res.json()
-
     if (!res.ok) { setError(data.error); setLoading(false); return }
     router.push(`/${tenant}/rentals/${id}/contract`)
   }
 
-  if (!rental) return <div className="text-gray-400 text-sm p-6">Chargement...</div>
+  if (!rental) return (
+    <div className="max-w-lg mx-auto pt-20 text-center">
+      <div className="w-8 h-8 rounded-full border-2 border-indigo-200 border-t-indigo-500 animate-spin mx-auto" />
+    </div>
+  )
 
   const elapsedMs = now.getTime() - new Date(rental.startAt).getTime()
   const hours = Math.floor(elapsedMs / 3600000)
   const minutes = Math.floor((elapsedMs % 3600000) / 60000)
   const durationLabel = hours > 0 ? `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}` : `${minutes}min`
-  const isOverdue = rental.expectedReturnAt && new Date(rental.expectedReturnAt) < now
-  const paymentLabel: Record<string, string> = { CASH: 'Espèces', CARD: 'Carte', BIZUM: 'Bizum', TRANSFER: 'Virement' }
+  const isOverdue = rental.status === 'ACTIVE' && rental.expectedReturnAt && new Date(rental.expectedReturnAt) < now
+  const isActive = rental.status === 'ACTIVE'
+  const initials = `${rental.customer.firstName[0]}${rental.customer.lastName[0]}`.toUpperCase()
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-sm">← Retour</button>
-        <h1 className="text-xl font-bold text-gray-900">Location</h1>
-        <span className={`text-xs font-medium px-2 py-1 rounded-full ${rental.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-          {rental.status === 'ACTIVE' ? 'En cours' : 'Clôturée'}
-        </span>
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 transition-colors"
+        >
+          <ArrowLeft size={15} /> Locations
+        </button>
+        <Link
+          href={`/${tenant}/rentals/${id}/contract`}
+          className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors bg-white"
+        >
+          <FileText size={13} /> Contrat
+        </Link>
       </div>
 
-      {/* Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      {/* Status banner */}
+      <div
+        className="rounded-2xl p-5 mb-4 relative overflow-hidden"
+        style={{
+          background: isOverdue
+            ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'
+            : isActive
+              ? '#0F172A'
+              : '#f0fdf4',
+          border: isOverdue ? '1px solid #fecaca' : isActive ? 'none' : '1px solid #bbf7d0',
+        }}
+      >
+        {isActive && !isOverdue && <div className="absolute inset-0 grid-pattern pointer-events-none" />}
+        <div className="relative flex items-start justify-between">
           <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Client</p>
-            <p className="font-semibold text-gray-900">{rental.customer.firstName} {rental.customer.lastName}</p>
-            {rental.customer.phone && <p className="text-gray-500">{rental.customer.phone}</p>}
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  background: isOverdue ? '#fecaca' : isActive ? 'rgba(99,102,241,0.2)' : '#bbf7d0',
+                  color: isOverdue ? '#dc2626' : isActive ? '#a5b4fc' : '#16a34a',
+                }}
+              >
+                {isOverdue ? 'EN RETARD' : isActive ? 'EN COURS' : 'CLÔTURÉE'}
+              </span>
+            </div>
+            <p
+              className="text-3xl font-semibold tracking-tight"
+              style={{ color: isOverdue ? '#dc2626' : isActive ? 'white' : '#16a34a' }}
+            >
+              {isActive ? durationLabel : <Check size={28} className="inline" />}
+            </p>
+            <p
+              className="text-xs mt-1"
+              style={{ color: isOverdue ? '#ef4444' : isActive ? 'rgba(255,255,255,0.4)' : '#86efac' }}
+            >
+              {isActive
+                ? `Démarré le ${new Date(rental.startAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })} à ${new Date(rental.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+                : 'Location terminée'}
+            </p>
           </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Vélo</p>
-            <p className="font-semibold text-gray-900">{rental.bike.name}</p>
-            <p className="text-gray-500 font-mono">{rental.bike.code}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Ouverture</p>
-            <p className="text-gray-900">{new Date(rental.startAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Durée</p>
-            <p className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-red-600' : 'text-gray-900'}`}>{durationLabel} {isOverdue ? <AlertTriangle size={14} /> : ''}</p>
-          </div>
-          {rental.expectedReturnAt && (
-            <div className={`col-span-2 rounded-lg px-3 py-2 ${isOverdue ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Retour prévu</p>
-              <p className={`font-semibold flex items-center gap-1.5 ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
-                {isOverdue && <AlertTriangle size={14} />}
-                {new Date(rental.expectedReturnAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                {isOverdue && <span className="text-xs font-normal ml-1">— EN RETARD</span>}
-              </p>
+          {isActive && (
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{ background: isOverdue ? '#fee2e2' : 'rgba(99,102,241,0.2)' }}
+            >
+              {isOverdue
+                ? <AlertTriangle size={22} className="text-red-500" />
+                : <Clock size={22} style={{ color: '#a5b4fc' }} />
+              }
             </div>
           )}
-          <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Payé</p>
-            <p className="font-semibold text-green-700">{Number(rental.amountPaid ?? 0).toFixed(2)} € — {paymentLabel[rental.paymentMethod] ?? rental.paymentMethod}</p>
+        </div>
+
+        {/* Retour prévu */}
+        {rental.expectedReturnAt && isActive && (
+          <div
+            className="relative mt-4 pt-4 flex items-center justify-between"
+            style={{ borderTop: isOverdue ? '1px solid #fecaca' : '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <span className="text-xs" style={{ color: isOverdue ? '#ef4444' : 'rgba(255,255,255,0.35)' }}>
+              Retour prévu
+            </span>
+            <span
+              className="text-sm font-semibold"
+              style={{ color: isOverdue ? '#dc2626' : 'rgba(255,255,255,0.7)' }}
+            >
+              {new Date(rental.expectedReturnAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Client + Vélo */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Client</p>
+          <div className="flex items-center gap-2.5 mb-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+              style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">
+                {rental.customer.firstName} {rental.customer.lastName}
+              </p>
+            </div>
+          </div>
+          {rental.customer.phone && (
+            <a
+              href={`tel:${rental.customer.phone}`}
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-600 transition-colors"
+            >
+              <Phone size={11} /> {rental.customer.phone}
+            </a>
+          )}
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Vélo</p>
+          <div className="flex items-center gap-2.5 mb-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(99,102,241,0.1)' }}
+            >
+              <Bike size={14} style={{ color: '#6366F1' }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">{rental.bike.name}</p>
+            </div>
+          </div>
+          <p className="font-mono text-xs text-slate-400">{rental.bike.code}</p>
+        </div>
+      </div>
+
+      {/* Détails financiers */}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden mb-4">
+        <div className="px-4 py-3 border-b border-slate-50">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Détails</p>
+        </div>
+        <div className="divide-y divide-slate-50">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2.5 text-sm text-slate-500">
+              <Clock size={13} className="text-slate-300" /> Ouverture
+            </div>
+            <span className="text-sm font-medium text-slate-900">
+              {new Date(rental.startAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2.5 text-sm text-slate-500">
+              <CreditCard size={13} className="text-slate-300" /> Paiement
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold" style={{ color: '#6366F1' }}>
+                {Number(rental.amountPaid ?? 0).toFixed(2)} €
+              </span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(99,102,241,0.08)', color: '#6366F1' }}>
+                {PAYMENT_LABEL[rental.paymentMethod] ?? rental.paymentMethod}
+              </span>
+            </div>
           </div>
           {Number(rental.depositAmount) > 0 && (
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Caution</p>
-              <p className="text-gray-900">{Number(rental.depositAmount).toFixed(2)} €</p>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                <Shield size={13} className="text-slate-300" /> Caution
+              </div>
+              <span className="text-sm font-semibold text-amber-600">
+                {Number(rental.depositAmount).toFixed(2)} €
+              </span>
+            </div>
+          )}
+          {rental.notes && (
+            <div className="px-4 py-3">
+              <p className="text-xs text-slate-400 mb-1">Notes</p>
+              <p className="text-sm text-slate-600">{rental.notes}</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Links */}
-      <div className="flex gap-2 mb-4">
-        <Link href={`/${tenant}/rentals/${id}/contract`} className="flex-1 text-center bg-gray-100 text-gray-700 text-xs font-medium px-3 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-1.5">
-          <FileText size={13} /> Voir le contrat
-        </Link>
-      </div>
-
-      {/* Return form */}
-      {rental.status === 'ACTIVE' && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Retour du vélo</h2>
+      {/* Return section */}
+      {isActive && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-5">
+            <PenLine size={15} style={{ color: '#6366F1' }} />
+            <h2 className="text-sm font-semibold text-slate-900">Retour du vélo</h2>
+          </div>
 
           {/* Client signature */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-700">Signature du client :</p>
-              <button type="button" onClick={clearSignature} className="text-xs text-red-500 hover:underline">Effacer</button>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Signature client</p>
+              <button
+                type="button"
+                onClick={() => clearCanvas(canvasRef, setHasSigned)}
+                className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+              >
+                Effacer
+              </button>
             </div>
-            <canvas
-              ref={canvasRef}
-              style={{ touchAction: 'none', width: '100%', height: '120px', border: '2px dashed #d1d5db', borderRadius: '12px', background: '#fafafa', cursor: 'crosshair', display: 'block' }}
-              onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
-              onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
-            />
-            {!hasSigned && <p className="text-xs text-gray-400 text-center mt-1">← Signer avec le doigt →</p>}
+            <div className="relative rounded-xl overflow-hidden" style={{ border: hasSigned ? '1.5px solid #6366F1' : '1.5px dashed #e2e8f0' }}>
+              <canvas
+                ref={canvasRef}
+                style={{ touchAction: 'none', width: '100%', height: '110px', background: hasSigned ? 'white' : '#fafbff', cursor: 'crosshair', display: 'block' }}
+                onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
+                onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
+              />
+              {!hasSigned && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <p className="text-xs text-slate-300 font-medium">Signer ici</p>
+                </div>
+              )}
+            </div>
+            {hasSigned && (
+              <p className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
+                <Check size={10} /> Signature client enregistrée
+              </p>
+            )}
           </div>
 
           {/* Staff signature */}
-          <div className="mb-4">
+          <div className="mb-5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-700">Signature du staff :</p>
-              <button type="button" onClick={clearStaffSignature} className="text-xs text-red-500 hover:underline">Effacer</button>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Signature staff</p>
+              <button
+                type="button"
+                onClick={() => clearCanvas(staffCanvasRef, setHasStaffSigned)}
+                className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+              >
+                Effacer
+              </button>
             </div>
-            <canvas
-              ref={staffCanvasRef}
-              style={{ touchAction: 'none', width: '100%', height: '120px', border: '2px dashed #f59e0b', borderRadius: '12px', background: '#fffbeb', cursor: 'crosshair', display: 'block' }}
-              onMouseDown={startStaffDraw} onMouseMove={drawStaff} onMouseUp={stopStaffDraw} onMouseLeave={stopStaffDraw}
-              onTouchStart={startStaffDraw} onTouchMove={drawStaff} onTouchEnd={stopStaffDraw}
-            />
-            {!hasStaffSigned && <p className="text-xs text-amber-500 text-center mt-1">← Staff : signer ici →</p>}
+            <div className="relative rounded-xl overflow-hidden" style={{ border: hasStaffSigned ? '1.5px solid #6366F1' : '1.5px dashed #e2e8f0' }}>
+              <canvas
+                ref={staffCanvasRef}
+                style={{ touchAction: 'none', width: '100%', height: '110px', background: hasStaffSigned ? 'white' : '#fafbff', cursor: 'crosshair', display: 'block' }}
+                onMouseDown={startStaffDraw} onMouseMove={drawStaff} onMouseUp={stopStaffDraw} onMouseLeave={stopStaffDraw}
+                onTouchStart={startStaffDraw} onTouchMove={drawStaff} onTouchEnd={stopStaffDraw}
+              />
+              {!hasStaffSigned && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <p className="text-xs text-slate-300 font-medium">Signer ici</p>
+                </div>
+              )}
+            </div>
+            {hasStaffSigned && (
+              <p className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
+                <Check size={10} /> Signature staff enregistrée
+              </p>
+            )}
           </div>
 
-          {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</p>}
+          {error && (
+            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+              <AlertTriangle size={14} className="flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <button onClick={handleReturn} disabled={loading || !hasSigned || !hasStaffSigned}
-            className="w-full bg-green-600 text-white rounded-lg py-3 text-sm font-semibold hover:bg-green-700 disabled:opacity-40 transition-colors">
-            {loading ? 'Clôture...' : <><Check size={15} className="inline mr-1.5" />Confirmer le retour</>}
+          <button
+            onClick={handleReturn}
+            disabled={loading || !hasSigned || !hasStaffSigned}
+            className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2 transition-opacity"
+            style={{
+              background: 'linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%)',
+              boxShadow: (loading || !hasSigned || !hasStaffSigned) ? 'none' : '0 4px 14px rgba(99,102,241,0.35)',
+            }}
+          >
+            {loading
+              ? <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Clôture en cours...</>
+              : <><Check size={15} /> Confirmer le retour</>
+            }
           </button>
+
+          {(!hasSigned || !hasStaffSigned) && (
+            <p className="text-center text-xs text-slate-400 mt-2">
+              {!hasSigned && !hasStaffSigned ? 'Les deux signatures sont requises' : !hasSigned ? 'Signature client manquante' : 'Signature staff manquante'}
+            </p>
+          )}
         </div>
       )}
+
     </div>
   )
 }
