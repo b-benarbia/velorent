@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { AlertTriangle, Clock, Plus } from 'lucide-react'
 import AutoRefresh from '../_components/AutoRefresh'
+import AnimatedNumber from '../_components/AnimatedNumber'
 
 export default async function DashboardPage({
   params,
@@ -86,41 +87,53 @@ export default async function DashboardPage({
       )}
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 stagger">
         <Link href={`/${tenant}/rentals`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 block card-hover">
           <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">En cours</p>
-          <p className="text-3xl font-semibold tracking-tight" style={{ color: '#6366F1' }}>{activeRentals.length}</p>
+          <p className="text-3xl font-semibold tracking-tight" style={{ color: '#6366F1' }}>
+            <AnimatedNumber value={activeRentals.length} />
+          </p>
           <p className="text-xs text-slate-400 mt-1">location{activeRentals.length !== 1 ? 's' : ''}</p>
         </Link>
 
         <Link href={`/${tenant}/bikes`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-emerald-300 block card-hover">
           <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">Disponibles</p>
-          <p className="text-3xl font-semibold tracking-tight text-emerald-500">{bikesAvailable}</p>
+          <p className="text-3xl font-semibold tracking-tight text-emerald-500">
+            <AnimatedNumber value={bikesAvailable} />
+          </p>
           <p className="text-xs text-slate-400 mt-1">sur {bikesTotal} véhicule{bikesTotal !== 1 ? 's' : ''}</p>
         </Link>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">Aujourd'hui</p>
-          <p className="text-2xl font-semibold tracking-tight text-slate-900">{todayRevenue.toFixed(2)} €</p>
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{"Aujourd'hui"}</p>
+          <p className="text-2xl font-semibold tracking-tight text-slate-900">
+            <AnimatedNumber value={todayRevenue} decimals={2} suffix=" €" duration={800} />
+          </p>
           <p className="text-xs text-slate-400 mt-1">{todayInvoices._count} clôturée{todayInvoices._count !== 1 ? 's' : ''}</p>
         </div>
 
         <div className={`border rounded-2xl p-4 ${overdueRentals.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
           <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">En retard</p>
-          <p className={`text-3xl font-semibold tracking-tight ${overdueRentals.length > 0 ? 'text-red-500' : 'text-slate-200'}`}>{overdueRentals.length}</p>
+          <p className={`text-3xl font-semibold tracking-tight ${overdueRentals.length > 0 ? 'text-red-500' : 'text-slate-200'}`}>
+            <AnimatedNumber value={overdueRentals.length} />
+          </p>
           <p className="text-xs text-slate-400 mt-1">non rendu{overdueRentals.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
-      {/* Month revenue — indigo flat card */}
+      {/* Month revenue */}
       <div className="rounded-2xl p-5 mb-5 flex items-center justify-between" style={{ background: '#6366F1' }}>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>CA — {monthName}</p>
-          <p className="text-3xl font-semibold text-white tracking-tight">{monthRevenue.toFixed(2)} €</p>
+          <p className="text-3xl font-semibold text-white tracking-tight">
+            <AnimatedNumber value={monthRevenue} decimals={2} suffix=" €" duration={900} />
+          </p>
         </div>
         <div className="text-right">
           <p className="text-[11px] mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Locations clôturées</p>
-          <p className="text-2xl font-semibold text-white">{monthInvoices._count}</p>
+          <p className="text-2xl font-semibold text-white">
+            <AnimatedNumber value={monthInvoices._count} duration={900} />
+          </p>
         </div>
       </div>
 
@@ -138,7 +151,7 @@ export default async function DashboardPage({
             <Link href={`/${tenant}/rentals/new`} className="text-xs hover:underline mt-1 block" style={{ color: '#6366F1' }}>Créer une location</Link>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-50 stagger">
             {activeRentals.map(rental => {
               const elapsedMs = now.getTime() - new Date(rental.startAt).getTime()
               const hours = Math.floor(elapsedMs / 3600000)
