@@ -34,33 +34,34 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
 
   const max = Math.max(...data.map(d => d.value), 1)
   const H = 120
-  const W = 100
-  const barW = Math.max(8, Math.min(36, (W / data.length) * 0.55))
-  const gap = (W - data.length * barW) / (data.length + 1)
+  const SVG_W = 800
+  const barW = Math.min(60, Math.max(16, (SVG_W / data.length) * 0.45))
+  const gap = (SVG_W - data.length * barW) / (data.length + 1)
 
   return (
+    <div style={{ height: 160, overflow: 'hidden' }}>
     <svg
-      viewBox={`0 0 ${W} ${H + 20}`}
-      style={{ width: '100%', overflow: 'visible' }}
+      viewBox={`0 0 ${SVG_W} ${H + 28}`}
+      style={{ width: '100%', height: '100%' }}
       preserveAspectRatio="none"
     >
       {[0, 0.33, 0.66, 1].map((t, i) => (
         <line
           key={i}
           x1={0} y1={H * (1 - t)}
-          x2={W} y2={H * (1 - t)}
+          x2={SVG_W} y2={H * (1 - t)}
           stroke="rgba(148,163,184,0.15)"
-          strokeWidth={0.3}
+          strokeWidth={1}
         />
       ))}
       {data.map((d, i) => {
         const x = gap + i * (barW + gap)
-        const barH = Math.max(2, (d.value / max) * H)
+        const barH = Math.max(3, (d.value / max) * (H * 0.85))
         const isHov = hovered === i
         return (
           <g key={i}>
             <rect
-              x={x} y={H - barH} width={barW} height={barH} rx={2}
+              x={x} y={H - barH} width={barW} height={barH} rx={4}
               fill={isHov ? '#818cf8' : '#6366F1'}
               opacity={isHov ? 1 : 0.85}
               style={{ transition: 'fill 0.15s, opacity 0.15s' }}
@@ -69,9 +70,9 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
             />
             {isHov && (
               <text
-                x={x + barW / 2} y={H - barH - 4}
+                x={x + barW / 2} y={H - barH - 6}
                 textAnchor="middle"
-                fontSize={3.5}
+                fontSize={12}
                 fill="#6366F1"
                 fontWeight="600"
               >
@@ -79,9 +80,9 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
               </text>
             )}
             <text
-              x={x + barW / 2} y={H + 14}
+              x={x + barW / 2} y={H + 20}
               textAnchor="middle"
-              fontSize={3}
+              fontSize={10}
               fill="#94a3b8"
             >
               {d.label}
@@ -90,6 +91,7 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
         )
       })}
     </svg>
+    </div>
   )
 }
 
