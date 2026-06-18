@@ -141,7 +141,7 @@ export default async function BikesPage({
                     <Link
                       key={bike.id}
                       href={`/${tenant}/bikes/${bike.id}`}
-                      className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 transition-colors group"
+                      className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 group card-hover"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>

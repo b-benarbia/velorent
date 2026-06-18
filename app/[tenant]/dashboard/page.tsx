@@ -87,13 +87,13 @@ export default async function DashboardPage({
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        <Link href={`/${tenant}/rentals`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 transition-colors block">
+        <Link href={`/${tenant}/rentals`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 block card-hover">
           <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">En cours</p>
           <p className="text-3xl font-semibold tracking-tight" style={{ color: '#6366F1' }}>{activeRentals.length}</p>
           <p className="text-xs text-slate-400 mt-1">location{activeRentals.length !== 1 ? 's' : ''}</p>
         </Link>
 
-        <Link href={`/${tenant}/bikes`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-emerald-300 transition-colors block">
+        <Link href={`/${tenant}/bikes`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-emerald-300 block card-hover">
           <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">Disponibles</p>
           <p className="text-3xl font-semibold tracking-tight text-emerald-500">{bikesAvailable}</p>
           <p className="text-xs text-slate-400 mt-1">sur {bikesTotal} véhicule{bikesTotal !== 1 ? 's' : ''}</p>

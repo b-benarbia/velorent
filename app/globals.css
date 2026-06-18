@@ -1,34 +1,142 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #F8FAFC;
+  --foreground: #0f172a;
+  --accent: #6366F1;
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Texte toujours visible — noir dans tous les champs */
+/* ── Tabular numbers — chiffres alignés partout ── */
+.tabular, [class*="font-mono"], td, th, .stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Scrollbar premium ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+
+/* ── Sélection texte ── */
+::selection { background: rgba(99, 102, 241, 0.15); color: #4338ca; }
+
+/* ── Inputs ── */
 input, select, textarea {
-  color: #111827 !important;
+  color: #0f172a !important;
 }
 input::placeholder, textarea::placeholder {
-  color: #9ca3af !important;
+  color: #94a3b8 !important;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Page entrance ── */
+main > * {
+  animation: fadeUp 0.35s ease both;
+}
+main > *:nth-child(1) { animation-delay: 0ms; }
+main > *:nth-child(2) { animation-delay: 40ms; }
+main > *:nth-child(3) { animation-delay: 80ms; }
+main > *:nth-child(4) { animation-delay: 120ms; }
+main > *:nth-child(5) { animation-delay: 160ms; }
+
+/* ── Card hover lift ── */
+.card-hover {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* ── Button press ── */
+button:not(:disabled):active,
+a[class*="rounded"]:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* ── Skeleton loader ── */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ── Glow on active nav ── */
+.nav-active-glow {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 12px rgba(99,102,241,0.25);
+}
+
+/* ── Focus ring premium ── */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  border-color: #6366F1 !important;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+/* ── Transition globale douce ── */
+a, button {
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+}
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Noise overlay utility ── */
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Grid pattern utility ── */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
