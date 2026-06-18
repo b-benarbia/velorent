@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose'
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/book', '/book', '/_next', '/favicon']
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
