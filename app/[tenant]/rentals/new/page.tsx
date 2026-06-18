@@ -808,7 +808,7 @@ export default function NewRentalPage() {
                   .map(a => {
                     const codes = accessoryCodes[a.type] ?? []
                     const codeStr = codes.filter(Boolean).length > 0 ? ` (${codes.filter(Boolean).join(', ')})` : ''
-                    return `${a.icon} ${accessoryQty[a.type]}× ${a.label}${codeStr}`
+                    return `${accessoryQty[a.type]}× ${a.label}${codeStr}`
                   }).join(' · ')}
               </span></p>
             )}
