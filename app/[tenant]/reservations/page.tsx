@@ -8,6 +8,7 @@ import {
   AlertCircle, Pencil, Clock, CheckCircle2,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
+import DateTimePicker from './_components/DateTimePicker'
 
 interface BikeRecord {
   id: string
@@ -106,7 +107,7 @@ export default function ReservationsPage() {
 
   const [form, setForm] = useState({
     customerName: '', customerPhone: '', customerEmail: '',
-    bikeId: '', startAt: '', endAt: '', notes: '',
+    bikeId: '', bikeType: '', startAt: '', endAt: '', notes: '',
   })
 
   useEffect(() => {
@@ -221,7 +222,7 @@ export default function ReservationsPage() {
     if (!res.ok) { setError(data.error); setSaving(false); return }
     setReservations(prev => [data, ...prev])
     setShowForm(false)
-    setForm({ customerName: '', customerPhone: '', customerEmail: '', bikeId: '', startAt: '', endAt: '', notes: '' })
+    setForm({ customerName: '', customerPhone: '', customerEmail: '', bikeId: '', bikeType: '', startAt: '', endAt: '', notes: '' })
     setSaving(false)
   }
 
@@ -801,63 +802,133 @@ export default function ReservationsPage() {
       {/* ── New reservation form ──────────────────────────────────────────── */}
       {showForm && (
         <form onSubmit={handleSubmit}
-          style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20, padding: 20, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 0, marginBottom: 16 }}>{t('new')}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('customerName')} *</label>
+          style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20, padding: '20px 20px 24px', marginBottom: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
+
+          {/* Section: Client */}
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 0, marginBottom: 12 }}>
+            Client
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                {t('customerName')} <span style={{ color: '#f97316' }}>*</span>
+              </label>
               <input type="text" required value={form.customerName}
                 onChange={e => setForm(f => ({ ...f, customerName: e.target.value }))}
-                className={INPUT_CLASS} placeholder="First Last" />
+                placeholder="Prénom Nom" className={INPUT_CLASS}
+                style={{ borderRadius: 12, padding: '11px 14px', fontSize: 13 }} />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  {t('phone')}
+                </label>
+                <input type="tel" value={form.customerPhone}
+                  onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))}
+                  placeholder="+33 6 …" className={INPUT_CLASS}
+                  style={{ borderRadius: 12, padding: '11px 14px', fontSize: 13 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  Email
+                </label>
+                <input type="email" value={form.customerEmail}
+                  onChange={e => setForm(f => ({ ...f, customerEmail: e.target.value }))}
+                  placeholder="client@mail.com" className={INPUT_CLASS}
+                  style={{ borderRadius: 12, padding: '11px 14px', fontSize: 13 }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: '#f1f5f9', margin: '0 0 20px' }} />
+
+          {/* Section: Dates */}
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 0, marginBottom: 12 }}>
+            Dates
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+            <DateTimePicker
+              value={form.startAt}
+              onChange={v => setForm(f => ({ ...f, startAt: v }))}
+              label={t('start')}
+              locale={locale}
+              placeholder="Date et heure de début"
+              required
+            />
+            <DateTimePicker
+              value={form.endAt}
+              onChange={v => setForm(f => ({ ...f, endAt: v }))}
+              label={t('end')}
+              locale={locale}
+              placeholder="Date et heure de fin"
+              required
+            />
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: '#f1f5f9', margin: '0 0 20px' }} />
+
+          {/* Section: Vélo & notes */}
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 0, marginBottom: 12 }}>
+            {t('bikeOptional')}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
             <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('phone') || 'Phone'}</label>
-              <input type="tel" value={form.customerPhone}
-                onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))} className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Email</label>
-              <input type="email" value={form.customerEmail}
-                onChange={e => setForm(f => ({ ...f, customerEmail: e.target.value }))} className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('start')} *</label>
-              <input type="datetime-local" required value={form.startAt}
-                onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))} className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('end')} *</label>
-              <input type="datetime-local" required value={form.endAt}
-                onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))} className={INPUT_CLASS} />
-            </div>
-            <div className="col-span-2">
-              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('bikeOptional')}</label>
-              <select value={form.bikeId} onChange={e => setForm(f => ({ ...f, bikeId: e.target.value }))} className={INPUT_CLASS}>
-                <option value="">— —</option>
+              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                Vélo spécifique
+              </label>
+              <select value={form.bikeId} onChange={e => setForm(f => ({ ...f, bikeId: e.target.value, bikeType: '' }))}
+                className={INPUT_CLASS} style={{ borderRadius: 12, padding: '11px 14px', fontSize: 13 }}>
+                <option value="">— Aucun —</option>
                 {bikes.map(b => (
                   <option key={b.id} value={b.id}>{b.name} ({b.code}) — {Number(b.dailyRate).toFixed(2)} €/j</option>
                 ))}
               </select>
             </div>
-            <div className="col-span-2">
-              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('notes') || 'Notes'}</label>
+            {!form.bikeId && (
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  Ou type de vélo
+                </label>
+                <select value={form.bikeType} onChange={e => setForm(f => ({ ...f, bikeType: e.target.value }))}
+                  className={INPUT_CLASS} style={{ borderRadius: 12, padding: '11px 14px', fontSize: 13 }}>
+                  <option value="">— Type quelconque —</option>
+                  {Object.entries(BIKE_TYPE_LABEL).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                {t('notes')}
+              </label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                rows={2} className={`${INPUT_CLASS} resize-none`} />
+                rows={2} placeholder="Demandes spéciales, allergies, contexte…"
+                className={`${INPUT_CLASS} resize-none`}
+                style={{ borderRadius: 12, padding: '11px 14px', fontSize: 13 }} />
             </div>
           </div>
+
           {error && (
             <p style={{ color: '#dc2626', fontSize: 13, background: '#fef2f2',
-              border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', marginTop: 12 }}>{error}</p>
+              border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', marginBottom: 16, marginTop: 0 }}>
+              {error}
+            </p>
           )}
-          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" disabled={saving}
               style={{ flex: 1, background: '#6366F1', color: 'white', border: 'none', borderRadius: 12,
-                padding: '10px 0', fontSize: 13, fontWeight: 700,
-                cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}>
+                padding: '12px 0', fontSize: 13, fontWeight: 700,
+                cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1,
+                boxShadow: '0 2px 10px rgba(99,102,241,0.25)' }}>
               {saving ? t('saving') : t('new')}
             </button>
             <button type="button" onClick={() => setShowForm(false)}
-              style={{ padding: '10px 16px', borderRadius: 12, background: 'transparent',
+              style={{ padding: '12px 18px', borderRadius: 12, background: 'transparent',
                 border: '1.5px solid #e2e8f0', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>
               {t('cancel')}
             </button>
