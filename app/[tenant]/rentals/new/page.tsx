@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge } from 'lucide-react'
+import CountrySelect from '../_components/CountrySelect'
 
 interface Bike { id: string; code: string; name: string; dailyRate: number; hourlyRate: number | null; type: string; status: string }
 interface Customer { id: string; firstName: string; lastName: string; phone: string | null }
@@ -418,9 +419,10 @@ export default function NewRentalPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5">Nationalité</label>
-                <input type="text" value={customerForm.nationality}
-                  onChange={e => setCustomerForm({ ...customerForm, nationality: e.target.value })}
-                  placeholder="FR, ES, DE..." className={INPUT} />
+                <CountrySelect
+                  value={customerForm.nationality}
+                  onChange={v => setCustomerForm({ ...customerForm, nationality: v })}
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5">Adresse / Dirección</label>
