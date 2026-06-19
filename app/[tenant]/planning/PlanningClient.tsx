@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Link2, CalendarDays } from 'lucide-react'
+import { useLocale } from 'next-intl'
 
 // ── Types ────────────────────────────────────────────────────────────────
 type BikeRow  = { id: string; code: string; name: string; type: string }
@@ -76,6 +77,7 @@ interface Props {
 const ROW_H = 44
 
 export default function PlanningClient({ tenant, bikes, rentals, labels }: Props) {
+  const locale = useLocale()
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
   const [weekOffset, setWeekOffset] = useState(0)
   const [typeFilter, setTypeFilter]  = useState('ALL')
@@ -86,9 +88,9 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart])
 
   const weekLabel = useMemo(() => {
-    const fmt = (d: Date) => new Intl.DateTimeFormat(undefined, { day:'numeric', month:'short' }).format(d)
-    const m1 = new Intl.DateTimeFormat(undefined, { month:'long' }).format(days[0])
-    const m2 = new Intl.DateTimeFormat(undefined, { month:'long' }).format(days[6])
+    const fmt = (d: Date) => new Intl.DateTimeFormat(locale, { day:'numeric', month:'short' }).format(d)
+    const m1 = new Intl.DateTimeFormat(locale, { month:'long' }).format(days[0])
+    const m2 = new Intl.DateTimeFormat(locale, { month:'long' }).format(days[6])
     return m1 === m2
       ? `${fmt(days[0])} – ${days[6].getDate()} ${m1} ${days[0].getFullYear()}`
       : `${fmt(days[0])} – ${fmt(days[6])} ${days[0].getFullYear()}`
@@ -236,7 +238,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
           <div style={{ width:72, flexShrink:0, borderRight:'1px solid #f1f5f9' }} />
           {days.map((d, i) => {
             const isToday = sameDay(d, today)
-            const dow = new Intl.DateTimeFormat(undefined, { weekday:'short' }).format(d).slice(0,3)
+            const dow = new Intl.DateTimeFormat(locale, { weekday:'short' }).format(d).slice(0,3)
             return (
               <div key={i} style={{ flex:1, textAlign:'center', padding:'6px 2px',
                 borderRight: i<6 ? '1px solid #f1f5f9' : 'none',

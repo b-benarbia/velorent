@@ -6,7 +6,7 @@ import {
   CalendarDays, Phone, Mail, Bike, Check, ArrowRight,
   Plus, Search, Star, X, ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface BikeRecord {
   id: string
@@ -62,6 +62,7 @@ export default function ReservationsPage() {
   const tenant   = params.tenant as string
   const t        = useTranslations('reservations')
   const tStatus  = useTranslations('status')
+  const locale   = useLocale()
 
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [bikes, setBikes]     = useState<BikeRecord[]>([])
@@ -215,13 +216,13 @@ export default function ReservationsPage() {
     const { year, month } = calMonth
     const firstDow    = (new Date(year, month, 1).getDay() + 6) % 7  // Mon=0
     const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const monthLabel  = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' })
+    const monthLabel  = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })
       .format(new Date(year, month, 1))
     const monthFormatted = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)
 
     // Single-char weekday headers, Mon-first (Jan 1 2024 = Monday)
     const dayHdrs = Array.from({ length: 7 }, (_, i) =>
-      new Intl.DateTimeFormat(undefined, { weekday: 'narrow' }).format(new Date(2024, 0, 1 + i))
+      new Intl.DateTimeFormat(locale, { weekday: 'narrow' }).format(new Date(2024, 0, 1 + i))
     )
 
     const cells: (number | null)[] = [
@@ -313,8 +314,8 @@ export default function ReservationsPage() {
     const stLabel   = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
     const retCount  = returningCount(r.customerName)
     const countdown = variant !== 'upcoming' ? getCountdown(r.startAt) : ''
-    const startTime = new Date(r.startAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    const endDate   = new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
+    const startTime = new Date(r.startAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    const endDate   = new Date(r.endAt).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
     const stBadge   = STATUS_BADGE[r.status] ?? { bg: '#f8fafc', border: '#e2e8f0', text: '#475569' }
     const isT       = variant === 'today'
     const isTmr     = variant === 'tomorrow'
@@ -387,9 +388,9 @@ export default function ReservationsPage() {
                 color: '#94a3b8', fontSize: 12 }}>
                 <CalendarDays size={12} style={{ color: '#cbd5e1', flexShrink: 0 }} />
                 <span>
-                  {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                  {new Date(r.startAt).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })}
                   {' → '}
-                  {new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                  {new Date(r.endAt).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })}
                 </span>
               </div>
             )}
@@ -611,7 +612,7 @@ export default function ReservationsPage() {
           <CalendarDays size={17} />
           {selectedDate && (
             <span style={{ fontSize: 12, fontWeight: 700 }}>
-              {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+              {new Date(selectedDate + 'T12:00:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
             </span>
           )}
         </button>
@@ -623,7 +624,7 @@ export default function ReservationsPage() {
           background: '#eef2ff', border: '1.5px solid #c7d2fe', borderRadius: 10, padding: '8px 12px' }}>
           <CalendarDays size={14} style={{ color: '#6366f1', flexShrink: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#4f46e5', flex: 1 }}>
-            {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
+            {new Date(selectedDate + 'T12:00:00').toLocaleDateString(locale, {
               weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
             })}
           </span>
@@ -762,9 +763,9 @@ export default function ReservationsPage() {
                       <div>
                         <p style={{ fontSize: 14, fontWeight: 500, color: '#334155', margin: 0 }}>{r.customerName}</p>
                         <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0' }}>
-                          {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          {new Date(r.startAt).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           {' → '}
-                          {new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                          {new Date(r.endAt).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })}
                         </p>
                       </div>
                       <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
