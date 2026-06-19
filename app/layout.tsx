@@ -4,6 +4,7 @@ import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import IntlProvider from './_providers/IntlProvider';
+import { setRequestLocale } from 'next-intl/server';
 import { cookies } from 'next/headers';
 
 const inter = Inter({
@@ -41,6 +42,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const { locale, messages } = await getLocaleAndMessages();
+  try { setRequestLocale(locale); } catch { /* prerendering */ }
 
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`}>
