@@ -16,7 +16,8 @@ export default async function ContractPage({
   const rental = await prisma.rental.findUnique({
     where: { id },
     include: { bike: true, customer: true, tenant: true },
-  })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any
 
   if (!rental) notFound()
 
