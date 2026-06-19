@@ -320,7 +320,16 @@
     "cancelReasonHint": "(optional — wird an den Kunden gesendet)",
     "cancelReasonPlaceholder": "Z.B. Kein E-Scooter an diesem Datum verfügbar…",
     "confirmCancel": "Stornierung bestätigen",
-    "back": "Zurück"
+    "back": "Zurück",
+    "searchPlaceholder": "Kunden suchen...",
+    "sectionToday": "Heute",
+    "sectionTomorrow": "Morgen",
+    "sectionUpcoming": "Demnächst",
+    "countdownPrefix": "In",
+    "countdownDay": "T",
+    "countdownHour": "Std",
+    "countdownMin": "Min",
+    "returning": "Stammkunde"
   },
   "accounting": {
     "title": "Buchhaltung",

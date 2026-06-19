@@ -320,7 +320,16 @@
     "cancelReasonHint": "(facoltativo — verrà inviato al cliente)",
     "cancelReasonPlaceholder": "Es: Nessun monopattino disponibile in questa data…",
     "confirmCancel": "Conferma cancellazione",
-    "back": "Indietro"
+    "back": "Indietro",
+    "searchPlaceholder": "Cerca cliente...",
+    "sectionToday": "Oggi",
+    "sectionTomorrow": "Domani",
+    "sectionUpcoming": "Prossime",
+    "countdownPrefix": "Tra",
+    "countdownDay": "g",
+    "countdownHour": "h",
+    "countdownMin": "min",
+    "returning": "Cliente abituale"
   },
   "accounting": {
     "title": "Contabilità",

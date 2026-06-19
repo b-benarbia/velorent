@@ -320,7 +320,16 @@
     "cancelReasonHint": "(opcional — se enviará al cliente)",
     "cancelReasonPlaceholder": "Ej: No hay patinete disponible en esta fecha…",
     "confirmCancel": "Confirmar cancelación",
-    "back": "Volver"
+    "back": "Volver",
+    "searchPlaceholder": "Buscar cliente...",
+    "sectionToday": "Hoy",
+    "sectionTomorrow": "Mañana",
+    "sectionUpcoming": "Próximas",
+    "countdownPrefix": "En",
+    "countdownDay": "d",
+    "countdownHour": "h",
+    "countdownMin": "min",
+    "returning": "Cliente habitual"
   },
   "accounting": {
     "title": "Contabilidad",

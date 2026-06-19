@@ -320,7 +320,16 @@
     "cancelReasonHint": "(optioneel — wordt naar de klant gestuurd)",
     "cancelReasonPlaceholder": "Bijv. Geen e-scooter beschikbaar op deze datum…",
     "confirmCancel": "Annulering bevestigen",
-    "back": "Terug"
+    "back": "Terug",
+    "searchPlaceholder": "Klant zoeken...",
+    "sectionToday": "Vandaag",
+    "sectionTomorrow": "Morgen",
+    "sectionUpcoming": "Binnenkort",
+    "countdownPrefix": "Over",
+    "countdownDay": "d",
+    "countdownHour": "u",
+    "countdownMin": "min",
+    "returning": "Vaste klant"
   },
   "accounting": {
     "title": "Boekhouding",

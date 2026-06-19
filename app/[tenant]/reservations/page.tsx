@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CalendarDays, Phone, Mail, Bike, Check, ArrowRight, Plus } from 'lucide-react'
+import { CalendarDays, Phone, Mail, Bike, Check, ArrowRight, Plus, Search, Star, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-interface Bike {
+// BikeRecord — renamed to avoid clash with Lucide's Bike icon
+interface BikeRecord {
   id: string
   name: string
   code: string
@@ -34,16 +35,17 @@ interface Reservation {
   bike?: { name: string; code: string } | null
 }
 
-// Outside component — stable reference, no re-creation on render
+// Outside component — stable reference, never recreated
 function localDateStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const STATUS_COLOR = {
-  PENDING:   'bg-amber-50 text-amber-600',
-  CONFIRMED: 'bg-emerald-50 text-emerald-600',
-  CANCELLED: 'bg-red-50 text-red-500',
-  CONVERTED: 'bg-indigo-50 text-indigo-600',
+// Status badge inline colours (shared between all card variants)
+const STATUS_BADGE: Record<string, { bg: string; border: string; text: string }> = {
+  PENDING:   { bg: '#fffbeb', border: '#fde68a', text: '#92400e' },
+  CONFIRMED: { bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46' },
+  CANCELLED: { bg: '#fef2f2', border: '#fecaca', text: '#991b1b' },
+  CONVERTED: { bg: '#eef2ff', border: '#c7d2fe', text: '#3730a3' },
 }
 
 const INPUT_CLASS = 'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white text-slate-900'
@@ -56,23 +58,26 @@ export default function ReservationsPage() {
   const tStatus = useTranslations('status')
 
   const [reservations, setReservations] = useState<Reservation[]>([])
-  const [bikes, setBikes] = useState<Bike[]>([])
+  const [bikes, setBikes]   = useState<BikeRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]   = useState('')
   const [cancelModal, setCancelModal] = useState<{ id: string; name: string } | null>(null)
   const [cancelReason, setCancelReason] = useState('')
+  const [search, setSearch] = useState('')
+  // now updates every minute — countdown stays accurate without re-fetching
+  const [now, setNow] = useState(() => new Date())
 
   const [form, setForm] = useState({
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-    bikeId: '',
-    startAt: '',
-    endAt: '',
-    notes: '',
+    customerName: '', customerPhone: '', customerEmail: '',
+    bikeId: '', startAt: '', endAt: '', notes: '',
   })
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -88,14 +93,50 @@ export default function ReservationsPage() {
     return () => { alive = false }
   }, [])
 
+  // Computed once at mount — won't drift if page stays open overnight
+  const [todayStr]    = useState(() => localDateStr(new Date()))
+  const [tomorrowStr] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d)
+  })
+
+  const isToday    = (iso: string) => localDateStr(new Date(iso)) === todayStr
+  const isTomorrow = (iso: string) => localDateStr(new Date(iso)) === tomorrowStr
+
+  function matchesSearch(r: Reservation) {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return r.customerName.toLowerCase().includes(q) ||
+           (r.customerPhone ?? '').toLowerCase().includes(q) ||
+           (r.customerEmail ?? '').toLowerCase().includes(q)
+  }
+
+  // "Dans 1h45" — returns '' if startAt is already past
+  function getCountdown(startAt: string): string {
+    const diff = new Date(startAt).getTime() - now.getTime()
+    if (diff <= 0) return ''
+    const totalMins = Math.floor(diff / 60_000)
+    const days  = Math.floor(totalMins / 1440)
+    const hours = Math.floor((totalMins % 1440) / 60)
+    const mins  = totalMins % 60
+    const pre = t('countdownPrefix')
+    const dU  = t('countdownDay')
+    const hU  = t('countdownHour')
+    const mU  = t('countdownMin')
+    if (days > 0)  return `${pre} ${days}${dU} ${hours}${hU}`
+    if (hours > 0) return `${pre} ${hours}${hU}${mins > 0 ? ` ${mins}${mU}` : ''}`
+    return `${pre} ${mins}${mU}`
+  }
+
+  // Count previous completed (CONVERTED) reservations by customer name
+  function returningCount(name: string): number {
+    const n = name.toLowerCase()
+    return reservations.filter(r => r.status === 'CONVERTED' && r.customerName.toLowerCase() === n).length
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.customerName || !form.startAt || !form.endAt) {
-      setError(t('error'))
-      return
-    }
-    setSaving(true)
-    setError('')
+    if (!form.customerName || !form.startAt || !form.endAt) { setError(t('error')); return }
+    setSaving(true); setError('')
     const res = await fetch('/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -109,101 +150,267 @@ export default function ReservationsPage() {
     setSaving(false)
   }
 
-  async function updateStatus(id: string, status: string, cancelReason?: string) {
+  async function updateStatus(id: string, status: string, reason?: string) {
     const res = await fetch(`/api/reservations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, cancelReason }),
+      body: JSON.stringify({ status, cancelReason: reason }),
     })
-    if (res.ok) {
-      setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-    }
+    if (res.ok) setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
   }
 
   async function handleCancel() {
     if (!cancelModal) return
     await updateStatus(cancelModal.id, 'CANCELLED', cancelReason.trim() || undefined)
-    setCancelModal(null)
-    setCancelReason('')
+    setCancelModal(null); setCancelReason('')
   }
 
-  async function convertToRental(reservation: Reservation) {
+  function convertToRental(reservation: Reservation) {
     router.push(`/${tenant}/rentals/new?reservationId=${reservation.id}`)
   }
 
-  // todayStr in state → survives overnight without stale date
-  const [todayStr] = useState(() => localDateStr(new Date()))
-  const isToday = (iso: string) => localDateStr(new Date(iso)) === todayStr
-
-  const all_pending  = reservations.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
-  const todayPending = all_pending.filter(r => isToday(r.startAt))
-  // Sort upcoming by start date ascending (nearest first)
-  const laterPending = all_pending
-    .filter(r => !isToday(r.startAt))
+  // ── Section arrays ────────────────────────────────────────────────────────
+  const all_pending     = reservations.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
+  const todayPending    = all_pending.filter(r => isToday(r.startAt) && matchesSearch(r))
+  const tomorrowPending = all_pending.filter(r => isTomorrow(r.startAt) && matchesSearch(r))
+  const laterPending    = all_pending
+    .filter(r => !isToday(r.startAt) && !isTomorrow(r.startAt) && matchesSearch(r))
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
   const pending = all_pending
-  // Sort past by start date descending (most recent first)
-  const past = reservations
-    .filter(r => r.status === 'CANCELLED' || r.status === 'CONVERTED')
+  const past    = reservations
+    .filter(r => (r.status === 'CANCELLED' || r.status === 'CONVERTED') && matchesSearch(r))
     .sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
 
+  const hasResults = todayPending.length + tomorrowPending.length + laterPending.length > 0
+
+  // ── Shared card renderer ──────────────────────────────────────────────────
+  function renderCard(r: Reservation, variant: 'today' | 'tomorrow' | 'upcoming') {
+    const stLabel   = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
+    const retCount  = returningCount(r.customerName)
+    const countdown = variant !== 'upcoming' ? getCountdown(r.startAt) : ''
+    const startTime = new Date(r.startAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    const endDate   = new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
+    const stBadge   = STATUS_BADGE[r.status] ?? { bg: '#f8fafc', border: '#e2e8f0', text: '#475569' }
+
+    const isT   = variant === 'today'
+    const isTmr = variant === 'tomorrow'
+
+    const cardStyle = isT ? {
+      background: '#fff7ed',
+      border: '1.5px solid #fed7aa', borderLeft: '4px solid #f97316',
+      borderRadius: 16, padding: 16,
+      boxShadow: '0 2px 12px rgba(249,115,22,0.08)',
+    } : isTmr ? {
+      background: '#fefce8',
+      border: '1.5px solid #fef08a', borderLeft: '4px solid #ca8a04',
+      borderRadius: 16, padding: 16,
+      boxShadow: '0 1px 6px rgba(202,138,4,0.06)',
+    } : {
+      background: 'white',
+      border: '1.5px solid #e2e8f0',
+      borderRadius: 16, padding: 16,
+    }
+
+    const iconColor  = isT ? '#f97316' : isTmr ? '#ca8a04' : '#cbd5e1'
+    const convertBg  = isT ? '#f97316' : isTmr ? '#ca8a04' : '#6366F1'
+    const timeColor  = isT ? '#ea580c' : '#a16207'
+    const arrowColor = isT ? '#fb923c' : '#ca8a04'
+
+    return (
+      <div key={r.id} style={cardStyle}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            {/* Row 1: name + status + returning + countdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 8 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1 }}>
+                {r.customerName}
+              </p>
+              {/* Status */}
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                background: isT ? '#fff7ed' : isTmr ? '#fefce8' : stBadge.bg,
+                color:      isT ? '#c2410c' : isTmr ? '#a16207' : stBadge.text,
+                border:     `1px solid ${isT ? '#fed7aa' : isTmr ? '#fef08a' : stBadge.border}`,
+                textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+              }}>
+                {stLabel}
+              </span>
+              {/* Returning customer */}
+              {retCount > 0 && (
+                <span style={{
+                  display: 'flex', alignItems: 'center', gap: 3,
+                  fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                  background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a',
+                  textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+                }}>
+                  <Star size={9} style={{ fill: '#f59e0b', color: '#f59e0b', flexShrink: 0 }} />
+                  {t('returning')}
+                </span>
+              )}
+              {/* Countdown pill */}
+              {countdown && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                  background: isT ? '#fff7ed' : '#fefce8',
+                  color:      isT ? '#c2410c' : '#a16207',
+                  border:     `1px solid ${isT ? '#fed7aa' : '#fef08a'}`,
+                }}>
+                  ⏱ {countdown}
+                </span>
+              )}
+            </div>
+
+            {/* Row 2: time (prominent for today/tomorrow) or date range for upcoming */}
+            {(isT || isTmr) ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: isT ? 22 : 17, fontWeight: 800, color: timeColor, lineHeight: 1 }}>
+                  {startTime}
+                </span>
+                <span style={{ fontSize: 12, color: arrowColor, fontWeight: 500 }}>
+                  → {endDate}
+                </span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, color: '#94a3b8', fontSize: 12 }}>
+                <CalendarDays size={12} style={{ color: '#cbd5e1', flexShrink: 0 }} />
+                <span>
+                  {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                  {' → '}
+                  {new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                </span>
+              </div>
+            )}
+
+            {/* Row 3: contact + bike */}
+            <div style={{ fontSize: 12, color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {r.customerPhone && (
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                  <Phone size={11} style={{ color: iconColor, flexShrink: 0 }} />
+                  {r.customerPhone}
+                </p>
+              )}
+              {r.customerEmail && (
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                  <Mail size={11} style={{ color: iconColor, flexShrink: 0 }} />
+                  {r.customerEmail}
+                </p>
+              )}
+              {r.bikeType && !r.bike && (
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
+                  {BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}
+                </p>
+              )}
+              {r.bike && (
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
+                  {r.bike.name} ({r.bike.code})
+                </p>
+              )}
+              {r.notes && <p style={{ margin: 0, fontStyle: 'italic', color: '#c7d0dd' }}>{r.notes}</p>}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            {r.status === 'PENDING' && (
+              <button
+                onClick={() => updateStatus(r.id, 'CONFIRMED')}
+                style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: 8,
+                  padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Check size={11} />{t('confirm')}
+              </button>
+            )}
+            <button
+              onClick={() => convertToRental(r)}
+              style={{ background: convertBg, color: 'white', border: 'none', borderRadius: 8,
+                padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Bike size={11} />{t('convert')} <ArrowRight size={10} />
+            </button>
+            <button
+              onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
+              style={{ border: 'none', background: 'transparent', color: '#94a3b8',
+                fontSize: 12, cursor: 'pointer', padding: '2px 0', textAlign: 'center' as const }}>
+              {t('cancel')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-3xl mx-auto">
+
       {/* Cancel Modal */}
       {cancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 pt-6 pb-4 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900">{t('cancelModalTitle')}</h2>
-              <p className="text-sm text-slate-400 mt-0.5">{cancelModal.name}</p>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', padding: 16, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'white', borderRadius: 20, boxShadow: '0 25px 50px rgba(0,0,0,0.2)',
+            width: '100%', maxWidth: 420, overflow: 'hidden' }}>
+            <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #f1f5f9' }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: 0 }}>{t('cancelModalTitle')}</h2>
+              <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 3, marginBottom: 0 }}>{cancelModal.name}</p>
             </div>
-            <div className="px-6 py-5">
-              <label className="text-xs font-semibold text-slate-500 block mb-2">{t('cancelReasonLabel')} <span className="font-normal text-slate-400">{t('cancelReasonHint')}</span></label>
+            <div style={{ padding: '20px 24px' }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 8 }}>
+                {t('cancelReasonLabel')}{' '}
+                <span style={{ fontWeight: 400, color: '#94a3b8' }}>{t('cancelReasonHint')}</span>
+              </label>
               <textarea
                 value={cancelReason}
                 onChange={e => setCancelReason(e.target.value)}
                 placeholder={t('cancelReasonPlaceholder')}
-                rows={3}
-                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300/40 focus:border-red-400 resize-none text-slate-900 placeholder-slate-300"
-                autoFocus
+                rows={3} autoFocus
+                style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e2e8f0',
+                  borderRadius: 12, padding: '10px 14px', fontSize: 13, resize: 'none',
+                  outline: 'none', color: '#0f172a', fontFamily: 'inherit' }}
               />
             </div>
-            <div className="px-6 pb-6 flex gap-3">
-              <button
-                onClick={handleCancel}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: '#ef4444' }}
-              >
+            <div style={{ padding: '0 24px 24px', display: 'flex', gap: 12 }}>
+              <button onClick={handleCancel}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: '#ef4444',
+                  color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 {t('confirmCancel')}
               </button>
-              <button
-                onClick={() => { setCancelModal(null); setCancelReason('') }}
-                className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-slate-100 transition-colors"
-              >
+              <button onClick={() => { setCancelModal(null); setCancelReason('') }}
+                style={{ padding: '10px 16px', borderRadius: 12, background: 'transparent',
+                  border: '1.5px solid #e2e8f0', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>
                 {t('back')}
               </button>
             </div>
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between mb-6">
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t('title')}</h1>
-          <p className="text-sm text-slate-400 mt-0.5">{pending.length} {t('pending').toLowerCase()}</p>
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+            {t('title')}
+          </h1>
+          <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 4, marginBottom: 0 }}>
+            {pending.length} {t('pending').toLowerCase()}
+            {todayPending.length > 0 && ` · ${todayPending.length} ${t('sectionToday').toLowerCase()}`}
+          </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-opacity"
-          style={{ background: '#6366F1' }}
-        >
+          style={{ background: '#6366F1', color: 'white', border: 'none', borderRadius: 12,
+            padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6 }}>
           <Plus size={15} /> {t('new')}
         </button>
       </div>
 
       {/* New reservation form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 space-y-4">
-          <h2 className="font-semibold text-slate-900 text-sm mb-2">{t('new')}</h2>
+        <form onSubmit={handleSubmit}
+          style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20, padding: 20, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 0, marginBottom: 16 }}>{t('new')}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('customerName')} *</label>
@@ -237,213 +444,185 @@ export default function ReservationsPage() {
             </div>
             <div className="col-span-2">
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('bikeOptional')}</label>
-              <select value={form.bikeId} onChange={e => setForm(f => ({ ...f, bikeId: e.target.value }))} className={INPUT_CLASS}>
+              <select value={form.bikeId}
+                onChange={e => setForm(f => ({ ...f, bikeId: e.target.value }))}
+                className={INPUT_CLASS}>
                 <option value="">— —</option>
                 {bikes.map(b => (
-                  <option key={b.id} value={b.id}>{b.name} ({b.code}) — {Number(b.dailyRate).toFixed(2)} €/j</option>
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.code}) — {Number(b.dailyRate).toFixed(2)} €/j
+                  </option>
                 ))}
               </select>
             </div>
             <div className="col-span-2">
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('notes') || 'Notes'}</label>
-              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              <textarea value={form.notes}
+                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 rows={2} className={`${INPUT_CLASS} resize-none`} />
             </div>
           </div>
-          {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
-          <div className="flex gap-3">
+          {error && (
+            <p style={{ color: '#dc2626', fontSize: 13, background: '#fef2f2',
+              border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', marginTop: 12 }}>
+              {error}
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
             <button type="submit" disabled={saving}
-              className="flex-1 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
-              style={{ background: '#6366F1' }}>
+              style={{ flex: 1, background: '#6366F1', color: 'white', border: 'none', borderRadius: 12,
+                padding: '10px 0', fontSize: 13, fontWeight: 700,
+                cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}>
               {saving ? t('saving') : t('new')}
             </button>
             <button type="button" onClick={() => setShowForm(false)}
-              className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-slate-100 transition-colors">
+              style={{ padding: '10px 16px', borderRadius: 12, background: 'transparent',
+                border: '1.5px solid #e2e8f0', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>
               {t('cancel')}
             </button>
           </div>
         </form>
       )}
 
+      {/* Search bar */}
+      <div style={{ position: 'relative', marginBottom: 20 }}>
+        <Search size={15} style={{ position: 'absolute', left: 14, top: '50%',
+          transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t('searchPlaceholder')}
+          style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e2e8f0',
+            borderRadius: 12, padding: '10px 36px', fontSize: 13, color: '#0f172a',
+            outline: 'none', background: 'white', fontFamily: 'inherit' }}
+        />
+        {search && (
+          <button onClick={() => setSearch('')}
+            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+              display: 'flex', alignItems: 'center' }}>
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       {loading ? (
-        <div className="text-slate-400 text-sm text-center py-12">{t('loading') || 'Loading...'}</div>
+        <div style={{ color: '#94a3b8', fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
+          {t('loading') || 'Loading...'}
+        </div>
       ) : (
         <>
-          {pending.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center mb-6">
-              <div className="flex justify-center mb-2"><CalendarDays size={24} className="text-slate-200" /></div>
-              <p className="text-sm text-slate-400">{t('noPending')}</p>
-            </div>
-          ) : (
-            <div className="space-y-4 mb-6">
-
-              {/* ── TODAY reservations ── */}
-              {todayPending.length > 0 && (
-                <div>
-                  {/* Section header */}
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div style={{ display:'flex', alignItems:'center', gap:6,
-                      background:'linear-gradient(90deg,#fff7ed,#fffbeb)',
-                      border:'1.5px solid #fed7aa', borderRadius:10,
-                      padding:'5px 12px' }}>
-                      <span style={{ width:7, height:7, borderRadius:'50%', background:'#f97316',
-                        display:'inline-block', boxShadow:'0 0 0 3px #fed7aa',
-                        animation:'todayPulse 1.8s ease-in-out infinite' }} />
-                      <span style={{ fontSize:11, fontWeight:800, color:'#c2410c',
-                        textTransform:'uppercase', letterSpacing:'0.08em' }}>
-                        Aujourd&apos;hui
-                      </span>
-                      <span style={{ fontSize:11, fontWeight:600, color:'#fb923c' }}>
-                        · {todayPending.length} réservation{todayPending.length > 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {todayPending.map(r => {
-                      const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
-                      const startTime = new Date(r.startAt).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' })
-                      const endDate   = new Date(r.endAt).toLocaleDateString(undefined, { day:'2-digit', month:'2-digit' })
-                      return (
-                        <div key={r.id} style={{
-                          background:'linear-gradient(135deg,#fff7ed 0%,#ffffff 60%)',
-                          border:'1.5px solid #fed7aa',
-                          borderLeft:'4px solid #f97316',
-                          borderRadius:16, padding:16,
-                          boxShadow:'0 2px 12px rgba(249,115,22,0.10)',
-                        }}>
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0 flex-1">
-                              {/* Name + badges row */}
-                              <div className="flex items-center gap-2 flex-wrap mb-2">
-                                <p className="font-bold text-slate-900 text-sm">{r.customerName}</p>
-                                <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px',
-                                  borderRadius:20, background:'#fff7ed', color:'#ea580c',
-                                  border:'1px solid #fed7aa', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                                  {stLabel}
-                                </span>
-                              </div>
-                              {/* Start time prominent */}
-                              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
-                                <span style={{ fontSize:20, fontWeight:800, color:'#ea580c', lineHeight:1 }}>
-                                  {startTime}
-                                </span>
-                                <span style={{ fontSize:12, color:'#fb923c', fontWeight:500 }}>
-                                  → {endDate}
-                                </span>
-                              </div>
-                              {/* Contact & bike info */}
-                              <div className="text-xs text-slate-400 space-y-1">
-                                {r.customerPhone && <p className="flex items-center gap-1.5"><Phone size={11} className="text-orange-300 flex-shrink-0" />{r.customerPhone}</p>}
-                                {r.customerEmail && <p className="flex items-center gap-1.5"><Mail size={11} className="text-orange-300 flex-shrink-0" />{r.customerEmail}</p>}
-                                {r.bikeType && <p className="flex items-center gap-1.5"><Bike size={11} className="text-orange-300 flex-shrink-0" />{BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}</p>}
-                                {r.bike && <p className="flex items-center gap-1.5"><Bike size={11} className="text-orange-300 flex-shrink-0" />{r.bike.name} ({r.bike.code})</p>}
-                                {r.notes && <p className="italic text-slate-400">{r.notes}</p>}
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-2 flex-shrink-0">
-                              {r.status === 'PENDING' && (
-                                <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
-                                  className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
-                                  style={{ background: '#10b981' }}>
-                                  <Check size={11} />{t('confirm')}
-                                </button>
-                              )}
-                              <button onClick={() => convertToRental(r)}
-                                className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
-                                style={{ background: '#f97316' }}>
-                                <Bike size={11} />{t('convert')} <ArrowRight size={10} />
-                              </button>
-                              <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
-                                className="text-xs text-slate-400 hover:text-red-500 transition-colors">
-                                {t('cancel')}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+          {/* ── TODAY ─────────────────────────────────────────────────── */}
+          {todayPending.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7,
+                  background: 'linear-gradient(90deg,#fff7ed,#fffbeb)',
+                  border: '1.5px solid #fed7aa', borderRadius: 10, padding: '5px 12px' }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f97316',
+                    display: 'inline-block', boxShadow: '0 0 0 3px #fed7aa', flexShrink: 0,
+                    animation: 'todayPulse 1.8s ease-in-out infinite' }} />
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c',
+                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {t('sectionToday')}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#fb923c' }}>
+                    · {todayPending.length}
+                  </span>
                 </div>
-              )}
-
-              {/* ── UPCOMING reservations ── */}
-              {laterPending.length > 0 && (
-                <div>
-                  {todayPending.length > 0 && (
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                      À venir
-                    </p>
-                  )}
-                  <div className="space-y-3">
-                    {laterPending.map(r => {
-                      const stColor = STATUS_COLOR[r.status as keyof typeof STATUS_COLOR] ?? 'bg-slate-50 text-slate-500'
-                      const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
-                      return (
-                        <div key={r.id} className="bg-white border border-slate-200 rounded-2xl p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <p className="font-semibold text-slate-900 text-sm">{r.customerName}</p>
-                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stColor}`}>{stLabel}</span>
-                              </div>
-                              <div className="text-xs text-slate-400 space-y-1">
-                                {r.customerPhone && <p className="flex items-center gap-1.5"><Phone size={11} className="text-slate-300 flex-shrink-0" />{r.customerPhone}</p>}
-                                {r.customerEmail && <p className="flex items-center gap-1.5"><Mail size={11} className="text-slate-300 flex-shrink-0" />{r.customerEmail}</p>}
-                                <p className="flex items-center gap-1.5">
-                                  <CalendarDays size={11} className="text-slate-300 flex-shrink-0" />
-                                  {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })} →{' '}
-                                  {new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
-                                </p>
-                                {r.bikeType && <p className="flex items-center gap-1.5"><Bike size={11} className="text-slate-300 flex-shrink-0" />{BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}</p>}
-                                {r.bike && <p className="flex items-center gap-1.5"><Bike size={11} className="text-slate-300 flex-shrink-0" />{r.bike.name} ({r.bike.code})</p>}
-                                {r.notes && <p className="text-slate-400 italic">{r.notes}</p>}
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-2 flex-shrink-0">
-                              {r.status === 'PENDING' && (
-                                <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
-                                  className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
-                                  style={{ background: '#10b981' }}>
-                                  <Check size={11} />{t('confirm')}
-                                </button>
-                              )}
-                              <button onClick={() => convertToRental(r)}
-                                className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
-                                style={{ background: '#6366F1' }}>
-                                <Bike size={11} />{t('convert')} <ArrowRight size={10} />
-                              </button>
-                              <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
-                                className="text-xs text-slate-400 hover:text-red-500 transition-colors">
-                                {t('cancel')}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {todayPending.map(r => renderCard(r, 'today'))}
+              </div>
             </div>
           )}
 
+          {/* ── TOMORROW ──────────────────────────────────────────────── */}
+          {tomorrowPending.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7,
+                  background: '#fefce8', border: '1.5px solid #fef08a',
+                  borderRadius: 10, padding: '5px 12px' }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ca8a04',
+                    display: 'inline-block', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#a16207',
+                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {t('sectionTomorrow')}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#ca8a04' }}>
+                    · {tomorrowPending.length}
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {tomorrowPending.map(r => renderCard(r, 'tomorrow'))}
+              </div>
+            </div>
+          )}
+
+          {/* ── UPCOMING ──────────────────────────────────────────────── */}
+          {laterPending.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              {(todayPending.length > 0 || tomorrowPending.length > 0) && (
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                  {t('sectionUpcoming')} · {laterPending.length}
+                </p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {laterPending.map(r => renderCard(r, 'upcoming'))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state — search found nothing in pending */}
+          {!hasResults && pending.length > 0 && search && (
+            <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
+              padding: '40px 20px', textAlign: 'center', marginBottom: 24 }}>
+              <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>—</p>
+            </div>
+          )}
+
+          {/* Empty state — genuinely no pending */}
+          {pending.length === 0 && !search && (
+            <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
+              padding: '40px 20px', textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                <CalendarDays size={24} style={{ color: '#e2e8f0' }} />
+              </div>
+              <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>{t('noPending')}</p>
+            </div>
+          )}
+
+          {/* ── HISTORY ───────────────────────────────────────────────── */}
           {past.length > 0 && (
             <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">{t('history')}</p>
-              <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-50 overflow-hidden">
-                {past.map(r => {
-                  const stColor = STATUS_COLOR[r.status as keyof typeof STATUS_COLOR] ?? 'bg-slate-50 text-slate-500'
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8',
+                textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                {t('history')}
+              </p>
+              <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20, overflow: 'hidden' }}>
+                {past.map((r, i) => {
+                  const stBadge = STATUS_BADGE[r.status] ?? { bg: '#f8fafc', border: '#e2e8f0', text: '#475569' }
                   const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
                   return (
-                    <div key={r.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                    <div key={r.id} style={{ padding: '12px 16px', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', borderTop: i > 0 ? '1px solid #f8fafc' : undefined }}>
                       <div>
-                        <p className="text-sm font-medium text-slate-700">{r.customerName}</p>
-                        <p className="text-xs text-slate-400">
-                          {new Date(r.startAt).toLocaleDateString('fr-FR')} → {new Date(r.endAt).toLocaleDateString('fr-FR')}
+                        <p style={{ fontSize: 14, fontWeight: 500, color: '#334155', margin: 0 }}>{r.customerName}</p>
+                        <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0' }}>
+                          {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          {' → '}
+                          {new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
                         </p>
                       </div>
-                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${stColor}`}>{stLabel}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                        background: stBadge.bg, color: stBadge.text, border: `1px solid ${stBadge.border}`,
+                        textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                        {stLabel}
+                      </span>
                     </div>
                   )
                 })}
@@ -452,6 +631,7 @@ export default function ReservationsPage() {
           )}
         </>
       )}
+
       <style>{`
         @keyframes todayPulse {
           0%,100% { box-shadow: 0 0 0 3px #fed7aa; }

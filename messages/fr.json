@@ -320,7 +320,16 @@
     "cancelReasonHint": "(optionnel — sera envoyé au client)",
     "cancelReasonPlaceholder": "Ex : Aucune trottinette disponible à cette date…",
     "confirmCancel": "Confirmer l'annulation",
-    "back": "Retour"
+    "back": "Retour",
+    "searchPlaceholder": "Rechercher un client...",
+    "sectionToday": "Aujourd'hui",
+    "sectionTomorrow": "Demain",
+    "sectionUpcoming": "À venir",
+    "countdownPrefix": "Dans",
+    "countdownDay": "j",
+    "countdownHour": "h",
+    "countdownMin": "min",
+    "returning": "Client fidèle"
   },
   "accounting": {
     "title": "Comptabilité",

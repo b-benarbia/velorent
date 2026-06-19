@@ -320,7 +320,16 @@
     "cancelReasonHint": "(optional — will be sent to the customer)",
     "cancelReasonPlaceholder": "E.g. No e-scooter available on this date…",
     "confirmCancel": "Confirm cancellation",
-    "back": "Back"
+    "back": "Back",
+    "searchPlaceholder": "Search a customer...",
+    "sectionToday": "Today",
+    "sectionTomorrow": "Tomorrow",
+    "sectionUpcoming": "Upcoming",
+    "countdownPrefix": "In",
+    "countdownDay": "d",
+    "countdownHour": "h",
+    "countdownMin": "min",
+    "returning": "Returning customer"
   },
   "accounting": {
     "title": "Accounting",
