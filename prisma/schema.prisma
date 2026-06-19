@@ -297,6 +297,7 @@ model Reservation {
 
   partnerId     String?           // Si réservation via hôtel
   notes         String?
+  reminderSentAt DateTime?        // Null = rappel pas encore envoyé
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
