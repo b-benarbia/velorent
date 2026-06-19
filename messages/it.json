@@ -56,7 +56,9 @@
     "available": "Disponibile",
     "rented": "Noleggiato",
     "lost": "Perso",
-    "maintenance": "Manutenzione"
+    "maintenance": "Manutenzione",
+    "no_show": "No-show",
+    "checked_in": "Arrivato"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -330,7 +332,10 @@
     "countdownHour": "h",
     "countdownMin": "min",
     "returning": "Cliente abituale",
-    "calBtn": "Calendario"
+    "calBtn": "Calendario",
+    "noShow": "No-show",
+    "kpiWeek": "Prossimi 7 giorni",
+    "editReservation": "Modifica"
   },
   "accounting": {
     "title": "Contabilità",

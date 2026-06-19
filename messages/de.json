@@ -56,7 +56,9 @@
     "available": "Verfügbar",
     "rented": "Vermietet",
     "lost": "Verloren",
-    "maintenance": "Wartung"
+    "maintenance": "Wartung",
+    "no_show": "Nicht erschienen",
+    "checked_in": "Eingecheckt"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -330,7 +332,10 @@
     "countdownHour": "Std",
     "countdownMin": "Min",
     "returning": "Stammkunde",
-    "calBtn": "Kalender"
+    "calBtn": "Kalender",
+    "noShow": "Nicht erschienen",
+    "kpiWeek": "Nächste 7 Tage",
+    "editReservation": "Bearbeiten"
   },
   "accounting": {
     "title": "Buchhaltung",

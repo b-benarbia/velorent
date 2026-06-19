@@ -27,18 +27,28 @@ export async function PATCH(
 
   const { id } = await params
   const body = await req.json()
-  const { status, cancelReason } = body
+  const { status, cancelReason, startAt, endAt, notes, bikeId, bikeType } = body
+
+  // Build update data — only include defined fields
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: Record<string, any> = {}
+  if (status    !== undefined) updateData.status    = status
+  if (startAt   !== undefined) updateData.startAt   = new Date(startAt)
+  if (endAt     !== undefined) updateData.endAt     = new Date(endAt)
+  if (notes     !== undefined) updateData.notes     = notes ?? null
+  if (bikeId    !== undefined) updateData.bikeId    = bikeId || null
+  if (bikeType  !== undefined) updateData.bikeType  = bikeType || null
 
   try {
     const reservation = await prisma.reservation.update({
       where: { id, tenantId: session.tenantId },
-      data: { status },
+      data: updateData,
     })
 
     // Fetch tenant for shop name
     const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
     const email = reservation.customerEmail
-    const bikeType = reservation.bikeType ?? 'CITY'
+    const emailBikeType = reservation.bikeType ?? 'CITY'
 
     if (email && tenant) {
       if (status === 'CONFIRMED') {
@@ -46,7 +56,7 @@ export async function PATCH(
           to: email,
           customerName: reservation.customerName,
           shopName: tenant.name,
-          bikeType,
+          bikeType: emailBikeType,
           startAt: reservation.startAt,
           endAt: reservation.endAt,
           notes: reservation.notes,
@@ -56,7 +66,7 @@ export async function PATCH(
           to: email,
           customerName: reservation.customerName,
           shopName: tenant.name,
-          bikeType,
+          bikeType: emailBikeType,
           startAt: reservation.startAt,
           cancelReason: cancelReason ?? null,
         })

@@ -56,7 +56,9 @@
     "available": "Beschikbaar",
     "rented": "Verhuurd",
     "lost": "Verloren",
-    "maintenance": "Onderhoud"
+    "maintenance": "Onderhoud",
+    "no_show": "Niet verschenen",
+    "checked_in": "Ingecheckt"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -330,7 +332,10 @@
     "countdownHour": "u",
     "countdownMin": "min",
     "returning": "Vaste klant",
-    "calBtn": "Kalender"
+    "calBtn": "Kalender",
+    "noShow": "Niet verschenen",
+    "kpiWeek": "Volgende 7 dagen",
+    "editReservation": "Bewerken"
   },
   "accounting": {
     "title": "Boekhouding",
