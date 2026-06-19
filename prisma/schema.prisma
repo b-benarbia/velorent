@@ -37,6 +37,9 @@ model Tenant {
   // ex: {"valencia": 2, "outside_20km": 5, "road": 0}
   insuranceConfig Json    @default("{}")
 
+  // Grille tarifaire complète (par type de véhicule × durée)
+  pricingGrid Json        @default("{}")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
