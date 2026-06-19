@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendBookingConfirmationToCustomer, sendBookingAlertToShop } from '@/lib/email'
 
 // GET — shop info + available bike types
 export async function GET(
@@ -58,6 +59,37 @@ export async function POST(
       source: 'ONLINE',
     },
   })
+
+  // Emails en arrière-plan (ne bloque pas la réponse)
+  const startDate = new Date(startAt)
+  const endDate = new Date(endAt)
+
+  void Promise.allSettled([
+    email
+      ? sendBookingConfirmationToCustomer({
+          to: email,
+          customerName: `${firstName} ${lastName}`,
+          shopName: tenant.name,
+          bikeType,
+          startAt: startDate,
+          endAt: endDate,
+          notes: fullNotes,
+        })
+      : Promise.resolve(),
+    tenant.email
+      ? sendBookingAlertToShop({
+          shopEmail: tenant.email,
+          shopName: tenant.name,
+          customerName: `${firstName} ${lastName}`,
+          customerPhone: phone,
+          customerEmail: email,
+          bikeType,
+          startAt: startDate,
+          endAt: endDate,
+          notes: fullNotes,
+        })
+      : Promise.resolve(),
+  ])
 
   return NextResponse.json(reservation, { status: 201 })
 }
