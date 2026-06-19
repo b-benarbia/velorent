@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import SignaturePad, { type SignaturePadHandle } from './_components/SignaturePad'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge, Users, Waves, Activity, FileText, Euro, ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -107,9 +108,11 @@ export default function NewRentalPage() {
   })
   const [documentPhoto, setDocumentPhoto] = useState<string | null>(null)
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const isDrawing = useRef(false)
-  const [hasSigned, setHasSigned] = useState(false)
+  // ── Signature pads (signature_pad lib — touch/scroll safe) ───────────────
+  const clientPadRef = useRef<SignaturePadHandle>(null)
+  const staffPadRef  = useRef<SignaturePadHandle>(null)
+  const [clientSigned, setClientSigned] = useState(false)
+  const [staffSigned,  setStaffSigned]  = useState(false)
   const [hasReadTerms, setHasReadTerms] = useState(false)
 
   useEffect(() => {
@@ -142,72 +145,6 @@ export default function NewRentalPage() {
       .catch(() => {})
   }, [searchParams])
 
-  function initCanvas() {
-    setTimeout(() => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      const rect = canvas.getBoundingClientRect()
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      ctx.scale(dpr, dpr)
-      ctx.strokeStyle = '#6366F1'
-      ctx.lineWidth = 2
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-    }, 50)
-  }
-
-  useEffect(() => {
-    if (step === 4 && hasReadTerms) initCanvas()
-  }, [step, hasReadTerms])
-
-  const getPos = (e: React.TouchEvent | React.MouseEvent, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect()
-    if ('touches' in e) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top }
-  }
-
-  const startDraw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault()
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    isDrawing.current = true
-    const pos = getPos(e, canvas)
-    ctx.beginPath()
-    ctx.moveTo(pos.x, pos.y)
-  }, [])
-
-  const draw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault()
-    if (!isDrawing.current) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const pos = getPos(e, canvas)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.stroke()
-    setHasSigned(true)
-  }, [])
-
-  const stopDraw = useCallback(() => { isDrawing.current = false }, [])
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const rect = canvas.getBoundingClientRect()
-    ctx.clearRect(0, 0, rect.width, rect.height)
-    setHasSigned(false)
-  }
-
-  const getSignatureData = (): string => canvasRef.current?.toDataURL('image/png') ?? ''
 
   const selectedBike = bikes.find(b => b.id === selectedBikeIds[0])
   const selectedBikes = useMemo(() => bikes.filter(b => selectedBikeIds.includes(b.id)), [bikes, selectedBikeIds])
@@ -379,7 +316,8 @@ export default function NewRentalPage() {
             customerId,
             amountPaid: amountPerBike,
             depositAmount: depositPerBike,
-            openingSignature: getSignatureData(),
+            openingSignature: clientPadRef.current?.toDataURL() ?? '',
+            staffSignature:   staffPadRef.current?.toDataURL()  ?? '',
             accessories: accessoriesPayload,
           }),
         }).then(r => r.json().then(d => ({ ok: r.ok, data: d })))
@@ -414,7 +352,7 @@ export default function NewRentalPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <button
-          onClick={() => { if (step > 1) { setStepDir('back'); setStep(step - 1); if (step === 4) { setHasReadTerms(false); setHasSigned(false) } } else { router.back() } }}
+          onClick={() => { if (step > 1) { setStepDir('back'); setStep(step - 1); if (step === 4) { setHasReadTerms(false); setClientSigned(false); setStaffSigned(false); clientPadRef.current?.clear(); staffPadRef.current?.clear() } } else { router.back() } }}
           className="text-slate-400 hover:text-slate-600 text-sm transition-colors"
         >
           {t('back')}
@@ -1218,28 +1156,68 @@ export default function NewRentalPage() {
               <p className="text-xs text-slate-400 text-center mt-2">{t('scrollToSign')}</p>
             </div>
           ) : (
-            <div>
-              <div className="flex items-center gap-2 mb-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
                 <Check size={14} className="text-emerald-600" />
                 <p className="text-sm text-emerald-700 font-medium">{t('termsRead')}</p>
               </div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-slate-500">{t('signHere')}</p>
-                <button type="button" onClick={clearSignature} className="text-xs text-red-400 hover:text-red-500 transition-colors">{t('clear')}</button>
+
+              {/* ── Signature client ── */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 14, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{t('signHere')}</p>
+                    <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                      {newCustomer ? `${customerForm.firstName} ${customerForm.lastName}` : customers.find(c => c.id === form.customerId)?.firstName + ' ' + customers.find(c => c.id === form.customerId)?.lastName}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {clientSigned && <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 20, padding: '2px 10px' }}>✓ Signé</span>}
+                    <button type="button" onClick={() => { clientPadRef.current?.clear(); setClientSigned(false) }}
+                      style={{ fontSize: 11, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      {t('clear')}
+                    </button>
+                  </div>
+                </div>
+                <SignaturePad
+                  ref={clientPadRef}
+                  onChange={notEmpty => setClientSigned(notEmpty)}
+                  placeholder={t('signWithFinger')}
+                />
               </div>
-              <canvas
-                ref={canvasRef}
-                style={{ touchAction: 'none', width: '100%', height: '160px', border: '2px dashed #e2e8f0', borderRadius: '14px', background: '#f8fafc', cursor: 'crosshair', display: 'block' }}
-                onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
-                onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
-              />
-              {!hasSigned && <p className="text-xs text-slate-400 text-center mt-1">{t('signWithFinger')}</p>}
+
+              {/* ── Signature staff ── */}
+              <div style={{ background: '#fafbff', border: '1.5px solid #c7d2fe', borderRadius: 14, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#4338ca' }}>Signature responsable / Staff</p>
+                    <p style={{ fontSize: 11, color: '#a5b4fc', marginTop: 2 }}>Engagement du loueur</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {staffSigned && <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 20, padding: '2px 10px' }}>✓ Signé</span>}
+                    <button type="button" onClick={() => { staffPadRef.current?.clear(); setStaffSigned(false) }}
+                      style={{ fontSize: 11, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      {t('clear')}
+                    </button>
+                  </div>
+                </div>
+                <SignaturePad
+                  ref={staffPadRef}
+                  color="#4338ca"
+                  onChange={notEmpty => setStaffSigned(notEmpty)}
+                  placeholder="Signature du responsable / Staff signature"
+                />
+              </div>
+
+              {!clientSigned && !staffSigned && (
+                <p className="text-xs text-slate-400 text-center">{t('signWithFinger')}</p>
+              )}
             </div>
           )}
 
           {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
 
-          <button onClick={handleSubmit} disabled={loading || !hasSigned}
+          <button onClick={handleSubmit} disabled={loading || !clientSigned || !staffSigned}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity flex items-center justify-center gap-2"
             style={{ background: '#6366F1' }}>
             {loading ? t('creating') : <><Check size={15} />{t('confirmOpen')}</>}

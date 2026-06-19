@@ -45,10 +45,11 @@ export async function POST(
     const now = new Date()
     await prisma.reservation.update({
       where: { id: reservation.id },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
-        reminderSentAt:   reservation.reminderSentAt   ?? now,
-        reminder2hSentAt: reservation.reminder2hSentAt ?? now,
-      },
+        reminderSentAt:   (reservation as any).reminderSentAt   ?? now,
+        reminder2hSentAt: (reservation as any).reminder2hSentAt ?? now,
+      } as any,
     })
 
     return NextResponse.json({ ok: true })

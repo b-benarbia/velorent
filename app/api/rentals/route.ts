@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   const body = await req.json()
-  const { bikeId, customerId, expectedReturnAt, depositAmount, depositPaymentMethod, amountPaid, paymentMethod, notes, openingSignature, accessories } = body
+  const { bikeId, customerId, expectedReturnAt, depositAmount, depositPaymentMethod, amountPaid, paymentMethod, notes, openingSignature, staffSignature, accessories } = body
 
   if (!bikeId || !customerId) {
     return NextResponse.json({ error: 'Vélo et client requis' }, { status: 400 })
@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
         paymentMethod: paymentMethod || 'CASH',
         amountPaid: amountPaid ? parseFloat(amountPaid) : null,
         openingSignature: openingSignature || null,
-        contractSigned: !!openingSignature,
+        staffSignature:   staffSignature   || null,
+        contractSigned: !!(openingSignature && staffSignature),
         accessories: accessories ?? [],
         rateSnapshot: {
           dailyRate: Number(bike.dailyRate),

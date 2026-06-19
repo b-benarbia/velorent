@@ -25,37 +25,43 @@ export async function GET(req: NextRequest) {
   const from2h  = new Date(now.getTime() + 1 * 60 * 60 * 1000)
   const until2h = new Date(now.getTime() + 3 * 60 * 60 * 1000)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const baseWhere = (extraWhere: Record<string, any>) => ({
+    status:    { in: ['PENDING', 'CONFIRMED'] as const },
+    ...extraWhere,
+  })
+
   const [res24h, res2h] = await Promise.all([
-    // Rappels 24h — pas encore envoyés
     prisma.reservation.findMany({
-      where: {
-        status:          { in: ['PENDING', 'CONFIRMED'] },
-        customerEmail:   { not: null },
-        reminderSentAt:  null,
-        startAt:         { gte: from24, lte: until24 },
-      },
+      where: baseWhere({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        reminderSentAt: null as any,
+        startAt: { gte: from24, lte: until24 },
+      }),
       include: { tenant: { select: { name: true, phone: true } } },
     }),
-    // Rappels 2h — pas encore envoyés
     prisma.reservation.findMany({
-      where: {
-        status:            { in: ['PENDING', 'CONFIRMED'] },
-        customerEmail:     { not: null },
-        reminder2hSentAt:  null,
-        startAt:           { gte: from2h, lte: until2h },
-      },
+      where: baseWhere({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        reminder2hSentAt: null as any,
+        startAt: { gte: from2h, lte: until2h },
+      }),
       include: { tenant: { select: { name: true, phone: true } } },
     }),
   ])
+
+  // Filter out reservations without a customer email
+  const needs24h = res24h.filter(r => r.customerEmail)
+  const needs2h  = res2h.filter(r => r.customerEmail)
 
   let sent = 0
   let errors = 0
 
   await Promise.allSettled([
-    ...res24h.map(async (r) => {
+    ...needs24h.map(async (r) => {
       try {
         await sendReminderToCustomer({
-          to:           r.customerEmail!,
+          to:           r.customerEmail,
           customerName: r.customerName,
           shopName:     r.tenant.name,
           shopPhone:    r.tenant.phone,
@@ -67,16 +73,17 @@ export async function GET(req: NextRequest) {
         })
         await prisma.reservation.update({
           where: { id: r.id },
-          data:  { reminderSentAt: new Date() },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data: { reminderSentAt: new Date() } as any,
         })
         sent++
       } catch { errors++ }
     }),
 
-    ...res2h.map(async (r) => {
+    ...needs2h.map(async (r) => {
       try {
         await sendReminderToCustomer({
-          to:           r.customerEmail!,
+          to:           r.customerEmail,
           customerName: r.customerName,
           shopName:     r.tenant.name,
           shopPhone:    r.tenant.phone,
@@ -88,7 +95,8 @@ export async function GET(req: NextRequest) {
         })
         await prisma.reservation.update({
           where: { id: r.id },
-          data:  { reminder2hSentAt: new Date() },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data: { reminder2hSentAt: new Date() } as any,
         })
         sent++
       } catch { errors++ }
@@ -99,6 +107,6 @@ export async function GET(req: NextRequest) {
     ok:      true,
     sent,
     errors,
-    checked: { '24h': res24h.length, '2h': res2h.length },
+    checked: { '24h': needs24h.length, '2h': needs2h.length },
   })
 }
