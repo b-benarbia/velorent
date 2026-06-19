@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Link2, CalendarDays } from 'lucide-react'
 
@@ -73,16 +73,12 @@ interface Props {
   labels: PlanningLabels
 }
 
-type TooltipData = { x: number; y: number; rental: RentalEvent }
-
-const ROW_H = 52
+const ROW_H = 44
 
 export default function PlanningClient({ tenant, bikes, rentals, labels }: Props) {
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
   const [weekOffset, setWeekOffset] = useState(0)
   const [typeFilter, setTypeFilter]  = useState('ALL')
-  const [tooltip, setTooltip]        = useState<TooltipData | null>(null)
-  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null)
 
   // ── Week days ─────────────────────────────────────────────────────
   const weekStart = useMemo(() => addDays(getMondayOfWeek(today), weekOffset * 7), [today, weekOffset])
@@ -98,12 +94,22 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
       : `${fmt(days[0])} – ${fmt(days[6])} ${days[0].getFullYear()}`
   }, [days])
 
-  // ── Filtered bikes ────────────────────────────────────────────────
+  // ── Filtered bikes → grouped by type ─────────────────────────────
   const allTypes = useMemo(() => [...new Set(bikes.map(b => b.type))], [bikes])
   const visibleBikes = useMemo(
     () => typeFilter === 'ALL' ? bikes : bikes.filter(b => b.type === typeFilter),
     [bikes, typeFilter]
   )
+  // Group consecutive bikes by type (bikes already ordered by type from server)
+  const bikeGroups = useMemo(() => {
+    const groups: { type: string; bikes: BikeRow[] }[] = []
+    visibleBikes.forEach(bike => {
+      const last = groups[groups.length - 1]
+      if (last && last.type === bike.type) last.bikes.push(bike)
+      else groups.push({ type: bike.type, bikes: [bike] })
+    })
+    return groups
+  }, [visibleBikes])
 
   // ── Rentals per bike for the current week ─────────────────────────
   const rentalsByBike = useMemo(() => {
@@ -158,21 +164,6 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
     return { active, overdue, available }
   }, [bikes, rentalsByBike])
 
-  // ── Tooltip ───────────────────────────────────────────────────────
-  const showTip = useCallback((e: React.MouseEvent, rental: RentalEvent) => {
-    setTooltip({ x: e.clientX, y: e.clientY, rental })
-    setHoveredGroup(rental.groupKey)
-  }, [])
-  const hideTip = useCallback(() => { setTooltip(null); setHoveredGroup(null) }, [])
-
-  const statusLabel: Record<string,string> = {
-    ACTIVE:    labels.statusActive,
-    OVERDUE:   labels.statusOverdue,
-    COMPLETED: labels.statusCompleted,
-    CANCELLED: labels.statusCancelled,
-  }
-  const fmtDateTime = (s: string) =>
-    new Intl.DateTimeFormat(undefined, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }).format(new Date(s))
 
   return (
     <div style={{ fontFamily:'inherit', paddingBottom:24 }}>
@@ -262,110 +253,123 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
           })}
         </div>
 
-        {/* Bike rows */}
+        {/* Bike rows — grouped by type ── */}
         {visibleBikes.length === 0 ? (
           <div style={{ padding:40, textAlign:'center', color:'#94a3b8', fontSize:14 }}>
             {labels.noBikes}
           </div>
-        ) : visibleBikes.map((bike, bi) => {
-          const bikeRentals = rentalsByBike.get(bike.id) ?? []
-          return (
-            <div key={bike.id} style={{ display:'flex',
-              borderBottom: bi < visibleBikes.length-1 ? '1px solid #f1f5f9' : 'none',
-              minHeight:ROW_H }}>
+        ) : bikeGroups.map((group, gi) => (
+          <div key={group.type}>
 
-              {/* Bike label */}
-              <div style={{ width:72, flexShrink:0, padding:'8px 10px', borderRight:'1px solid #f1f5f9',
-                background:'#fafafa', display:'flex', flexDirection:'column', justifyContent:'center' }}>
-                <p style={{ fontSize:12, fontWeight:700, color:'#0f172a', lineHeight:1.2 }}>{bike.code}</p>
-                <p style={{ fontSize:10, color:'#94a3b8', marginTop:2 }}>{TYPE_LABEL[bike.type] ?? bike.type}</p>
+            {/* ── Category header ── */}
+            <div style={{
+              display:'flex', borderTop: gi > 0 ? '2px solid #e2e8f0' : 'none',
+              borderBottom:'1px solid #e2e8f0', background:'#f8fafc',
+            }}>
+              <div style={{ width:72, flexShrink:0, padding:'5px 10px', borderRight:'1px solid #e2e8f0',
+                display:'flex', alignItems:'center' }}>
+                <span style={{ fontSize:10, fontWeight:800, textTransform:'uppercase',
+                  letterSpacing:'0.08em', color:'#6366f1' }}>
+                  {TYPE_LABEL[group.type] ?? group.type}
+                </span>
               </div>
-
-              {/* Days area */}
-              <div style={{ flex:1, position:'relative', minHeight:ROW_H }}>
-
-                {/* Grid bg + today column */}
-                <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none' }}>
-                  {days.map((d, i) => (
-                    <div key={i} style={{ flex:1, height:'100%',
-                      borderRight: i<6 ? '1px solid #f9fafb' : 'none',
-                      background: sameDay(d, today) ? '#f5f3ff' : 'transparent' }} />
-                  ))}
-                </div>
-
-                {/* Free-slot dots */}
-                <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none', zIndex:1 }}>
-                  {days.map((d, i) => {
-                    const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999)
-                    const busy = bikeRentals.some(r => {
-                      const rs = new Date(r.startAt), re = new Date(r.endAt)
-                      return rs <= dayEnd && re >= d
-                    })
-                    return (
-                      <div key={i} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {!busy && <div style={{ width:5, height:5, borderRadius:'50%', background:'#d1fae5' }} />}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Rental blocks */}
-                <div style={{ position:'absolute', inset:0, zIndex:2, pointerEvents:'none' }}>
-                  {bikeRentals.map(rental => {
-                    const { startIdx, span, fromPrev, toNext } = getBlockGeometry(rental)
-                    const ss = STATUS[rental.status] ?? STATUS.COMPLETED
-                    const accent = accentColor(rental.customerId)
-                    const isGrouped = rental.groupSize > 1
-                    const isHovered = hoveredGroup === rental.groupKey
-
-                    const leftPct  = (startIdx / 7) * 100
-                    const widthPct = (span / 7) * 100
-                    const pad = 3
-
-                    return (
-                      <div key={rental.id} style={{ pointerEvents:'auto' }}
-                        onMouseEnter={e => showTip(e, rental)}
-                        onMouseLeave={hideTip}>
-                        <Link href={`/${tenant}/rentals/${rental.id}`} style={{ textDecoration:'none', display:'block' }}>
-                          <div style={{
-                            position:'absolute',
-                            top:6, height: ROW_H - 12,
-                            left: `calc(${leftPct}% + ${fromPrev ? 0 : pad}px)`,
-                            width:`calc(${widthPct}% - ${fromPrev ? 0 : pad}px - ${toNext ? 0 : pad}px)`,
-                            // Hover: solid darker fill; idle: light tint
-                            background: isHovered ? ss.hover : ss.bg,
-                            border: `1.5px solid ${isHovered ? ss.hover : ss.border}`,
-                            borderLeft: `3px solid ${accent}`,
-                            borderRadius: `${fromPrev?0:8}px ${toNext?0:8}px ${toNext?0:8}px ${fromPrev?0:8}px`,
-                            display:'flex', alignItems:'center', gap:4, paddingLeft:6, paddingRight:6,
-                            overflow:'hidden', cursor:'pointer',
-                            transition:'background .12s, border-color .12s, box-shadow .12s, transform .1s',
-                            boxShadow: isHovered ? `0 4px 12px ${ss.hover}55` : 'none',
-                            transform: isHovered ? 'translateY(-1px)' : 'none',
-                          }}>
-                            {/* Status dot */}
-                            <div style={{ width:6, height:6, borderRadius:'50%', flexShrink:0,
-                              background: isHovered ? 'rgba(255,255,255,0.7)' : ss.dot }} />
-                            {/* Name */}
-                            <span style={{ fontSize:11, fontWeight:600, flex:1,
-                              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
-                              color: isHovered ? '#fff' : ss.text }}>
-                              {span >= 2 ? rental.customerName : rental.customerName.split(' ')[0]}
-                            </span>
-                            {/* Group icon */}
-                            {isGrouped && (
-                              <Link2 size={10} style={{ color: isHovered ? 'rgba(255,255,255,0.8)' : accent, flexShrink:0 }} />
-                            )}
-                          </div>
-                        </Link>
-                      </div>
-                    )
-                  })}
-                </div>
+              <div style={{ flex:1, padding:'5px 10px', display:'flex', alignItems:'center' }}>
+                <span style={{ fontSize:10, color:'#94a3b8', fontWeight:500 }}>
+                  {group.bikes.length} vélo{group.bikes.length > 1 ? 's' : ''}
+                </span>
               </div>
             </div>
-          )
-        })}
+
+            {/* ── Bikes in this group ── */}
+            {group.bikes.map((bike, bi) => {
+              const bikeRentals = rentalsByBike.get(bike.id) ?? []
+              const isLast = gi === bikeGroups.length-1 && bi === group.bikes.length-1
+              return (
+                <div key={bike.id} style={{ display:'flex',
+                  borderBottom: isLast ? 'none' : '1px solid #f1f5f9',
+                  minHeight:ROW_H }}>
+
+                  {/* Bike label */}
+                  <div style={{ width:72, flexShrink:0, padding:'6px 10px', borderRight:'1px solid #f1f5f9',
+                    background:'#fafafa', display:'flex', alignItems:'center' }}>
+                    <p style={{ fontSize:12, fontWeight:700, color:'#0f172a' }}>{bike.code}</p>
+                  </div>
+
+                  {/* Days area */}
+                  <div style={{ flex:1, position:'relative', minHeight:ROW_H }}>
+
+                    {/* Grid bg + today highlight */}
+                    <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none' }}>
+                      {days.map((d, i) => (
+                        <div key={i} style={{ flex:1, height:'100%',
+                          borderRight: i<6 ? '1px solid #f9fafb' : 'none',
+                          background: sameDay(d, today) ? '#f5f3ff' : 'transparent' }} />
+                      ))}
+                    </div>
+
+                    {/* Free-slot dots */}
+                    <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none', zIndex:1 }}>
+                      {days.map((d, i) => {
+                        const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999)
+                        const busy = bikeRentals.some(r => {
+                          const rs = new Date(r.startAt), re = new Date(r.endAt)
+                          return rs <= dayEnd && re >= d
+                        })
+                        return (
+                          <div key={i} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            {!busy && <div style={{ width:5, height:5, borderRadius:'50%', background:'#d1fae5' }} />}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Rental blocks */}
+                    <div style={{ position:'absolute', inset:0, zIndex:2, pointerEvents:'none' }}>
+                      {bikeRentals.map(rental => {
+                        const { startIdx, span, fromPrev, toNext } = getBlockGeometry(rental)
+                        const ss = STATUS[rental.status] ?? STATUS.COMPLETED
+                        const accent = accentColor(rental.customerId)
+                        const isGrouped = rental.groupSize > 1
+                        const leftPct  = (startIdx / 7) * 100
+                        const widthPct = (span / 7) * 100
+                        const pad = 3
+
+                        return (
+                          <div key={rental.id} style={{ pointerEvents:'auto' }}>
+                            <Link href={`/${tenant}/rentals/${rental.id}`} style={{ textDecoration:'none', display:'block' }}>
+                              <div style={{
+                                position:'absolute',
+                                top:5, height: ROW_H - 10,
+                                left: `calc(${leftPct}% + ${fromPrev ? 0 : pad}px)`,
+                                width:`calc(${widthPct}% - ${fromPrev ? 0 : pad}px - ${toNext ? 0 : pad}px)`,
+                                background: ss.bg,
+                                border: `1.5px solid ${ss.border}`,
+                                borderLeft: `3px solid ${accent}`,
+                                borderRadius: `${fromPrev?0:7}px ${toNext?0:7}px ${toNext?0:7}px ${fromPrev?0:7}px`,
+                                display:'flex', alignItems:'center', gap:4, paddingLeft:6, paddingRight:6,
+                                overflow:'hidden', cursor:'pointer',
+                              }}>
+                                <div style={{ width:5, height:5, borderRadius:'50%', flexShrink:0, background:ss.dot }} />
+                                <span style={{ fontSize:11, fontWeight:600, flex:1,
+                                  whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+                                  color: ss.text }}>
+                                  {span >= 2 ? rental.customerName : rental.customerName.split(' ')[0]}
+                                </span>
+                                {isGrouped && (
+                                  <Link2 size={10} style={{ color: accent, flexShrink:0 }} />
+                                )}
+                              </div>
+                            </Link>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ))}
       </div>
 
       {/* ── Legend ── */}
@@ -391,49 +395,6 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
         </div>
       </div>
 
-      {/* ── Tooltip — rendered in-flow, position:fixed avoids overflow clipping ── */}
-      {tooltip && (() => {
-        const r = tooltip.rental
-        const ss = STATUS[r.status] ?? STATUS.COMPLETED
-        const accent = accentColor(r.customerId)
-        const tipX = typeof window !== 'undefined'
-          ? Math.min(tooltip.x + 14, window.innerWidth - 220)
-          : tooltip.x + 14
-        return (
-          <div style={{
-            position:'fixed', zIndex:9999, pointerEvents:'none',
-            left: tipX, top: tooltip.y - 12,
-            background:'#0f172a', borderRadius:12, padding:'10px 14px',
-            boxShadow:'0 8px 24px rgba(0,0,0,0.3)', minWidth:195,
-          }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-              <div style={{ width:3, height:36, borderRadius:2, background:accent, flexShrink:0 }} />
-              <div>
-                <p style={{ fontSize:13, fontWeight:700, color:'#f1f5f9', marginBottom:4 }}>{r.customerName}</p>
-                <span style={{ fontSize:11, fontWeight:600, padding:'2px 7px', borderRadius:6,
-                  background: ss.bg, color: ss.text }}>
-                  {statusLabel[r.status] ?? r.status}
-                </span>
-              </div>
-            </div>
-            <p style={{ fontSize:11, color:'#64748b', marginBottom:3 }}>{fmtDateTime(r.startAt)}</p>
-            <p style={{ fontSize:11, color:'#64748b' }}>→ {fmtDateTime(r.endAt)}</p>
-            {r.groupSize > 1 && (
-              <div style={{ marginTop:8, padding:'4px 8px', background:'rgba(99,102,241,0.18)',
-                borderRadius:6, display:'flex', alignItems:'center', gap:5 }}>
-                <Link2 size={11} style={{ color:'#a5b4fc' }} />
-                <span style={{ fontSize:11, color:'#a5b4fc', fontWeight:600 }}>
-                  {labels.legendGroup.split('(')[0].trim()} · {r.groupSize} {labels.groupBikes}
-                </span>
-              </div>
-            )}
-          </div>
-        )
-      })()}
-
-      <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-      `}</style>
     </div>
   )
 }
