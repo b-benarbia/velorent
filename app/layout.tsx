@@ -47,7 +47,12 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col font-[family-name:var(--font-inter)]">
         <NextTopLoader color="#6366F1" height={2} showSpinner={false} />
         <Toaster position="bottom-right" richColors />
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider
+          locale={locale}
+          messages={messages}
+          timeZone="Europe/Madrid"
+          now={new Date()}
+        >
           {children}
         </NextIntlClientProvider>
       </body>
