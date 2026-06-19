@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  turbopack: {
+    resolveAlias: {
+      'next-intl/config': './i18n/request.ts',
+    },
+  },
 };
 
 export default withNextIntl(nextConfig);
