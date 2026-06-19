@@ -159,6 +159,9 @@ enum DocumentType {
   PASSPORT
   ID_CARD
   DRIVING_LICENSE
+  DNI
+  NIE
+  OTHER
 }
 
 // ─────────────────────────────────────────────
