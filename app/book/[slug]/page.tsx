@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bike, Zap, Mountain, Package, Heart, Gauge, Flag, Check, ChevronLeft, ChevronRight, Shield, Lock, BatteryCharging, ShoppingBasket, Plus, Minus, User, Phone, Mail, MessageSquare } from 'lucide-react'
+import { Bike, Zap, Mountain, Package, Heart, Gauge, Flag, Check, ChevronLeft, ChevronRight, Shield, Lock, BatteryCharging, ShoppingBasket, Plus, Minus, User, Phone, Mail, MessageSquare, Users, Waves, Activity } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
 type Lang = 'fr' | 'en' | 'es'
@@ -141,7 +141,10 @@ const BIKE_TYPES = [
   { value: 'ROAD',     fr: 'Route',          en: 'Road bike',     es: 'Carretera',         icon: Flag,     grad: 'from-red-400 to-rose-600',      tagFr: 'Vitesse & adrénaline', tagEn: 'Speed',             tagEs: 'Velocidad' },
   { value: 'CARGO',    fr: 'Cargo',          en: 'Cargo',         es: 'Cargo',             icon: Package,  grad: 'from-violet-400 to-purple-600', tagFr: 'Transport maxi',       tagEn: 'Carry more',        tagEs: 'Más capacidad' },
   { value: 'KIDS',     fr: 'Enfant',         en: 'Kids',          es: 'Infantil',          icon: Heart,    grad: 'from-pink-400 to-rose-500',     tagFr: 'Pour les petits',      tagEn: 'For little ones',   tagEs: 'Para niños' },
-  { value: 'ESCOOTER', fr: 'Trottinette',    en: 'E-scooter',     es: 'Patinete',          icon: Gauge,    grad: 'from-indigo-400 to-violet-600', tagFr: 'Mobilité électrique',  tagEn: 'Electric ride',     tagEs: 'Movilidad eléctrica' },
+  { value: 'ESCOOTER', fr: 'Trottinette',    en: 'E-scooter',     es: 'Patinete',          icon: Gauge,    grad: 'from-indigo-400 to-violet-600', tagFr: 'Mobilité électrique',  tagEn: 'Electric ride',      tagEs: 'Movilidad eléctrica' },
+  { value: 'TANDEM',   fr: 'Tandem',         en: 'Tandem',        es: 'Tándem',            icon: Users,    grad: 'from-teal-400 to-cyan-600',    tagFr: 'Pour deux, fun garanti', tagEn: 'Double the fun',     tagEs: 'Doble diversión' },
+  { value: 'FATBIKE',  fr: 'Fat Bike',       en: 'Fat Bike',      es: 'Fat Bike',          icon: Waves,    grad: 'from-amber-500 to-orange-600',  tagFr: 'Plage & tout-terrain', tagEn: 'Beach & off-road',   tagEs: 'Playa & campo' },
+  { value: 'EMTB',     fr: 'VTT Électrique', en: 'Electric MTB',  es: 'MTB Eléctrica',     icon: Activity, grad: 'from-lime-400 to-green-600',    tagFr: 'Montagne assistée',    tagEn: 'Powered mountain',   tagEs: 'Montaña asistida' },
 ]
 
 // ─── Accessories ─────────────────────────────────────────────────────────────

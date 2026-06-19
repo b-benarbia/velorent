@@ -262,6 +262,9 @@
     "kids": "Kinder",
     "escooter": "E-Scooter",
     "road": "Rennrad",
+    "tandem": "Tandem",
+    "fatbike": "Fatbike",
+    "emtb": "E-MTB",
     "serialNumberLabel": "Seriennummer"
   },
   "reservations": {

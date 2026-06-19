@@ -13,6 +13,9 @@ const BIKE_LABELS: Record<string, Record<Locale, string>> = {
   CARGO:    { fr: 'Vélo cargo',       en: 'Cargo bike',      es: 'Bici de carga' },
   KIDS:     { fr: 'Vélo enfant',      en: 'Kids bike',       es: 'Bici infantil' },
   ESCOOTER: { fr: 'Trottinette',      en: 'E-scooter',       es: 'Patinete' },
+  TANDEM:   { fr: 'Tandem',           en: 'Tandem',          es: 'Tándem' },
+  FATBIKE:  { fr: 'Fat Bike',         en: 'Fat Bike',        es: 'Fat Bike' },
+  EMTB:     { fr: 'VTT Électrique',   en: 'Electric MTB',    es: 'MTB Eléctrica' },
 }
 
 function bikeLabel(type: string, locale: Locale) {
@@ -220,6 +223,7 @@ export async function sendBookingAlertToShop({
   const BIKE_LABELS: Record<string, string> = {
     CITY: 'Vélo de ville', ELECTRIC: 'Vélo électrique', MOUNTAIN: 'VTT',
     ROAD: 'Vélo de route', CARGO: 'Vélo cargo', KIDS: 'Vélo enfant', ESCOOTER: 'Trottinette',
+    TANDEM: 'Tandem', FATBIKE: 'Fat Bike', EMTB: 'VTT Électrique',
   }
 
   await resend.emails.send({

@@ -84,10 +84,13 @@ export default function NewBikePage() {
                 <option value="CITY">{t('city')}</option>
                 <option value="ELECTRIC">{t('electric')}</option>
                 <option value="MOUNTAIN">{t('mountain')}</option>
+                <option value="EMTB">{t('emtb')}</option>
+                <option value="ROAD">{t('road')}</option>
                 <option value="CARGO">{t('cargo')}</option>
                 <option value="KIDS">{t('kids')}</option>
                 <option value="ESCOOTER">{t('escooter')}</option>
-                <option value="ROAD">{t('road')}</option>
+                <option value="TANDEM">{t('tandem')}</option>
+                <option value="FATBIKE">{t('fatbike')}</option>
               </select>
             </div>
           </div>

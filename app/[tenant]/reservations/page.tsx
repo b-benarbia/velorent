@@ -16,6 +16,7 @@ interface Bike {
 const BIKE_TYPE_LABEL: Record<string, string> = {
   CITY: 'City', ELECTRIC: 'Electric', MOUNTAIN: 'Mountain',
   ROAD: 'Road', CARGO: 'Cargo', KIDS: 'Kids', ESCOOTER: 'E-Scooter',
+  TANDEM: 'Tandem', FATBIKE: 'Fat Bike', EMTB: 'E-MTB',
 }
 
 interface Reservation {
