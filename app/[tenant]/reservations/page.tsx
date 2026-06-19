@@ -34,6 +34,11 @@ interface Reservation {
   bike?: { name: string; code: string } | null
 }
 
+// Outside component — stable reference, no re-creation on render
+function localDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
 const STATUS_COLOR = {
   PENDING:   'bg-amber-50 text-amber-600',
   CONFIRMED: 'bg-emerald-50 text-emerald-600',
@@ -70,14 +75,17 @@ export default function ReservationsPage() {
   })
 
   useEffect(() => {
+    let alive = true
     Promise.all([
       fetch('/api/reservations').then(r => r.json()),
       fetch('/api/bikes').then(r => r.json()),
     ]).then(([res, bk]) => {
+      if (!alive) return
       setReservations(Array.isArray(res) ? res : [])
       setBikes(Array.isArray(bk) ? bk : [])
       setLoading(false)
     })
+    return () => { alive = false }
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -123,18 +131,21 @@ export default function ReservationsPage() {
     router.push(`/${tenant}/rentals/new?reservationId=${reservation.id}`)
   }
 
-  // Local date string helper — avoids UTC off-by-one
-  function localDateStr(d: Date) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  }
-  const todayStr = localDateStr(new Date())
-  const isToday  = (iso: string) => localDateStr(new Date(iso)) === todayStr
+  // todayStr in state → survives overnight without stale date
+  const [todayStr] = useState(() => localDateStr(new Date()))
+  const isToday = (iso: string) => localDateStr(new Date(iso)) === todayStr
 
   const all_pending  = reservations.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
   const todayPending = all_pending.filter(r => isToday(r.startAt))
-  const laterPending = all_pending.filter(r => !isToday(r.startAt))
+  // Sort upcoming by start date ascending (nearest first)
+  const laterPending = all_pending
+    .filter(r => !isToday(r.startAt))
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
   const pending = all_pending
-  const past = reservations.filter(r => r.status === 'CANCELLED' || r.status === 'CONVERTED')
+  // Sort past by start date descending (most recent first)
+  const past = reservations
+    .filter(r => r.status === 'CANCELLED' || r.status === 'CONVERTED')
+    .sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
 
   return (
     <div className="max-w-3xl mx-auto">
