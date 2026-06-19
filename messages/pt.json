@@ -340,7 +340,9 @@
     "availLeft": "1 restante",
     "availFull": "Completo",
     "availFree": "Livre",
-    "availUnavail": "Indisponível"
+    "availUnavail": "Indisponível",
+    "sendReminder": "Lembrar",
+    "reminderSent": "Enviado !"
   },
   "accounting": {
     "title": "Contabilidade",

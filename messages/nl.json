@@ -340,7 +340,9 @@
     "availLeft": "1 resterend",
     "availFull": "Vol",
     "availFree": "Vrij",
-    "availUnavail": "Niet beschikbaar"
+    "availUnavail": "Niet beschikbaar",
+    "sendReminder": "Herinner",
+    "reminderSent": "Verzonden !"
   },
   "accounting": {
     "title": "Boekhouding",

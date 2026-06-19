@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   CalendarDays, Phone, Mail, Bike, Check, ArrowRight,
   Plus, Search, Star, X, ChevronLeft, ChevronRight,
-  AlertCircle, Pencil, Clock, CheckCircle2,
+  AlertCircle, Pencil, Clock, CheckCircle2, BellRing,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import DateTimePicker from './_components/DateTimePicker'
@@ -87,6 +87,20 @@ export default function ReservationsPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [search, setSearch]   = useState('')
   const [now, setNow]         = useState(() => new Date())
+
+  // ── Reminder sending state ────────────────────────────────────────────────
+  // Map<reservationId, 'idle' | 'sending' | 'sent'>
+  const [reminderState, setReminderState] = useState<Map<string, 'idle' | 'sending' | 'sent'>>(new Map())
+
+  async function sendReminder(id: string) {
+    setReminderState(prev => new Map(prev).set(id, 'sending'))
+    try {
+      const res = await fetch(`/api/reservations/${id}/remind`, { method: 'POST' })
+      setReminderState(prev => new Map(prev).set(id, res.ok ? 'sent' : 'idle'))
+    } catch {
+      setReminderState(prev => new Map(prev).set(id, 'idle'))
+    }
+  }
 
   // ── Availability ───────────────────────────────────────────────────────────
   const [avail, setAvail] = useState<Map<string, AvailResult | null>>(new Map())
@@ -621,6 +635,27 @@ export default function ReservationsPage() {
                 display: 'flex', alignItems: 'center', gap: 4 }}>
               <Pencil size={11} />{t('editReservation')}
             </button>
+            {r.customerEmail && (
+              <button
+                onClick={() => sendReminder(r.id)}
+                disabled={reminderState.get(r.id) === 'sending' || reminderState.get(r.id) === 'sent'}
+                style={{
+                  background: reminderState.get(r.id) === 'sent' ? '#f0fdf4' : 'white',
+                  color:      reminderState.get(r.id) === 'sent' ? '#15803d' : '#8b5cf6',
+                  border:     `1.5px solid ${reminderState.get(r.id) === 'sent' ? '#86efac' : '#ddd6fe'}`,
+                  borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 700,
+                  cursor: reminderState.get(r.id) ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  opacity: reminderState.get(r.id) === 'sending' ? 0.6 : 1,
+                  transition: 'all .2s',
+                }}>
+                {reminderState.get(r.id) === 'sent'
+                  ? <CheckCircle2 size={11} />
+                  : <BellRing size={11} style={reminderState.get(r.id) === 'sending' ? { animation: 'todayPulse 1s infinite' } : {}} />
+                }
+                {reminderState.get(r.id) === 'sent' ? t('reminderSent') : t('sendReminder')}
+              </button>
+            )}
           </div>
         </div>
 

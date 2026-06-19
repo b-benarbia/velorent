@@ -340,7 +340,9 @@
     "availLeft": "1 left",
     "availFull": "Full",
     "availFree": "Free",
-    "availUnavail": "Unavailable"
+    "availUnavail": "Unavailable",
+    "sendReminder": "Remind",
+    "reminderSent": "Sent !"
   },
   "accounting": {
     "title": "Accounting",

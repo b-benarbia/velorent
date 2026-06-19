@@ -202,6 +202,77 @@ export async function sendReservationCancelledToCustomer({
   })
 }
 
+// ── Email RAPPEL au CLIENT (envoi manuel par le gérant) ──
+export async function sendReminderToCustomer({
+  to, customerName, shopName, shopPhone, bikeType, startAt, endAt, notes, locale = 'fr',
+}: {
+  to: string; customerName: string; shopName: string; shopPhone?: string | null
+  bikeType: string; startAt: Date; endAt: Date; notes?: string | null; locale?: string
+}) {
+  if (!to || !process.env.RESEND_API_KEY) return
+  const l = (['fr','en','es'].includes(locale) ? locale : 'fr') as Locale
+
+  const T = {
+    subject: { fr: `⏰ Rappel — votre location chez ${shopName}`, en: `⏰ Reminder — your rental at ${shopName}`, es: `⏰ Recordatorio — tu alquiler en ${shopName}` },
+    title:   { fr: 'Rappel de réservation', en: 'Booking reminder', es: 'Recordatorio de reserva' },
+    greeting:{ fr: `Bonjour <strong>${customerName}</strong>,`, en: `Hello <strong>${customerName}</strong>,`, es: `Hola <strong>${customerName}</strong>,` },
+    body:    {
+      fr: `Votre location d'un <strong>${bikeLabel(bikeType, l)}</strong> chez <strong>${shopName}</strong> arrive bientôt. Voici un rappel des détails.`,
+      en: `Your <strong>${bikeLabel(bikeType, l)}</strong> rental at <strong>${shopName}</strong> is coming up soon. Here's a reminder of the details.`,
+      es: `Tu alquiler de <strong>${bikeLabel(bikeType, l)}</strong> en <strong>${shopName}</strong> se acerca. Aquí tienes un recordatorio de los detalles.`,
+    },
+    details: { fr: 'Votre réservation', en: 'Your booking', es: 'Tu reserva' },
+    bikeType:{ fr: 'Type de vélo', en: 'Bike type', es: 'Tipo de bici' },
+    start:   { fr: 'Début', en: 'Start', es: 'Inicio' },
+    end:     { fr: 'Fin prévue', en: 'Expected end', es: 'Fin prevista' },
+    notes:   { fr: 'Notes', en: 'Notes', es: 'Notas' },
+    bringTitle: { fr: 'À prévoir le jour J', en: 'What to bring', es: 'Qué traer' },
+    bring: {
+      fr: ["Une pièce d'identité", 'Un moyen de paiement', 'Une tenue adaptée 🚴'],
+      en: ['A valid ID', 'A payment method', 'Suitable clothing 🚴'],
+      es: ['Un documento de identidad', 'Un medio de pago', 'Ropa adecuada 🚴'],
+    },
+    contact: { fr: `Pour toute question, contactez <strong>${shopName}</strong>${shopPhone ? ` au ${shopPhone}` : ''}.`, en: `For any questions, contact <strong>${shopName}</strong>${shopPhone ? ` at ${shopPhone}` : ''}.`, es: `Para cualquier pregunta, contacta con <strong>${shopName}</strong>${shopPhone ? ` en ${shopPhone}` : ''}.` },
+  }
+
+  await resend.emails.send({
+    from: FROM, to,
+    subject: T.subject[l],
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#fffbeb;font-family:system-ui,-apple-system,sans-serif;">
+<div style="max-width:520px;margin:40px auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(251,191,36,0.15)">
+  <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:36px 32px 32px;text-align:center">
+    <div style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:28px;line-height:1">⏰</div>
+    <p style="color:rgba(255,255,255,0.8);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 6px">VeloRent · ${shopName}</p>
+    <h1 style="color:white;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.02em">${T.title[l]}</h1>
+  </div>
+  <div style="padding:32px">
+    <p style="color:#374151;font-size:15px;margin:0 0 12px">${T.greeting[l]}</p>
+    <p style="color:#374151;font-size:15px;margin:0 0 24px;line-height:1.6">${T.body[l]}</p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:22px;margin-bottom:22px">
+      <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 14px">${T.details[l]}</p>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px;width:38%">${T.bikeType[l]}</td><td style="padding:6px 0;color:#0f172a;font-size:13px;font-weight:700">${bikeLabel(bikeType,l)}</td></tr>
+        <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px;border-top:1px solid #f1f5f9">${T.start[l]}</td><td style="padding:6px 0;color:#0f172a;font-size:13px;font-weight:700;border-top:1px solid #f1f5f9">${fmtDate(startAt,l)}</td></tr>
+        <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px;border-top:1px solid #f1f5f9">${T.end[l]}</td><td style="padding:6px 0;color:#0f172a;font-size:13px;font-weight:600;border-top:1px solid #f1f5f9">${fmtDate(endAt,l)}</td></tr>
+        ${notes ? `<tr><td style="padding:6px 0;color:#94a3b8;font-size:13px;border-top:1px solid #f1f5f9">${T.notes[l]}</td><td style="padding:6px 0;color:#475569;font-size:13px;border-top:1px solid #f1f5f9;font-style:italic">${notes}</td></tr>` : ''}
+      </table>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 18px;margin-bottom:24px">
+      <p style="color:#92400e;font-size:13px;font-weight:700;margin:0 0 8px">${T.bringTitle[l]}</p>
+      <ul style="margin:0;padding:0 0 0 16px;color:#b45309;font-size:13px;line-height:1.8">
+        ${T.bring[l].map(i => `<li>${i}</li>`).join('')}
+      </ul>
+    </div>
+    <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0">${T.contact[l]}</p>
+  </div>
+  <div style="background:#f8fafc;border-top:1px solid #f1f5f9;padding:16px 32px;text-align:center">
+    <p style="color:#94a3b8;font-size:11px;margin:0">Powered by <strong>VeloRent</strong></p>
+  </div>
+</div></body></html>`,
+  })
+}
+
 // ── Email au GÉRANT après réservation ──
 export async function sendBookingAlertToShop({
   shopEmail, shopName, customerName, customerPhone, customerEmail,
