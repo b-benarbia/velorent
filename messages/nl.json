@@ -335,7 +335,12 @@
     "calBtn": "Kalender",
     "noShow": "Niet verschenen",
     "kpiWeek": "Volgende 7 dagen",
-    "editReservation": "Bewerken"
+    "editReservation": "Bewerken",
+    "availDispo": "besch.",
+    "availLeft": "1 resterend",
+    "availFull": "Vol",
+    "availFree": "Vrij",
+    "availUnavail": "Niet beschikbaar"
   },
   "accounting": {
     "title": "Boekhouding",

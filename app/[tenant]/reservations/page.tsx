@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   CalendarDays, Phone, Mail, Bike, Check, ArrowRight,
   Plus, Search, Star, X, ChevronLeft, ChevronRight,
-  AlertCircle, Pencil, Clock,
+  AlertCircle, Pencil, Clock, CheckCircle2,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -59,6 +59,8 @@ const NAV_BTN: React.CSSProperties = {
   padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center',
 }
 
+interface AvailResult { total: number; booked: number; available: number }
+
 // Format ISO datetime to local datetime-local input value
 function isoToInputValue(iso: string): string {
   const d = new Date(iso)
@@ -84,6 +86,9 @@ export default function ReservationsPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [search, setSearch]   = useState('')
   const [now, setNow]         = useState(() => new Date())
+
+  // ── Availability ───────────────────────────────────────────────────────────
+  const [avail, setAvail] = useState<Map<string, AvailResult | null>>(new Map())
 
   // ── Edit modal ─────────────────────────────────────────────────────────────
   const [editModal, setEditModal] = useState<Reservation | null>(null)
@@ -122,6 +127,51 @@ export default function ReservationsPage() {
     })
     return () => { alive = false }
   }, [])
+
+  // Fetch availability for all pending/confirmed reservations after load
+  useEffect(() => {
+    const pending = reservations.filter(r =>
+      (r.status === 'PENDING' || r.status === 'CONFIRMED') && (r.bikeType || r.bikeId)
+    )
+    if (pending.length === 0) return
+
+    let alive = true
+    const ac = new AbortController()
+
+    // Mark all as loading (null = loading)
+    setAvail(prev => {
+      const next = new Map(prev)
+      pending.forEach(r => { if (!next.has(r.id)) next.set(r.id, null) })
+      return next
+    })
+
+    Promise.all(
+      pending.map(async r => {
+        const sp = new URLSearchParams({
+          start: r.startAt,
+          end:   r.endAt,
+          excludeId: r.id,
+        })
+        if (r.bikeId)    sp.set('bikeId',    r.bikeId)
+        else if (r.bikeType) sp.set('bikeType', r.bikeType)
+        try {
+          const res = await fetch(`/api/availability?${sp}`, { signal: ac.signal })
+          if (!res.ok) return null
+          const data = await res.json() as AvailResult
+          return { id: r.id, data }
+        } catch { return null }
+      })
+    ).then(results => {
+      if (!alive) return
+      setAvail(prev => {
+        const next = new Map(prev)
+        results.forEach(r => { if (r) next.set(r.id, r.data) })
+        return next
+      })
+    })
+
+    return () => { alive = false; ac.abort() }
+  }, [reservations])
 
   const [todayStr]    = useState(() => localDateStr(new Date()))
   const [tomorrowStr] = useState(() => {
@@ -346,6 +396,88 @@ export default function ReservationsPage() {
     )
   }
 
+  // ── Availability badge ─────────────────────────────────────────────────────
+  function renderAvailBadge(r: Reservation) {
+    if (!r.bikeType && !r.bikeId) return null
+    const a = avail.get(r.id)
+
+    // Loading shimmer
+    if (a === null || a === undefined) {
+      return (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+          background: '#f1f5f9', color: '#94a3b8', border: '1px solid #e2e8f0',
+          textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+          animation: 'availPulse 1.4s ease-in-out infinite',
+        }}>
+          <Bike size={9} /> ···
+        </span>
+      )
+    }
+
+    const { available, total } = a
+
+    // Specific bike: binary
+    if (r.bikeId) {
+      return available > 0 ? (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+          background: '#f0fdf4', color: '#15803d', border: '1px solid #86efac',
+          textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+        }}>
+          <CheckCircle2 size={9} /> {t('availFree')}
+        </span>
+      ) : (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+          background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
+          textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+        }}>
+          <AlertCircle size={9} /> {t('availUnavail')}
+        </span>
+      )
+    }
+
+    // Type-based: show count
+    if (total === 0) return null
+
+    if (available === 0) return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+        background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
+        textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+      }}>
+        <AlertCircle size={9} /> {t('availFull')}
+      </span>
+    )
+
+    if (available === 1) return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+        background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a',
+        textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+      }}>
+        <AlertCircle size={9} /> {t('availLeft')}
+      </span>
+    )
+
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+        background: '#f0fdf4', color: '#15803d', border: '1px solid #86efac',
+        textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+      }}>
+        <CheckCircle2 size={9} /> {available} {t('availDispo')}
+      </span>
+    )
+  }
+
   // ── Shared card renderer ───────────────────────────────────────────────────
   function renderCard(r: Reservation, variant: 'today' | 'tomorrow' | 'upcoming') {
     const stLabel   = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
@@ -455,17 +587,14 @@ export default function ReservationsPage() {
                   </span>
                 </a>
               )}
-              {r.bikeType && !r.bike && (
-                <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  {BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}
-                </p>
-              )}
-              {r.bike && (
-                <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  {r.bike.name} ({r.bike.code})
-                </p>
+              {(r.bikeType || r.bike) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                    <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
+                    {r.bike ? `${r.bike.name} (${r.bike.code})` : (BIKE_TYPE_LABEL[r.bikeType!] ?? r.bikeType)}
+                  </p>
+                  {renderAvailBadge(r)}
+                </div>
               )}
               {r.notes && (
                 <p style={{ margin: 0, fontStyle: 'italic', color: '#94a3b8', fontSize: 11 }}>
@@ -939,6 +1068,10 @@ export default function ReservationsPage() {
         @keyframes todayPulse {
           0%,100% { box-shadow: 0 0 0 3px #fed7aa; }
           50%      { box-shadow: 0 0 0 6px #fdba7420; }
+        }
+        @keyframes availPulse {
+          0%,100% { opacity: 1; }
+          50%      { opacity: 0.4; }
         }
         @media screen and (max-width: 767px) {
           input, select, textarea { font-size: 16px !important; }

@@ -335,7 +335,12 @@
     "calBtn": "Calendário",
     "noShow": "No-show",
     "kpiWeek": "Próximos 7 dias",
-    "editReservation": "Editar"
+    "editReservation": "Editar",
+    "availDispo": "disp",
+    "availLeft": "1 restante",
+    "availFull": "Completo",
+    "availFree": "Livre",
+    "availUnavail": "Indisponível"
   },
   "accounting": {
     "title": "Contabilidade",
