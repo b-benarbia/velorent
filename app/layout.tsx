@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
@@ -16,6 +16,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "VeloRent",
   description: "Gestion de location de vélos",
+};
+
+// viewport-fit=cover is required for env(safe-area-inset-bottom) on iPhone X+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 const LOCALES = ['fr', 'en', 'es', 'de', 'it', 'nl', 'pt'] as const;

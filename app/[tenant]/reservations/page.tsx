@@ -276,7 +276,7 @@ export default function ReservationsPage() {
                 onClick={() => { setSelectedDate(isSel ? null : dk); if (!isSel) setShowCal(false) }}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  justifyContent: 'center', padding: '5px 2px', minHeight: 36,
+                  justifyContent: 'center', padding: '5px 2px', minHeight: 44,
                   borderRadius: 8, border: 'none', cursor: 'pointer',
                   background: isSel ? '#6366f1' : isTd ? '#eef2ff' : 'transparent',
                 }}>
