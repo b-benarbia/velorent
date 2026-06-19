@@ -55,6 +55,8 @@ export default function ReservationsPage() {
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [cancelModal, setCancelModal] = useState<{ id: string; name: string } | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
 
   const [form, setForm] = useState({
     customerName: '',
@@ -98,15 +100,22 @@ export default function ReservationsPage() {
     setSaving(false)
   }
 
-  async function updateStatus(id: string, status: string) {
+  async function updateStatus(id: string, status: string, cancelReason?: string) {
     const res = await fetch(`/api/reservations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, cancelReason }),
     })
     if (res.ok) {
       setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
     }
+  }
+
+  async function handleCancel() {
+    if (!cancelModal) return
+    await updateStatus(cancelModal.id, 'CANCELLED', cancelReason.trim() || undefined)
+    setCancelModal(null)
+    setCancelReason('')
   }
 
   async function convertToRental(reservation: Reservation) {
@@ -118,6 +127,43 @@ export default function ReservationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Cancel Modal */}
+      {cancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">{t('cancelModalTitle')}</h2>
+              <p className="text-sm text-slate-400 mt-0.5">{cancelModal.name}</p>
+            </div>
+            <div className="px-6 py-5">
+              <label className="text-xs font-semibold text-slate-500 block mb-2">{t('cancelReasonLabel')} <span className="font-normal text-slate-400">{t('cancelReasonHint')}</span></label>
+              <textarea
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                placeholder={t('cancelReasonPlaceholder')}
+                rows={3}
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300/40 focus:border-red-400 resize-none text-slate-900 placeholder-slate-300"
+                autoFocus
+              />
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={handleCancel}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ background: '#ef4444' }}
+              >
+                {t('confirmCancel')}
+              </button>
+              <button
+                onClick={() => { setCancelModal(null); setCancelReason('') }}
+                className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-slate-100 transition-colors"
+              >
+                {t('back')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t('title')}</h1>
@@ -245,7 +291,7 @@ export default function ReservationsPage() {
                           style={{ background: '#6366F1' }}>
                           <Bike size={11} />{t('convert')} <ArrowRight size={10} />
                         </button>
-                        <button onClick={() => updateStatus(r.id, 'CANCELLED')}
+                        <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
                           className="text-xs text-slate-400 hover:text-red-500 transition-colors">
                           {t('cancel')}
                         </button>
