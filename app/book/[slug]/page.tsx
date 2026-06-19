@@ -1,117 +1,135 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bike, Zap, Mountain, Package, Heart, Gauge, Flag, Check, ChevronRight, ChevronLeft, CalendarDays, User, Phone, Mail, MessageSquare, Shield, Lock, BatteryCharging, ShoppingBasket } from 'lucide-react'
+import { Bike, Zap, Mountain, Package, Heart, Gauge, Flag, Check, ChevronLeft, Shield, Lock, BatteryCharging, ShoppingBasket, Plus, Minus, CalendarDays, User, Phone, Mail, MessageSquare, Clock } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
 type Lang = 'fr' | 'en' | 'es'
 
 const LANG = {
   fr: {
-    bikeQuestion: 'Quel type de vélo ?',
-    whenQuestion: 'Quand ?',
-    yourInfo: 'Vos informations',
+    step1Title: 'Choisissez votre véhicule',
+    step1Sub: 'Quel type de vélo pour votre aventure ?',
+    step2Title: 'Votre location',
+    step2Sub: 'Choisissez vos dates',
+    step3Title: 'Vos informations',
+    step3Sub: 'Dernière étape, promis !',
     bikeQty: 'Nombre de vélos',
-    start: 'Début',
-    end: 'Fin',
+    start: 'Départ',
+    end: 'Retour',
     firstName: 'Prénom',
     lastName: 'Nom',
     phone: 'Téléphone',
     optional: 'optionnel',
     address: 'Adresse',
     accessories: 'Accessoires',
-    message: 'Message',
-    messagePlaceholder: 'Taille casque M, questions...',
+    message: 'Note',
+    messagePlaceholder: 'Taille de casque, demandes particulières…',
     continue: 'Continuer',
-    send: 'Envoyer la demande',
-    sending: 'Envoi...',
+    send: 'Envoyer ma demande',
+    sending: 'Envoi en cours…',
     back: 'Retour',
-    noPayment: 'Pas de paiement maintenant — confirmation par la boutique.',
+    change: 'Modifier',
+    noPayment: 'Aucun paiement requis maintenant',
     successTitle: 'Demande envoyée !',
     successSub: (name: string) => `Merci ${name}, votre demande a bien été reçue.`,
     successNote: (shop: string) => `${shop} vous contactera pour confirmer.`,
-    notFound: 'Shop introuvable',
+    notFound: 'Page introuvable',
     notFoundSub: "Ce lien de réservation n'existe pas.",
-    type: 'Type',
+    type: 'Véhicule',
     from: 'Du',
     to: 'Au',
+    days: (n: number) => n === 1 ? '1 jour' : `${n} jours`,
+    stepOf: (s: number) => `Étape ${s} sur 3`,
   },
   en: {
-    bikeQuestion: 'What type of bike?',
-    whenQuestion: 'When?',
-    yourInfo: 'Your details',
+    step1Title: 'Choose your vehicle',
+    step1Sub: 'What type of bike for your adventure?',
+    step2Title: 'Your rental',
+    step2Sub: 'Choose your dates',
+    step3Title: 'Your details',
+    step3Sub: 'Last step, promise!',
     bikeQty: 'Number of bikes',
     start: 'Start',
-    end: 'End',
+    end: 'Return',
     firstName: 'First name',
     lastName: 'Last name',
     phone: 'Phone',
     optional: 'optional',
     address: 'Address',
     accessories: 'Accessories',
-    message: 'Message',
-    messagePlaceholder: 'Helmet size M, questions...',
+    message: 'Note',
+    messagePlaceholder: 'Helmet size, special requests…',
     continue: 'Continue',
-    send: 'Send request',
-    sending: 'Sending...',
+    send: 'Send my request',
+    sending: 'Sending…',
     back: 'Back',
-    noPayment: 'No payment now — confirmation by the shop.',
+    change: 'Change',
+    noPayment: 'No payment required now',
     successTitle: 'Request sent!',
     successSub: (name: string) => `Thanks ${name}, your request has been received.`,
     successNote: (shop: string) => `${shop} will contact you to confirm.`,
-    notFound: 'Shop not found',
+    notFound: 'Page not found',
     notFoundSub: 'This booking link does not exist.',
-    type: 'Type',
+    type: 'Vehicle',
     from: 'From',
     to: 'To',
+    days: (n: number) => n === 1 ? '1 day' : `${n} days`,
+    stepOf: (s: number) => `Step ${s} of 3`,
   },
   es: {
-    bikeQuestion: '¿Qué tipo de bici?',
-    whenQuestion: '¿Cuándo?',
-    yourInfo: 'Sus datos',
+    step1Title: 'Elige tu vehículo',
+    step1Sub: '¿Qué tipo de bici para tu aventura?',
+    step2Title: 'Tu alquiler',
+    step2Sub: 'Elige tus fechas',
+    step3Title: 'Tus datos',
+    step3Sub: '¡Último paso!',
     bikeQty: 'Número de bicis',
     start: 'Inicio',
-    end: 'Fin',
+    end: 'Devolución',
     firstName: 'Nombre',
     lastName: 'Apellido',
     phone: 'Teléfono',
     optional: 'opcional',
     address: 'Dirección',
     accessories: 'Accesorios',
-    message: 'Mensaje',
-    messagePlaceholder: 'Talla casco M, preguntas...',
+    message: 'Nota',
+    messagePlaceholder: 'Talla de casco, peticiones especiales…',
     continue: 'Continuar',
     send: 'Enviar solicitud',
-    sending: 'Enviando...',
+    sending: 'Enviando…',
     back: 'Volver',
-    noPayment: 'Sin pago ahora — confirmación por la tienda.',
+    change: 'Cambiar',
+    noPayment: 'Sin pago ahora',
     successTitle: '¡Solicitud enviada!',
-    successSub: (name: string) => `Gracias ${name}, tu solicitud ha sido recibida.`,
+    successSub: (name: string) => `Gracias ${name}, tu solicitud fue recibida.`,
     successNote: (shop: string) => `${shop} te contactará para confirmar.`,
-    notFound: 'Tienda no encontrada',
+    notFound: 'Página no encontrada',
     notFoundSub: 'Este enlace de reserva no existe.',
-    type: 'Tipo',
-    from: 'Desde',
-    to: 'Hasta',
+    type: 'Vehículo',
+    from: 'Del',
+    to: 'Al',
+    days: (n: number) => n === 1 ? '1 día' : `${n} días`,
+    stepOf: (s: number) => `Paso ${s} de 3`,
   },
 }
 
 const BIKE_TYPES = [
-  { value: 'CITY',     fr: 'Vélo de ville',   en: 'City bike',      es: 'Bici urbana',    icon: Bike,     color: 'bg-blue-50 border-blue-200 text-blue-700' },
-  { value: 'ELECTRIC', fr: 'Vélo électrique', en: 'Electric bike',  es: 'Bici eléctrica', icon: Zap,      color: 'bg-yellow-50 border-yellow-200 text-yellow-700' },
-  { value: 'MOUNTAIN', fr: 'VTT',             en: 'Mountain bike',  es: 'Bici de montaña',icon: Mountain, color: 'bg-green-50 border-green-200 text-green-700' },
-  { value: 'ROAD',     fr: 'Vélo de route',   en: 'Road bike',      es: 'Bici de carretera',icon: Flag,   color: 'bg-red-50 border-red-200 text-red-700' },
-  { value: 'CARGO',    fr: 'Vélo cargo',      en: 'Cargo bike',     es: 'Bici de carga',  icon: Package,  color: 'bg-purple-50 border-purple-200 text-purple-700' },
-  { value: 'KIDS',     fr: 'Vélo enfant',     en: 'Kids bike',      es: 'Bici infantil',  icon: Heart,    color: 'bg-pink-50 border-pink-200 text-pink-700' },
-  { value: 'ESCOOTER', fr: 'Trottinette',     en: 'E-scooter',      es: 'Patinete',       icon: Gauge,    color: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+  { value: 'CITY',     fr: 'Vélo de ville',  en: 'City bike',     es: 'Bici urbana',      icon: Bike,     grad: 'from-sky-400 to-blue-500',      tagFr: 'Confort urbain',       tagEn: 'Urban comfort',     tagEs: 'Confort urbano' },
+  { value: 'ELECTRIC', fr: 'Électrique',     en: 'Electric bike', es: 'Eléctrica',         icon: Zap,      grad: 'from-amber-400 to-orange-500',  tagFr: 'Assistance moteur',    tagEn: 'Motor assisted',    tagEs: 'Motor asistido' },
+  { value: 'MOUNTAIN', fr: 'VTT',            en: 'Mountain',      es: 'Montaña',           icon: Mountain, grad: 'from-emerald-400 to-green-600', tagFr: 'Hors des sentiers',    tagEn: 'Off road',          tagEs: 'Todo terreno' },
+  { value: 'ROAD',     fr: 'Route',          en: 'Road bike',     es: 'Carretera',         icon: Flag,     grad: 'from-red-400 to-rose-600',      tagFr: 'Vitesse & adrénaline', tagEn: 'Speed',             tagEs: 'Velocidad' },
+  { value: 'CARGO',    fr: 'Cargo',          en: 'Cargo',         es: 'Cargo',             icon: Package,  grad: 'from-violet-400 to-purple-600', tagFr: 'Transport maxi',       tagEn: 'Carry more',        tagEs: 'Más capacidad' },
+  { value: 'KIDS',     fr: 'Enfant',         en: 'Kids',          es: 'Infantil',          icon: Heart,    grad: 'from-pink-400 to-rose-500',     tagFr: 'Pour les petits',      tagEn: 'For little ones',   tagEs: 'Para niños' },
+  { value: 'ESCOOTER', fr: 'Trottinette',    en: 'E-scooter',     es: 'Patinete',          icon: Gauge,    grad: 'from-indigo-400 to-violet-600', tagFr: 'Mobilité électrique',  tagEn: 'Electric ride',     tagEs: 'Movilidad eléctrica' },
 ]
 
 const ACCESSORIES = [
-  { key: 'helmet',    fr: 'Casque',       en: 'Helmet',     es: 'Casco',        icon: Shield },
-  { key: 'childseat', fr: 'Siège enfant', en: 'Child seat', es: 'Silla niño',   icon: Heart },
-  { key: 'lock',      fr: 'Cadenas',      en: 'Lock',       es: 'Candado',      icon: Lock },
-  { key: 'basket',    fr: 'Panier',       en: 'Basket',     es: 'Cesta',        icon: ShoppingBasket },
-  { key: 'charger',   fr: 'Chargeur',     en: 'Charger',    es: 'Cargador',     icon: BatteryCharging },
+  { key: 'helmet',    fr: 'Casque',       en: 'Helmet',     es: 'Casco',      icon: Shield },
+  { key: 'childseat', fr: 'Siège enfant', en: 'Child seat', es: 'Silla niño', icon: Heart },
+  { key: 'lock',      fr: 'Cadenas',      en: 'Lock',       es: 'Candado',    icon: Lock },
+  { key: 'basket',    fr: 'Panier',       en: 'Basket',     es: 'Cesta',      icon: ShoppingBasket },
+  { key: 'charger',   fr: 'Chargeur',     en: 'Charger',    es: 'Cargador',   icon: BatteryCharging },
 ]
 
 interface ShopInfo { name: string; slug: string; availableTypes: string[] }
@@ -123,6 +141,14 @@ function detectLang(): Lang {
   if (l.startsWith('en')) return 'en'
   return 'fr'
 }
+
+function diffDays(start: string, end: string): number {
+  if (!start || !end) return 0
+  const ms = new Date(end).getTime() - new Date(start).getTime()
+  return Math.max(1, Math.ceil(ms / 86400000))
+}
+
+const INPUT = 'w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white text-slate-900 transition-all'
 
 export default function BookingPage() {
   const params = useParams()
@@ -144,13 +170,20 @@ export default function BookingPage() {
   })
 
   useEffect(() => { setLang(detectLang()) }, [])
-
   useEffect(() => {
     fetch(`/api/book/${slug}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setShop(data); else setNotFound(true) })
       .catch(() => setNotFound(true))
   }, [slug])
+
+  function toggleAccessory(key: string) {
+    setForm(f => {
+      const updated = { ...f.accessories }
+      if (updated[key]) delete updated[key]; else updated[key] = 1
+      return { ...f, accessories: updated }
+    })
+  }
 
   function setAccessoryQty(key: string, delta: number) {
     setForm(f => {
@@ -174,224 +207,388 @@ export default function BookingPage() {
   }
 
   const T = LANG[lang]
-  const availableTypes = BIKE_TYPES.filter(t => !shop?.availableTypes?.length || shop.availableTypes.includes(t.value))
-  const selectedType = BIKE_TYPES.find(t => t.value === form.bikeType)
+  const availableTypes = BIKE_TYPES.filter(bt => !shop?.availableTypes?.length || shop.availableTypes.includes(bt.value))
+  const selectedType = BIKE_TYPES.find(bt => bt.value === form.bikeType)
+  const SelectedIcon = selectedType?.icon
+  const days = diffDays(form.startAt, form.endAt)
+  const bkLabel = (bt: typeof BIKE_TYPES[0]) => lang === 'fr' ? bt.fr : lang === 'en' ? bt.en : bt.es
+  const accLabel = (a: typeof ACCESSORIES[0]) => lang === 'fr' ? a.fr : lang === 'en' ? a.en : a.es
+  const fmtDate = (s: string) => !s ? '' : new Date(s).toLocaleDateString(
+    lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-GB' : 'fr-FR',
+    { day: '2-digit', month: 'short' }
+  )
+  const now = new Date().toISOString().slice(0, 16)
 
-  const INPUT = 'w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
-  const LANG_BTN = (l: Lang) => `px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${lang === l ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-gray-700'}`
-
+  // — 404
   if (notFound) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="text-center">
-        <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Bike size={24} className="text-gray-400" />
+        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-5">
+          <Bike size={28} className="text-slate-300" />
         </div>
-        <h1 className="text-lg font-semibold text-gray-800 mb-1">{T.notFound}</h1>
-        <p className="text-gray-500 text-sm">{T.notFoundSub}</p>
+        <h1 className="text-lg font-bold text-slate-800 mb-1">{T.notFound}</h1>
+        <p className="text-slate-400 text-sm">{T.notFoundSub}</p>
       </div>
     </div>
   )
 
+  // — Loading
   if (!shop) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
+  // — Success
   if (done) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-sm w-full text-center shadow-sm">
-        <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Check size={26} className="text-green-600" />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-lg p-8 max-w-sm w-full text-center">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+          style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+          <Check size={28} className="text-white" strokeWidth={3} />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">{T.successTitle}</h2>
-        <p className="text-gray-500 text-sm mb-1">{T.successSub(form.firstName)}</p>
-        <p className="text-gray-400 text-sm">{T.successNote(shop.name)}</p>
-        <div className="mt-6 bg-gray-50 rounded-xl p-4 text-left text-sm space-y-1">
-          <p className="text-gray-600"><span className="text-gray-400">{T.type} :</span> {selectedType?.[lang]}</p>
-          <p className="text-gray-600"><span className="text-gray-400">{T.from} :</span> {new Date(form.startAt).toLocaleDateString(lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-          <p className="text-gray-600"><span className="text-gray-400">{T.to} :</span> {new Date(form.endAt).toLocaleDateString(lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">{T.successTitle}</h2>
+        <p className="text-slate-500 text-sm mb-1">{T.successSub(form.firstName)}</p>
+        <p className="text-slate-400 text-sm mb-6">{T.successNote(shop.name)}</p>
+        {selectedType && SelectedIcon && (
+          <div className="bg-slate-50 rounded-2xl p-4 text-left space-y-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${selectedType.grad} flex items-center justify-center flex-shrink-0`}>
+                <SelectedIcon size={16} className="text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">{T.type}</p>
+                <p className="text-sm font-bold text-slate-800">{bkLabel(selectedType)}</p>
+              </div>
+            </div>
+            <div className="h-px bg-slate-200" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-slate-400 mb-0.5">{T.from}</p>
+                <p className="text-sm font-semibold text-slate-700">{fmtDate(form.startAt)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-0.5">{T.to}</p>
+                <p className="text-sm font-semibold text-slate-700">{fmtDate(form.endAt)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-slate-300 mt-6">Powered by VeloRent</p>
       </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-8">
-      {/* Header */}
-      <div className="w-full max-w-md mb-6">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
-              <Bike size={18} className="text-white" />
+    <div className="min-h-screen bg-slate-50">
+
+      {/* ── Sticky header ── */}
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+              <Bike size={15} className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-gray-900 text-lg leading-tight">{shop.name}</h1>
-              <p className="text-xs text-gray-400">VeloRent</p>
+              <p className="text-sm font-bold text-slate-900 leading-tight">{shop.name}</p>
+              <p className="text-[10px] text-slate-400 leading-none">VeloRent</p>
             </div>
           </div>
           {/* Language switcher */}
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="flex bg-slate-100 rounded-lg p-0.5">
             {(['fr', 'en', 'es'] as Lang[]).map(l => (
-              <button key={l} onClick={() => setLang(l)} className={LANG_BTN(l)}>
+              <button key={l} onClick={() => setLang(l)}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === l ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                 {l.toUpperCase()}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex gap-1.5 mt-5">
-          {[1, 2, 3].map(s => (
-            <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${step >= s ? 'bg-blue-600' : 'bg-gray-200'}`} />
-          ))}
+        {/* Progress bar */}
+        <div className="max-w-lg mx-auto px-4 pb-2.5">
+          <div className="flex gap-1.5">
+            {[1, 2, 3].map(s => (
+              <div key={s} className={`h-0.5 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-indigo-500' : 'bg-slate-200'}`} />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="w-full max-w-md">
+      <div className="max-w-lg mx-auto px-4 pt-6 pb-36">
 
-        {/* STEP 1 — Type */}
+        {/* ── STEP 1 — Bike type ── */}
         {step === 1 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-5">{T.bikeQuestion}</h2>
+            <div className="mb-7">
+              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-2">{T.stepOf(1)}</p>
+              <h2 className="text-2xl font-black text-slate-900">{T.step1Title}</h2>
+              <p className="text-slate-400 text-sm mt-1">{T.step1Sub}</p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              {availableTypes.map(({ value, fr, en, es, icon: Icon, color }) => (
-                <button
-                  key={value}
-                  onClick={() => { setForm(f => ({ ...f, bikeType: value })); setStep(2) }}
-                  className={`border-2 rounded-2xl p-4 text-left transition-all hover:scale-[1.02] active:scale-95 ${color}`}
-                >
-                  <Icon size={22} className="mb-2" />
-                  <p className="font-semibold text-sm">{lang === 'fr' ? fr : lang === 'en' ? en : es}</p>
-                </button>
-              ))}
+              {availableTypes.map((bt) => {
+                const BtIcon = bt.icon
+                const tag = lang === 'fr' ? bt.tagFr : lang === 'en' ? bt.tagEn : bt.tagEs
+                return (
+                  <button key={bt.value}
+                    onClick={() => { setForm(f => ({ ...f, bikeType: bt.value })); setStep(2) }}
+                    className="bg-white rounded-2xl border border-slate-100 overflow-hidden text-left transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97]">
+                    <div className={`h-1.5 bg-gradient-to-r ${bt.grad}`} />
+                    <div className="p-4">
+                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${bt.grad} flex items-center justify-center mb-3`}>
+                        <BtIcon size={22} className="text-white" />
+                      </div>
+                      <p className="font-bold text-slate-900 text-sm leading-snug">{bkLabel(bt)}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{tag}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* STEP 2 — Dates */}
+        {/* ── STEP 2 — Dates ── */}
         {step === 2 && (
           <div>
-            <button onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-4">
-              <ChevronLeft size={16} /> {T.back}
+            <button onClick={() => setStep(1)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-700 mb-5 transition-colors">
+              <ChevronLeft size={14} /> {T.back}
             </button>
-            <h2 className="text-lg font-semibold text-gray-900 mb-5">{T.whenQuestion}</h2>
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+
+            {/* Selected bike recap */}
+            {selectedType && SelectedIcon && (
+              <div className="flex items-center gap-2.5 mb-6 bg-white rounded-2xl border border-slate-100 px-4 py-3">
+                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${selectedType.grad} flex items-center justify-center flex-shrink-0`}>
+                  <SelectedIcon size={16} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-900">{bkLabel(selectedType)}</p>
+                </div>
+                <button onClick={() => setStep(1)} className="text-xs text-indigo-400 hover:text-indigo-600 font-semibold transition-colors flex-shrink-0">
+                  {T.change}
+                </button>
+              </div>
+            )}
+
+            <div className="mb-7">
+              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-2">{T.stepOf(2)}</p>
+              <h2 className="text-2xl font-black text-slate-900">{T.step2Title}</h2>
+              <p className="text-slate-400 text-sm mt-1">{T.step2Sub}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-5">
+              {/* Qty */}
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">{T.bikeQty}</label>
-                <div className="flex items-center gap-4">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">{T.bikeQty}</label>
+                <div className="inline-flex items-center rounded-xl border border-slate-200 overflow-hidden">
                   <button type="button" onClick={() => setForm(f => ({ ...f, bikeQty: Math.max(1, f.bikeQty - 1) }))}
-                    className="w-10 h-10 rounded-xl border border-gray-200 text-xl font-light text-gray-600 hover:bg-gray-50 flex items-center justify-center">−</button>
-                  <span className="text-2xl font-semibold text-gray-900 w-8 text-center">{form.bikeQty}</span>
+                    className="w-11 h-11 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-200">
+                    <Minus size={15} />
+                  </button>
+                  <span className="w-14 text-center text-xl font-black text-slate-900">{form.bikeQty}</span>
                   <button type="button" onClick={() => setForm(f => ({ ...f, bikeQty: Math.min(10, f.bikeQty + 1) }))}
-                    className="w-10 h-10 rounded-xl border border-gray-200 text-xl font-light text-gray-600 hover:bg-gray-50 flex items-center justify-center">+</button>
+                    className="w-11 h-11 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors border-l border-slate-200">
+                    <Plus size={15} />
+                  </button>
                 </div>
               </div>
+
+              {/* Start */}
               <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
-                  <CalendarDays size={13} /> {T.start}
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <CalendarDays size={11} /> {T.start}
                 </label>
-                <input type="datetime-local" value={form.startAt}
-                  min={new Date().toISOString().slice(0, 16)}
-                  onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))}
-                  className={INPUT} />
+                <input type="datetime-local" value={form.startAt} min={now}
+                  onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))} className={INPUT} />
               </div>
+
+              {/* End */}
               <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
-                  <CalendarDays size={13} /> {T.end}
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <CalendarDays size={11} /> {T.end}
                 </label>
-                <input type="datetime-local" value={form.endAt}
-                  min={form.startAt || new Date().toISOString().slice(0, 16)}
-                  onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))}
-                  className={INPUT} />
+                <input type="datetime-local" value={form.endAt} min={form.startAt || now}
+                  onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))} className={INPUT} />
               </div>
+
+              {/* Duration pill */}
+              {days > 0 && (
+                <div className="flex items-center gap-2 bg-indigo-50 rounded-xl px-4 py-2.5">
+                  <Clock size={14} className="text-indigo-400 flex-shrink-0" />
+                  <span className="text-sm font-bold text-indigo-700">{T.days(days)}</span>
+                </div>
+              )}
             </div>
-            <button disabled={!form.startAt || !form.endAt} onClick={() => setStep(3)}
-              className="w-full mt-4 bg-blue-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
-              {T.continue} <ChevronRight size={16} />
-            </button>
           </div>
         )}
 
-        {/* STEP 3 — Infos */}
+        {/* ── STEP 3 — Info ── */}
         {step === 3 && (
           <div>
-            <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-4">
-              <ChevronLeft size={16} /> {T.back}
+            <button onClick={() => setStep(2)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-700 mb-5 transition-colors">
+              <ChevronLeft size={14} /> {T.back}
             </button>
-            <h2 className="text-lg font-semibold text-gray-900 mb-5">{T.yourInfo}</h2>
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5"><User size={13} /> {T.firstName} *</label>
-                  <input type="text" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} placeholder="Jean" className={INPUT} />
+
+            {/* Mini summary */}
+            {selectedType && SelectedIcon && (
+              <div className="bg-white rounded-2xl border border-slate-100 px-4 py-3 mb-6 flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${selectedType.grad} flex items-center justify-center flex-shrink-0`}>
+                  <SelectedIcon size={16} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-900">{bkLabel(selectedType)}</p>
+                  <p className="text-xs text-slate-400">
+                    {fmtDate(form.startAt)} → {fmtDate(form.endAt)}{days > 0 ? ` · ${T.days(days)}` : ''}
+                  </p>
+                </div>
+                <button onClick={() => setStep(2)} className="text-xs text-indigo-400 hover:text-indigo-600 font-semibold transition-colors flex-shrink-0">
+                  {T.change}
+                </button>
+              </div>
+            )}
+
+            <div className="mb-7">
+              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-2">{T.stepOf(3)}</p>
+              <h2 className="text-2xl font-black text-slate-900">{T.step3Title}</h2>
+              <p className="text-slate-400 text-sm mt-1">{T.step3Sub}</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Personal info card */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 mb-2">
+                      <User size={10} /> {T.firstName}
+                    </label>
+                    <input type="text" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
+                      placeholder="Jean" className={INPUT} autoComplete="given-name" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{T.lastName}</label>
+                    <input type="text" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
+                      placeholder="Dupont" className={INPUT} autoComplete="family-name" />
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1.5 block">{T.lastName} *</label>
-                  <input type="text" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} placeholder="Dupont" className={INPUT} />
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 mb-2">
+                    <Phone size={10} /> {T.phone}
+                  </label>
+                  <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    placeholder="+33 6 12 34 56 78" className={INPUT} autoComplete="tel" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <Mail size={10} /> Email{' '}
+                    <span className="font-normal text-slate-300 normal-case tracking-normal">— {T.optional}</span>
+                  </label>
+                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="jean@email.com" className={INPUT} autoComplete="email" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                    {T.address}{' '}
+                    <span className="font-normal text-slate-300 normal-case tracking-normal">— {T.optional}</span>
+                  </label>
+                  <input type="text" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                    placeholder="Rue, ville…" className={INPUT} autoComplete="street-address" />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5"><Phone size={13} /> {T.phone} *</label>
-                <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+33 6 12 34 56 78" className={INPUT} />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
-                  <Mail size={13} /> Email <span className="font-normal text-gray-400">({T.optional})</span>
-                </label>
-                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="jean@email.com" className={INPUT} />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
-                  📍 {T.address} <span className="font-normal text-gray-400">({T.optional})</span>
-                </label>
-                <input type="text" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Rue, ville..." className={INPUT} />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">
-                  {T.accessories} <span className="font-normal text-gray-400">({T.optional})</span>
-                </label>
-                <div className="space-y-2">
-                  {ACCESSORIES.map(({ key, fr, en, es, icon: Icon }) => {
-                    const qty = form.accessories[key] ?? 0
-                    const label = lang === 'fr' ? fr : lang === 'en' ? en : es
+
+              {/* Accessories card */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-5">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                  {T.accessories}{' '}
+                  <span className="font-normal text-slate-300 normal-case tracking-normal">— {T.optional}</span>
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {ACCESSORIES.map((acc) => {
+                    const AccIcon = acc.icon
+                    const qty = form.accessories[acc.key] ?? 0
+                    const active = qty > 0
                     return (
-                      <div key={key} className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${qty > 0 ? 'border-blue-200 bg-blue-50' : 'border-gray-200'}`}>
-                        <div className="flex items-center gap-2">
-                          <Icon size={15} className={qty > 0 ? 'text-blue-600' : 'text-gray-400'} />
-                          <p className={`text-xs font-medium ${qty > 0 ? 'text-blue-700' : 'text-gray-700'}`}>{label}</p>
+                      <button key={acc.key} type="button" onClick={() => toggleAccessory(acc.key)}
+                        className={`rounded-xl border p-3.5 text-left transition-all ${active ? 'border-indigo-200 bg-indigo-50' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <AccIcon size={18} className={active ? 'text-indigo-500' : 'text-slate-300'} />
+                          {active && (
+                            <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                              <Check size={10} className="text-white" strokeWidth={3} />
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <button type="button" onClick={() => setAccessoryQty(key, -1)}
-                            className="w-7 h-7 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-base leading-none">−</button>
-                          <span className={`w-4 text-center text-sm font-semibold ${qty > 0 ? 'text-blue-700' : 'text-gray-400'}`}>{qty}</span>
-                          <button type="button" onClick={() => setAccessoryQty(key, 1)}
-                            className="w-7 h-7 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-base leading-none">+</button>
-                        </div>
-                      </div>
+                        <p className={`text-xs font-bold leading-tight mb-2 ${active ? 'text-indigo-700' : 'text-slate-700'}`}>
+                          {accLabel(acc)}
+                        </p>
+                        {active && (
+                          <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                            <button type="button" onClick={() => setAccessoryQty(acc.key, -1)}
+                              className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold hover:bg-indigo-200 transition-colors">−</button>
+                            <span className="text-xs font-bold text-indigo-700 w-4 text-center">{qty}</span>
+                            <button type="button" onClick={() => setAccessoryQty(acc.key, 1)}
+                              className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold hover:bg-indigo-200 transition-colors">+</button>
+                          </div>
+                        )}
+                      </button>
                     )
                   })}
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
-                  <MessageSquare size={13} /> {T.message} <span className="font-normal text-gray-400">({T.optional})</span>
+
+              {/* Notes card */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <MessageSquare size={10} /> {T.message}{' '}
+                  <span className="font-normal text-slate-300 normal-case tracking-normal">— {T.optional}</span>
                 </label>
                 <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder={T.messagePlaceholder} rows={2} className={`${INPUT} resize-none`} />
+                  placeholder={T.messagePlaceholder} rows={3}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 resize-none text-slate-900 placeholder-slate-300 transition-all" />
               </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                  <p className="text-red-500 text-sm">{error}</p>
+                </div>
+              )}
             </div>
-
-            {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2 mt-3">{error}</p>}
-
-            <button disabled={!form.firstName || !form.lastName || !form.phone || loading} onClick={handleSubmit}
-              className="w-full mt-4 bg-blue-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition-colors">
-              {loading ? T.sending : T.send}
-            </button>
-            <p className="text-center text-xs text-gray-400 mt-3">{T.noPayment}</p>
           </div>
         )}
       </div>
 
-      <p className="text-xs text-gray-300 mt-10">Powered by VeloRent</p>
+      {/* ── Sticky bottom CTA ── */}
+      {(step === 2 || step === 3) && (
+        <div className="fixed bottom-0 inset-x-0 z-10">
+          <div className="bg-white/95 backdrop-blur-md border-t border-slate-100 px-4 pt-3 pb-8">
+            <div className="max-w-lg mx-auto">
+              {step === 2 ? (
+                <button disabled={!form.startAt || !form.endAt} onClick={() => setStep(3)}
+                  className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+                  {T.continue}
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ) : (
+                <>
+                  <button disabled={!form.firstName || !form.lastName || !form.phone || loading} onClick={handleSubmit}
+                    className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all disabled:opacity-30"
+                    style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+                    {loading ? T.sending : T.send}
+                  </button>
+                  <div className="flex items-center justify-center gap-1.5 mt-2.5">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-slate-400">
+                      <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <p className="text-[11px] text-slate-400">{T.noPayment}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
