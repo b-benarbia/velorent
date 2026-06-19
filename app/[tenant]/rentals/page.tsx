@@ -2,7 +2,7 @@ import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Bike, AlertTriangle, Plus } from 'lucide-react'
-import { getTranslations } from 'next-intl/server'
+import { getServerT } from '@/lib/server-t'
 
 const STATUS_COLOR: Record<string, string> = {
   ACTIVE:    'bg-indigo-50 text-indigo-600',
@@ -18,8 +18,8 @@ export default async function RentalsPage({
 }) {
   const { tenant } = await params
   const session = await requireSession()
-  const t = await getTranslations('rentals')
-  const tStatus = await getTranslations('status')
+  const t = await getServerT('rentals')
+  const tStatus = await getServerT('status')
 
   const rentals = await prisma.rental.findMany({
     where: { tenantId: session.tenantId },

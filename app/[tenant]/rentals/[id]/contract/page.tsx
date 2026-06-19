@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PrintButton from './PrintButton'
-import { getTranslations } from 'next-intl/server'
+import { getServerT } from '@/lib/server-t'
 
 export default async function ContractPage({
   params,
@@ -21,7 +21,7 @@ export default async function ContractPage({
 
   if (!rental) notFound()
 
-  const tRentals = await getTranslations('rentals')
+  const tRentals = await getServerT('rentals')
 
   const PAYMENT_LABEL: Record<string, string> = {
     CASH: 'Efectivo / Espèces', CARD: 'Tarjeta / Carte bancaire',

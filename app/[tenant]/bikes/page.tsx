@@ -2,7 +2,7 @@ import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Bike, Zap, Mountain, Package, Heart, Gauge, Flag, Wrench, Plus } from 'lucide-react'
-import { getTranslations } from 'next-intl/server'
+import { getServerT } from '@/lib/server-t'
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; bg: string; iconColor: string; labelKey: string }> = {
   CITY:     { labelKey: 'city',     icon: Bike,     bg: 'bg-indigo-50',  iconColor: 'text-indigo-500' },
@@ -37,7 +37,7 @@ export default async function BikesPage({
 }) {
   const { tenant } = await params
   const session = await requireSession()
-  const t = await getTranslations('bikes')
+  const t = await getServerT('bikes')
 
   const bikes = await prisma.bike.findMany({
     where: { tenantId: session.tenantId },

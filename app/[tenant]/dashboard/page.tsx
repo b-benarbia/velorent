@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { AlertTriangle, Clock, Plus } from 'lucide-react'
 import AutoRefresh from '../_components/AutoRefresh'
 import AnimatedNumber from '../_components/AnimatedNumber'
-import { getTranslations } from 'next-intl/server'
+import { getServerT } from '@/lib/server-t'
 
 export default async function DashboardPage({
   params,
@@ -14,9 +14,9 @@ export default async function DashboardPage({
   const { tenant } = await params
   const session = await requireSession()
   const tenantId = session.tenantId
-  const t = await getTranslations('dashboard')
-  const tRentals = await getTranslations('rentals')
-  const tStatus = await getTranslations('status')
+  const t = await getServerT('dashboard')
+  const tRentals = await getServerT('rentals')
+  const tStatus = await getServerT('status')
 
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())

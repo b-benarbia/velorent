@@ -2,7 +2,7 @@ import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Plus, Clock, AlertTriangle, ChevronRight, Bike } from 'lucide-react'
-import { getTranslations } from 'next-intl/server'
+import { getServerT } from '@/lib/server-t'
 
 export default async function StaffPage({
   params,
@@ -11,8 +11,8 @@ export default async function StaffPage({
 }) {
   const { tenant } = await params
   const session = await requireSession()
-  const t = await getTranslations('staff')
-  const tNav = await getTranslations('nav')
+  const t = await getServerT('staff')
+  const tNav = await getServerT('nav')
 
   const activeRentals = await prisma.rental.findMany({
     where: { tenantId: session.tenantId, status: { in: ['ACTIVE', 'OVERDUE'] } },
