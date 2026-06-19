@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge } from 'lucide-react'
+import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge, Users, Waves, Activity } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import CountrySelect from '../../_components/CountrySelect'
 
@@ -35,6 +35,7 @@ const DURATIONS = [
 const TYPE_LABEL: Record<string, string> = {
   CITY: 'City', ELECTRIC: 'Electric', MOUNTAIN: 'Mountain',
   CARGO: 'Cargo', KIDS: 'Kids', ESCOOTER: 'E-Scooter', ROAD: 'Road',
+  TANDEM: 'Tandem', FATBIKE: 'Fat Bike', EMTB: 'E-MTB',
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; headerBg: string; selectedBg: string }> = {
@@ -45,9 +46,12 @@ const TYPE_CONFIG: Record<string, { icon: React.ElementType; headerBg: string; s
   CARGO:    { icon: Package,  headerBg: 'bg-purple-50',  selectedBg: 'bg-purple-500' },
   KIDS:     { icon: Heart,    headerBg: 'bg-pink-50',    selectedBg: 'bg-pink-500' },
   ESCOOTER: { icon: Gauge,    headerBg: 'bg-slate-100',  selectedBg: 'bg-slate-600' },
+  TANDEM:   { icon: Users,    headerBg: 'bg-teal-50',    selectedBg: 'bg-teal-500' },
+  FATBIKE:  { icon: Waves,    headerBg: 'bg-amber-50',   selectedBg: 'bg-amber-600' },
+  EMTB:     { icon: Activity, headerBg: 'bg-lime-50',    selectedBg: 'bg-lime-600' },
 }
 
-const TYPE_ORDER = ['CITY', 'ELECTRIC', 'MOUNTAIN', 'ROAD', 'CARGO', 'KIDS', 'ESCOOTER']
+const TYPE_ORDER = ['CITY', 'ELECTRIC', 'MOUNTAIN', 'ROAD', 'CARGO', 'KIDS', 'ESCOOTER', 'TANDEM', 'FATBIKE', 'EMTB']
 
 const INPUT = 'w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white text-slate-900 placeholder-slate-400 transition-colors'
 
@@ -68,6 +72,7 @@ export default function NewRentalPage() {
   const [bikes, setBikes] = useState<Bike[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [pricingGrid, setPricingGrid] = useState<PricingGrid>({})
+  const [depositConfig, setDepositConfig] = useState<Record<string, number>>({})
 
   const [accessoryQty, setAccessoryQty] = useState<Record<string, number>>({})
   const [accessoryCodes, setAccessoryCodes] = useState<Record<string, string[]>>({})
@@ -105,6 +110,7 @@ export default function NewRentalPage() {
     fetch('/api/bikes').then(r => r.json()).then(data => setBikes(data.filter((b: Bike) => b.status === 'AVAILABLE')))
     fetch('/api/customers').then(r => r.json()).then(setCustomers)
     fetch('/api/settings/pricing').then(r => r.json()).then(setPricingGrid).catch(() => {})
+    fetch('/api/settings/shop').then(r => r.json()).then(d => setDepositConfig(d.depositConfig ?? {})).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -234,6 +240,17 @@ export default function NewRentalPage() {
       setForm(f => ({ ...f, amountPaid: calculatedTotal.toFixed(2) }))
     }
   }, [calculatedTotal, manualPrice])
+
+  // Auto-remplir la caution selon le type de vélo sélectionné
+  useEffect(() => {
+    if (selectedBikeIds.length === 0) return
+    let total = 0
+    for (const bikeId of selectedBikeIds) {
+      const bike = bikes.find(b => b.id === bikeId)
+      if (bike) total += depositConfig[bike.type] ?? 0
+    }
+    setForm(f => ({ ...f, depositAmount: total.toFixed(2) }))
+  }, [selectedBikeIds, bikes, depositConfig])
 
   function selectDuration(durKey: string) {
     setSelectedDuration(durKey)

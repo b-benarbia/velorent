@@ -248,8 +248,8 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <SectionIcon gradient="linear-gradient(135deg,#f59e0b,#f97316)" icon={<Store size={16} color="white" />} />
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Boutique</p>
-              <p style={{ fontSize: 11, color: '#94a3b8' }}>Informations affichées aux clients</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('shopTitle')}</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('shopSubtitle')}</p>
             </div>
           </div>
           <SaveBtn onClick={saveShop} loading={shopLoading} saved={shopSaved} error={shopError} label="Sauvegarder" />
@@ -258,33 +258,33 @@ export default function SettingsPage() {
         <div style={{ padding: 24 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div className="col-span-2" style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Nom de la boutique</label>
+              <label style={labelStyle}>{t('shopNameLabel')}</label>
               <input value={shop.name} onChange={e => setShop(s => ({ ...s, name: e.target.value }))}
                 placeholder="BikeAlao Marítim" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Téléphone</label>
+              <label style={labelStyle}>{t('shopPhoneLabel')}</label>
               <input value={shop.phone} onChange={e => setShop(s => ({ ...s, phone: e.target.value }))}
                 placeholder="+34 600 000 000" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Email de contact</label>
+              <label style={labelStyle}>{t('shopEmailLabel')}</label>
               <input type="email" value={shop.email} onChange={e => setShop(s => ({ ...s, email: e.target.value }))}
                 placeholder="contact@boutique.com" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Adresse</label>
+              <label style={labelStyle}>{t('shopAddressLabel')}</label>
               <input value={shop.address} onChange={e => setShop(s => ({ ...s, address: e.target.value }))}
                 placeholder="Calle del Mar 12, Valencia" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Site web</label>
+              <label style={labelStyle}>{t('shopWebsiteLabel')}</label>
               <input value={shop.website} onChange={e => setShop(s => ({ ...s, website: e.target.value }))}
                 placeholder="https://votreboutique.com" style={inputStyle} />
             </div>
           </div>
           <p style={{ fontSize: 11, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-            <Info size={11} /> Slug : <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>{tenant}</span> — non modifiable
+            <Info size={11} /> Slug : <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>{tenant}</span> — {t('slugNote')}
           </p>
         </div>
       </div>
@@ -297,8 +297,8 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <SectionIcon gradient="linear-gradient(135deg,#10b981,#059669)" icon={<Percent size={16} color="white" />} />
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>TVA & Cautions</p>
-              <p style={{ fontSize: 11, color: '#94a3b8' }}>Appliquées automatiquement à chaque location</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('taxTitle')}</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('taxSubtitle')}</p>
             </div>
           </div>
           <SaveBtn onClick={saveShop} loading={shopLoading} saved={shopSaved} error={shopError} label="Sauvegarder" />
@@ -307,7 +307,7 @@ export default function SettingsPage() {
         <div style={{ padding: 24 }}>
           {/* TVA */}
           <div style={{ marginBottom: 24 }}>
-            <label style={labelStyle}>Taux de TVA (%)</label>
+            <label style={labelStyle}>{t('taxRateLabel')}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ position: 'relative', width: 160 }}>
                 <input type="number" min="0" max="100" step="0.1"
@@ -316,14 +316,14 @@ export default function SettingsPage() {
                   style={{ ...inputStyle, paddingRight: 30 }} />
                 <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94a3b8', pointerEvents: 'none' }}>%</span>
               </div>
-              <p style={{ fontSize: 12, color: '#94a3b8' }}>Espagne : 21% standard · 10% réduit · 4% super-réduit</p>
+              <p style={{ fontSize: 12, color: '#94a3b8' }}>{t('taxHint')}</p>
             </div>
           </div>
 
           {/* Caution par type */}
           <div>
-            <label style={labelStyle}>Caution par type de véhicule (€)</label>
-            <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 14 }}>Montant bloqué ou demandé au client à l'ouverture de la location</p>
+            <label style={labelStyle}>{t('depositLabel')}</label>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 14 }}>{t('depositHint')}</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
               {BIKE_TYPES.map(bt => {
                 const BtIcon = bt.Icon
@@ -346,7 +346,7 @@ export default function SettingsPage() {
             </div>
             <div style={{ marginTop: 10, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <Lock size={13} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
-              <p style={{ fontSize: 12, color: '#6366F1' }}>La caution n'est pas encaissée — elle est simplement bloquée par empreinte CB ou en espèces. Laissez à 0 si vous ne prenez pas de caution.</p>
+              <p style={{ fontSize: 12, color: '#6366F1' }}>{t('depositNote')}</p>
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@ export default function SettingsPage() {
             <SectionIcon gradient="linear-gradient(135deg,#6366F1,#8b5cf6)" icon={<Zap size={16} color="white" />} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('pricing')}</p>
-              <p style={{ fontSize: 11, color: '#94a3b8' }}>Entrez le tarif journalier → cliquez ⚡ pour auto-calculer les autres durées</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('pricingSubtitleNew')}</p>
             </div>
           </div>
           <SaveBtn onClick={savePricing} loading={pricingLoading} saved={pricingSaved} error={pricingError} label="Sauvegarder" />
@@ -373,11 +373,11 @@ export default function SettingsPage() {
           <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', minWidth: 900 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
-                <th style={{ textAlign: 'left', paddingBottom: 10, paddingRight: 12, fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>Véhicule</th>
+                <th style={{ textAlign: 'left', paddingBottom: 10, paddingRight: 12, fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>{t('vehicleCol')}</th>
                 {DURATIONS.map(d => (
                   <th key={d.key} style={{ paddingBottom: 10, paddingInline: 5, textAlign: 'center', fontSize: 11, fontWeight: 700, color: d.key === '1day' ? '#6366F1' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 68 }}>
                     {d.label}
-                    {d.key === '1day' && <div style={{ fontSize: 9, color: '#a5b4fc', fontWeight: 600, marginTop: 1 }}>BASE</div>}
+                    {d.key === '1day' && <div style={{ fontSize: 9, color: '#a5b4fc', fontWeight: 600, marginTop: 1 }}>{t('baseCol')}</div>}
                   </th>
                 ))}
                 <th style={{ paddingBottom: 10, paddingInline: 8, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 60 }}>Auto</th>
@@ -444,9 +444,7 @@ export default function SettingsPage() {
 
           <div style={{ marginTop: 10, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'center' }}>
             <Sparkles size={13} color="#6366F1" />
-            <p style={{ fontSize: 12, color: '#6366F1' }}>
-              Renseignez le tarif <strong>1 day</strong> (surligné en violet), puis cliquez ⚡ pour calculer automatiquement toutes les durées. Vous pouvez modifier n'importe quelle cellule ensuite.
-            </p>
+            <p style={{ fontSize: 12, color: '#6366F1' }}>{t('pricingTip')}</p>
           </div>
         </div>
 
