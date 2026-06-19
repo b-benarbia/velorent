@@ -207,6 +207,11 @@ model Rental {
   contractPdfUrl   String?    // URL du PDF généré
   contractSigned   Boolean    @default(false)
 
+  // Signatures (base64 data URLs)
+  openingSignature String?    // Signature client à l'ouverture
+  closingSignature String?    // Signature client au retour
+  staffSignature   String?    // Signature staff
+
   // Source
   source           RentalSource @default(WALKIN)
   reservationId    String?    // Si venu d'une réservation online
