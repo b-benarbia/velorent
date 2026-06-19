@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import {
   Bike, Zap, Mountain, Package, Heart, Flag, Gauge,
   Shield, BatteryCharging, ShoppingBasket,
-  Info, Users, Eye, EyeOff, CheckCircle2,
+  Info, Users, Eye, EyeOff, CheckCircle2, Waves, Activity,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -39,6 +39,9 @@ const BIKE_TYPES = [
   { key: 'CARGO',    label: 'Cargo',     Icon: Package },
   { key: 'KIDS',     label: 'Kids',      Icon: Heart },
   { key: 'ROAD',     label: 'Road',      Icon: Flag },
+  { key: 'TANDEM',   label: 'Tandem',    Icon: Users },
+  { key: 'FATBIKE',  label: 'Fat Bike',  Icon: Waves },
+  { key: 'EMTB',     label: 'E-MTB',     Icon: Activity },
 ] as const
 
 const ACCESSORIES = [
