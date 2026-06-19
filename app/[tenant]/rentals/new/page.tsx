@@ -86,6 +86,8 @@ export default function NewRentalPage() {
   const [depositIdType, setDepositIdType] = useState('PASSPORT')
   const [showReturnPicker, setShowReturnPicker] = useState(false)
   const [pickerMonth, setPickerMonth] = useState(() => new Date())
+  const [stepDir, setStepDir] = useState<'fwd' | 'back'>('fwd')
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const [form, setForm] = useState({
     customerId: '',
@@ -387,7 +389,10 @@ export default function NewRentalPage() {
     const failed = results.find(r => !r.ok)
     if (failed) { setError(failed.data.error); setLoading(false); return }
 
-    router.push(`/${tenant}/rentals/${results[0].data.id}/contract`)
+    setShowSuccess(true)
+    setTimeout(() => {
+      router.push(`/${tenant}/rentals/${results[0].data.id}/contract`)
+    }, 1400)
   }
 
   const canNextStep1 = newCustomer ? customerForm.firstName && customerForm.lastName : form.customerId
@@ -400,10 +405,16 @@ export default function NewRentalPage() {
 
   return (
     <div className="max-w-lg mx-auto">
+      <style>{`
+        @keyframes slideInRight { from { opacity:0; transform:translateX(32px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes slideInLeft  { from { opacity:0; transform:translateX(-32px) } to { opacity:1; transform:translateX(0) } }
+        .step-enter-fwd { animation: slideInRight 0.22s cubic-bezier(.25,.8,.25,1) both }
+        .step-enter-bwd { animation: slideInLeft  0.22s cubic-bezier(.25,.8,.25,1) both }
+      `}</style>
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <button
-          onClick={() => { if (step > 1) { setStep(step - 1); if (step === 4) { setHasReadTerms(false); setHasSigned(false) } } else { router.back() } }}
+          onClick={() => { if (step > 1) { setStepDir('back'); setStep(step - 1); if (step === 4) { setHasReadTerms(false); setHasSigned(false) } } else { router.back() } }}
           className="text-slate-400 hover:text-slate-600 text-sm transition-colors"
         >
           {t('back')}
@@ -429,7 +440,7 @@ export default function NewRentalPage() {
 
       {/* ─── STEP 1 — CUSTOMER ─── */}
       {step === 1 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+        <div key="s1" className={`bg-white rounded-2xl border border-slate-200 p-5 space-y-4 ${stepDir === 'fwd' ? 'step-enter-fwd' : 'step-enter-bwd'}`}>
           {fromReservation && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2 text-xs text-indigo-700 font-medium flex items-center gap-2">
               <Check size={13} /> {t('prefilledFromReservation')}
@@ -536,14 +547,41 @@ export default function NewRentalPage() {
               </div>
             </div>
           ) : (
-            <select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })} className={INPUT}>
-              <option value="">{t('selectCustomer')}</option>
-              {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}{c.phone ? ` — ${c.phone}` : ''}</option>)}
-            </select>
+            <div className="space-y-2">
+              <select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })} className={INPUT}>
+                <option value="">{t('selectCustomer')}</option>
+                {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}{c.phone ? ` — ${c.phone}` : ''}</option>)}
+              </select>
+              {/* Customer history badge */}
+              {form.customerId && (() => {
+                const sel = customers.find(c => c.id === form.customerId)
+                if (!sel) return null
+                return (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '10px 14px', borderRadius: '12px',
+                    background: '#f8fafc', border: '1px solid #e2e8f0',
+                  }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%', background: '#6366f1',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontWeight: 700, fontSize: '13px', flexShrink: 0,
+                    }}>
+                      {sel.firstName[0]}{sel.lastName[0]}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{sel.firstName} {sel.lastName}</p>
+                      {sel.phone && <p style={{ fontSize: '12px', color: '#64748b' }}>{sel.phone}</p>}
+                    </div>
+                    <Check size={16} style={{ color: '#22c55e', marginLeft: 'auto', flexShrink: 0 }} />
+                  </div>
+                )
+              })()}
+            </div>
           )}
 
-          <button onClick={() => setStep(2)} disabled={!canNextStep1}
-            className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
+          <button onClick={() => { setStepDir('fwd'); setStep(2) }} disabled={!canNextStep1}
+            className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-all active:scale-95"
             style={{ background: '#6366F1' }}>
             {t('continue')}
           </button>
@@ -559,7 +597,7 @@ export default function NewRentalPage() {
         otherTypes.forEach(type => grouped.push({ type, items: bikes.filter(b => b.type === type) }))
 
         return (
-          <div className="space-y-3">
+          <div key="s2" className={`space-y-3 ${stepDir === 'fwd' ? 'step-enter-fwd' : 'step-enter-bwd'}`}>
             <div className="flex items-center justify-between px-1">
               <h2 className="text-base font-semibold text-slate-900">{t('chooseABike')}</h2>
               <div className="flex items-center gap-2">
@@ -608,7 +646,7 @@ export default function NewRentalPage() {
                               setManualPrice(false)
                               setForm(f => ({ ...f, amountPaid: '' }))
                             }}
-                            className={`flex flex-col items-start px-3 py-2 rounded-xl border-2 transition-all text-left ${
+                            className={`flex flex-col items-start px-3 py-2 rounded-xl border-2 transition-all active:scale-95 text-left ${
                               selected
                                 ? 'border-transparent shadow-sm'
                                 : 'border-slate-200 bg-white hover:border-indigo-300'
@@ -637,8 +675,8 @@ export default function NewRentalPage() {
               })
             )}
 
-            <button onClick={() => setStep(3)} disabled={!canNextStep2}
-              className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
+            <button onClick={() => { setStepDir('fwd'); setStep(3) }} disabled={!canNextStep2}
+              className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-all active:scale-95"
               style={{ background: '#6366F1' }}>
               {t('continue')}
             </button>
@@ -648,7 +686,7 @@ export default function NewRentalPage() {
 
       {/* ─── STEP 3 — PAYMENT ─── */}
       {step === 3 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-5">
+        <div key="s3" className={`bg-white rounded-2xl border border-slate-200 p-5 space-y-5 ${stepDir === 'fwd' ? 'step-enter-fwd' : 'step-enter-bwd'}`}>
           <h2 className="font-semibold text-slate-900 text-sm">{t('paymentTitle')}</h2>
 
           {/* Selected bikes */}
@@ -686,7 +724,7 @@ export default function NewRentalPage() {
                     key={dur.key}
                     type="button"
                     onClick={() => selectDuration(dur.key)}
-                    className={`rounded-xl border py-2.5 text-center transition-all ${
+                    className={`rounded-xl border py-2.5 text-center transition-all active:scale-95 ${
                       isSelected
                         ? 'border-transparent text-white'
                         : price !== undefined
@@ -707,7 +745,7 @@ export default function NewRentalPage() {
               <button
                 type="button"
                 onClick={() => { setSelectedDuration('custom'); setManualPrice(true) }}
-                className={`rounded-xl border py-2.5 text-center transition-all ${
+                className={`rounded-xl border py-2.5 text-center transition-all active:scale-95 ${
                   selectedDuration === 'custom'
                     ? 'border-transparent text-white'
                     : 'border-dashed border-slate-300 text-slate-500 hover:border-slate-400'
@@ -719,6 +757,26 @@ export default function NewRentalPage() {
               </button>
             </div>
           </div>
+
+          {/* Preview retour prévu */}
+          {selectedDuration && selectedDuration !== 'custom' && (() => {
+            const dur = DURATIONS.find(d => d.key === selectedDuration)
+            if (!dur) return null
+            const returnDate = new Date(Date.now() + dur.hours * 3600000)
+            return (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '10px 14px', borderRadius: '12px',
+                background: 'linear-gradient(135deg,#eef2ff,#f0fdf4)',
+                border: '1px solid #c7d2fe',
+              }}>
+                <CalendarDays size={15} style={{ color: '#6366f1', flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: '#3730a3', fontWeight: 600 }}>
+                  {t('returnExpected')} {new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(returnDate)}
+                </span>
+              </div>
+            )
+          })()}
 
           {/* Expected return — custom picker */}
           <div>
@@ -978,7 +1036,7 @@ export default function NewRentalPage() {
                 { value: 'TRANSFER', label: tPayment('transfer'), Icon: Building2 },
               ].map(pm => (
                 <button key={pm.value} type="button" onClick={() => setForm({ ...form, paymentMethod: pm.value })}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
                     form.paymentMethod === pm.value
                       ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
                       : 'border-slate-200 text-slate-600 hover:border-slate-300'
@@ -1030,7 +1088,7 @@ export default function NewRentalPage() {
                   ].map(pm => (
                     <button key={pm.value} type="button"
                       onClick={() => setForm({ ...form, depositPaymentMethod: pm.value })}
-                      className={`flex items-center gap-1 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${
+                      className={`flex items-center gap-1 px-3 py-2 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${
                         form.depositPaymentMethod === pm.value
                           ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
                           : 'border-slate-200 text-slate-500 hover:border-slate-300'
@@ -1078,8 +1136,8 @@ export default function NewRentalPage() {
               className={`${INPUT} resize-none`} />
           </div>
 
-          <button onClick={() => setStep(4)} disabled={!canNextStep3}
-            className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
+          <button onClick={() => { setStepDir('fwd'); setStep(4) }} disabled={!canNextStep3}
+            className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-all active:scale-95"
             style={{ background: '#6366F1' }}>
             {t('continueSig')}
           </button>
@@ -1088,7 +1146,7 @@ export default function NewRentalPage() {
 
       {/* ─── STEP 4 — SIGNATURE ─── */}
       {step === 4 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+        <div key="s4" className={`bg-white rounded-2xl border border-slate-200 p-5 space-y-4 ${stepDir === 'fwd' ? 'step-enter-fwd' : 'step-enter-bwd'}`}>
           <h2 className="font-semibold text-slate-900 text-sm">{t('signatureTitle')}</h2>
 
           {/* Summary */}
@@ -1186,6 +1244,36 @@ export default function NewRentalPage() {
             style={{ background: '#6366F1' }}>
             {loading ? t('creating') : <><Check size={15} />{t('confirmOpen')}</>}
           </button>
+        </div>
+      )}
+
+      {/* ─── SUCCESS OVERLAY ─── */}
+      {showSuccess && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
+        }}>
+          <style>{`
+            @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+            @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+            .success-pop { animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1) both }
+            .success-text { animation: fadeUp 0.3s 0.3s both }
+          `}</style>
+          <div className="success-pop" style={{
+            width: 72, height: 72, borderRadius: '50%',
+            background: 'linear-gradient(135deg,#6366f1,#22c55e)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 8px 32px rgba(99,102,241,0.35)',
+          }}>
+            <Check size={36} color="#fff" strokeWidth={3} />
+          </div>
+          <p className="success-text" style={{ marginTop: 20, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
+            Location créée !
+          </p>
+          <p className="success-text" style={{ marginTop: 6, fontSize: 14, color: '#64748b' }}>
+            Ouverture du contrat...
+          </p>
         </div>
       )}
     </div>
