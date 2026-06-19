@@ -286,7 +286,13 @@
     "error": "Name, start date and end date are required.",
     "loading": "Caricamento...",
     "phone": "Telefono",
-    "notes": "Note"
+    "notes": "Note",
+    "cancelModalTitle": "Annulla prenotazione",
+    "cancelReasonLabel": "Motivo di cancellazione",
+    "cancelReasonHint": "(facoltativo — verrà inviato al cliente)",
+    "cancelReasonPlaceholder": "Es: Nessun monopattino disponibile in questa data…",
+    "confirmCancel": "Conferma cancellazione",
+    "back": "Indietro"
   },
   "accounting": {
     "title": "Contabilità",

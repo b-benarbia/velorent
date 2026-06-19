@@ -286,7 +286,13 @@
     "error": "Name, start date and end date are required.",
     "loading": "Laden...",
     "phone": "Telefon",
-    "notes": "Notizen"
+    "notes": "Notizen",
+    "cancelModalTitle": "Buchung stornieren",
+    "cancelReasonLabel": "Stornogrund",
+    "cancelReasonHint": "(optional — wird an den Kunden gesendet)",
+    "cancelReasonPlaceholder": "Z.B. Kein E-Scooter an diesem Datum verfügbar…",
+    "confirmCancel": "Stornierung bestätigen",
+    "back": "Zurück"
   },
   "accounting": {
     "title": "Buchhaltung",

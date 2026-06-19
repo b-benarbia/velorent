@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { sendReservationConfirmedToCustomer, sendReservationCancelledToCustomer } from '@/lib/email'
 
 export async function GET(
   _req: NextRequest,
@@ -26,13 +27,42 @@ export async function PATCH(
 
   const { id } = await params
   const body = await req.json()
-  const { status } = body
+  const { status, cancelReason } = body
 
   try {
     const reservation = await prisma.reservation.update({
       where: { id, tenantId: session.tenantId },
       data: { status },
     })
+
+    // Fetch tenant for shop name
+    const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
+    const email = reservation.customerEmail
+    const bikeType = reservation.bikeType ?? 'CITY'
+
+    if (email && tenant) {
+      if (status === 'CONFIRMED') {
+        void sendReservationConfirmedToCustomer({
+          to: email,
+          customerName: reservation.customerName,
+          shopName: tenant.name,
+          bikeType,
+          startAt: reservation.startAt,
+          endAt: reservation.endAt,
+          notes: reservation.notes,
+        })
+      } else if (status === 'CANCELLED') {
+        void sendReservationCancelledToCustomer({
+          to: email,
+          customerName: reservation.customerName,
+          shopName: tenant.name,
+          bikeType,
+          startAt: reservation.startAt,
+          cancelReason: cancelReason ?? null,
+        })
+      }
+    }
+
     return NextResponse.json(reservation)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur interne'

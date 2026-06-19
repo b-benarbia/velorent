@@ -286,7 +286,13 @@
     "error": "Nom, date de début et date de fin sont requis.",
     "loading": "Chargement...",
     "phone": "Téléphone",
-    "notes": "Notes"
+    "notes": "Notes",
+    "cancelModalTitle": "Annuler la réservation",
+    "cancelReasonLabel": "Motif d'annulation",
+    "cancelReasonHint": "(optionnel — sera envoyé au client)",
+    "cancelReasonPlaceholder": "Ex : Aucune trottinette disponible à cette date…",
+    "confirmCancel": "Confirmer l'annulation",
+    "back": "Retour"
   },
   "accounting": {
     "title": "Comptabilité",

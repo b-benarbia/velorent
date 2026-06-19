@@ -286,7 +286,13 @@
     "error": "Name, start date and end date are required.",
     "loading": "Carregando...",
     "phone": "Telefone",
-    "notes": "Notas"
+    "notes": "Notas",
+    "cancelModalTitle": "Cancelar reserva",
+    "cancelReasonLabel": "Motivo do cancelamento",
+    "cancelReasonHint": "(opcional — será enviado ao cliente)",
+    "cancelReasonPlaceholder": "Ex: Nenhuma trotinete disponível nesta data…",
+    "confirmCancel": "Confirmar cancelamento",
+    "back": "Voltar"
   },
   "accounting": {
     "title": "Contabilidade",

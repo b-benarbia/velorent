@@ -29,7 +29,8 @@ export async function POST(
 ) {
   const { slug } = await params
   const body = await req.json()
-  const { firstName, lastName, phone, email, address, bikeType, bikeQty = 1, startAt, endAt, notes, accessories } = body
+  const { firstName, lastName, phone, email, address, bikeType, bikeQty = 1, startAt, endAt, notes, accessories, locale = 'fr' } = body
+  const addressNote = address?.trim() ? `Adresse: ${address.trim()}` : null
 
   if (!firstName || !lastName || !phone || !bikeType || !startAt || !endAt) {
     return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 })
@@ -42,7 +43,7 @@ export async function POST(
   const accessoryLine = accessories && Object.keys(accessories).length
     ? `Accessoires: ${Object.entries(accessories).map(([k, v]) => `${v}x ${k}`).join(', ')}`
     : null
-  const fullNotes = [bikeQtyLine, accessoryLine, notes].filter(Boolean).join(' — ') || null
+  const fullNotes = [bikeQtyLine, accessoryLine, addressNote, notes].filter(Boolean).join(' — ') || null
 
   const reservation = await prisma.reservation.create({
     data: {
@@ -50,7 +51,6 @@ export async function POST(
       customerName: `${firstName} ${lastName}`,
       customerPhone: phone || null,
       customerEmail: email || '',
-      customerAddress: address?.trim() || null,
       bikeType: bikeType as any,
       startAt: new Date(startAt),
       endAt: new Date(endAt),
@@ -74,6 +74,7 @@ export async function POST(
           startAt: startDate,
           endAt: endDate,
           notes: fullNotes,
+          locale,
         })
       : Promise.resolve(),
     tenant.email

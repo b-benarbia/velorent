@@ -286,7 +286,13 @@
     "error": "Name, start date and end date are required.",
     "loading": "Loading...",
     "phone": "Phone",
-    "notes": "Notes"
+    "notes": "Notes",
+    "cancelModalTitle": "Cancel booking",
+    "cancelReasonLabel": "Cancellation reason",
+    "cancelReasonHint": "(optional — will be sent to the customer)",
+    "cancelReasonPlaceholder": "E.g. No e-scooter available on this date…",
+    "confirmCancel": "Confirm cancellation",
+    "back": "Back"
   },
   "accounting": {
     "title": "Accounting",
