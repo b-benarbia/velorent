@@ -123,7 +123,17 @@ export default function ReservationsPage() {
     router.push(`/${tenant}/rentals/new?reservationId=${reservation.id}`)
   }
 
-  const pending = reservations.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
+  // Local date string helper — avoids UTC off-by-one
+  function localDateStr(d: Date) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  }
+  const todayStr = localDateStr(new Date())
+  const isToday  = (iso: string) => localDateStr(new Date(iso)) === todayStr
+
+  const all_pending  = reservations.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
+  const todayPending = all_pending.filter(r => isToday(r.startAt))
+  const laterPending = all_pending.filter(r => !isToday(r.startAt))
+  const pending = all_pending
   const past = reservations.filter(r => r.status === 'CANCELLED' || r.status === 'CONVERTED')
 
   return (
@@ -254,53 +264,156 @@ export default function ReservationsPage() {
               <p className="text-sm text-slate-400">{t('noPending')}</p>
             </div>
           ) : (
-            <div className="space-y-3 mb-6">
-              {pending.map(r => {
-                const stColor = STATUS_COLOR[r.status as keyof typeof STATUS_COLOR] ?? 'bg-slate-50 text-slate-500'
-                const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
-                return (
-                  <div key={r.id} className="bg-white border border-slate-200 rounded-2xl p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <p className="font-semibold text-slate-900 text-sm">{r.customerName}</p>
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stColor}`}>{stLabel}</span>
-                        </div>
-                        <div className="text-xs text-slate-400 space-y-1">
-                          {r.customerPhone && <p className="flex items-center gap-1.5"><Phone size={11} className="text-slate-300 flex-shrink-0" />{r.customerPhone}</p>}
-                          {r.customerEmail && <p className="flex items-center gap-1.5"><Mail size={11} className="text-slate-300 flex-shrink-0" />{r.customerEmail}</p>}
-                          <p className="flex items-center gap-1.5">
-                            <CalendarDays size={11} className="text-slate-300 flex-shrink-0" />
-                            {new Date(r.startAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} →{' '}
-                            {new Date(r.endAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
-                          </p>
-                          {r.bikeType && <p className="flex items-center gap-1.5"><Bike size={11} className="text-slate-300 flex-shrink-0" />{BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}</p>}
-                          {r.bike && <p className="flex items-center gap-1.5"><Bike size={11} className="text-slate-300 flex-shrink-0" />{r.bike.name} ({r.bike.code})</p>}
-                          {r.notes && <p className="text-slate-400 italic">{r.notes}</p>}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2 flex-shrink-0">
-                        {r.status === 'PENDING' && (
-                          <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
-                            className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
-                            style={{ background: '#10b981' }}>
-                            <Check size={11} />{t('confirm')}
-                          </button>
-                        )}
-                        <button onClick={() => convertToRental(r)}
-                          className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
-                          style={{ background: '#6366F1' }}>
-                          <Bike size={11} />{t('convert')} <ArrowRight size={10} />
-                        </button>
-                        <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
-                          className="text-xs text-slate-400 hover:text-red-500 transition-colors">
-                          {t('cancel')}
-                        </button>
-                      </div>
+            <div className="space-y-4 mb-6">
+
+              {/* ── TODAY reservations ── */}
+              {todayPending.length > 0 && (
+                <div>
+                  {/* Section header */}
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div style={{ display:'flex', alignItems:'center', gap:6,
+                      background:'linear-gradient(90deg,#fff7ed,#fffbeb)',
+                      border:'1.5px solid #fed7aa', borderRadius:10,
+                      padding:'5px 12px' }}>
+                      <span style={{ width:7, height:7, borderRadius:'50%', background:'#f97316',
+                        display:'inline-block', boxShadow:'0 0 0 3px #fed7aa',
+                        animation:'todayPulse 1.8s ease-in-out infinite' }} />
+                      <span style={{ fontSize:11, fontWeight:800, color:'#c2410c',
+                        textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                        Aujourd&apos;hui
+                      </span>
+                      <span style={{ fontSize:11, fontWeight:600, color:'#fb923c' }}>
+                        · {todayPending.length} réservation{todayPending.length > 1 ? 's' : ''}
+                      </span>
                     </div>
                   </div>
-                )
-              })}
+
+                  <div className="space-y-3">
+                    {todayPending.map(r => {
+                      const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
+                      const startTime = new Date(r.startAt).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' })
+                      const endDate   = new Date(r.endAt).toLocaleDateString(undefined, { day:'2-digit', month:'2-digit' })
+                      return (
+                        <div key={r.id} style={{
+                          background:'linear-gradient(135deg,#fff7ed 0%,#ffffff 60%)',
+                          border:'1.5px solid #fed7aa',
+                          borderLeft:'4px solid #f97316',
+                          borderRadius:16, padding:16,
+                          boxShadow:'0 2px 12px rgba(249,115,22,0.10)',
+                        }}>
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                              {/* Name + badges row */}
+                              <div className="flex items-center gap-2 flex-wrap mb-2">
+                                <p className="font-bold text-slate-900 text-sm">{r.customerName}</p>
+                                <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px',
+                                  borderRadius:20, background:'#fff7ed', color:'#ea580c',
+                                  border:'1px solid #fed7aa', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                  {stLabel}
+                                </span>
+                              </div>
+                              {/* Start time prominent */}
+                              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
+                                <span style={{ fontSize:20, fontWeight:800, color:'#ea580c', lineHeight:1 }}>
+                                  {startTime}
+                                </span>
+                                <span style={{ fontSize:12, color:'#fb923c', fontWeight:500 }}>
+                                  → {endDate}
+                                </span>
+                              </div>
+                              {/* Contact & bike info */}
+                              <div className="text-xs text-slate-400 space-y-1">
+                                {r.customerPhone && <p className="flex items-center gap-1.5"><Phone size={11} className="text-orange-300 flex-shrink-0" />{r.customerPhone}</p>}
+                                {r.customerEmail && <p className="flex items-center gap-1.5"><Mail size={11} className="text-orange-300 flex-shrink-0" />{r.customerEmail}</p>}
+                                {r.bikeType && <p className="flex items-center gap-1.5"><Bike size={11} className="text-orange-300 flex-shrink-0" />{BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}</p>}
+                                {r.bike && <p className="flex items-center gap-1.5"><Bike size={11} className="text-orange-300 flex-shrink-0" />{r.bike.name} ({r.bike.code})</p>}
+                                {r.notes && <p className="italic text-slate-400">{r.notes}</p>}
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2 flex-shrink-0">
+                              {r.status === 'PENDING' && (
+                                <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
+                                  className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
+                                  style={{ background: '#10b981' }}>
+                                  <Check size={11} />{t('confirm')}
+                                </button>
+                              )}
+                              <button onClick={() => convertToRental(r)}
+                                className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
+                                style={{ background: '#f97316' }}>
+                                <Bike size={11} />{t('convert')} <ArrowRight size={10} />
+                              </button>
+                              <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
+                                className="text-xs text-slate-400 hover:text-red-500 transition-colors">
+                                {t('cancel')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── UPCOMING reservations ── */}
+              {laterPending.length > 0 && (
+                <div>
+                  {todayPending.length > 0 && (
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                      À venir
+                    </p>
+                  )}
+                  <div className="space-y-3">
+                    {laterPending.map(r => {
+                      const stColor = STATUS_COLOR[r.status as keyof typeof STATUS_COLOR] ?? 'bg-slate-50 text-slate-500'
+                      const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
+                      return (
+                        <div key={r.id} className="bg-white border border-slate-200 rounded-2xl p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <p className="font-semibold text-slate-900 text-sm">{r.customerName}</p>
+                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stColor}`}>{stLabel}</span>
+                              </div>
+                              <div className="text-xs text-slate-400 space-y-1">
+                                {r.customerPhone && <p className="flex items-center gap-1.5"><Phone size={11} className="text-slate-300 flex-shrink-0" />{r.customerPhone}</p>}
+                                {r.customerEmail && <p className="flex items-center gap-1.5"><Mail size={11} className="text-slate-300 flex-shrink-0" />{r.customerEmail}</p>}
+                                <p className="flex items-center gap-1.5">
+                                  <CalendarDays size={11} className="text-slate-300 flex-shrink-0" />
+                                  {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })} →{' '}
+                                  {new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                                </p>
+                                {r.bikeType && <p className="flex items-center gap-1.5"><Bike size={11} className="text-slate-300 flex-shrink-0" />{BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}</p>}
+                                {r.bike && <p className="flex items-center gap-1.5"><Bike size={11} className="text-slate-300 flex-shrink-0" />{r.bike.name} ({r.bike.code})</p>}
+                                {r.notes && <p className="text-slate-400 italic">{r.notes}</p>}
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2 flex-shrink-0">
+                              {r.status === 'PENDING' && (
+                                <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
+                                  className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
+                                  style={{ background: '#10b981' }}>
+                                  <Check size={11} />{t('confirm')}
+                                </button>
+                              )}
+                              <button onClick={() => convertToRental(r)}
+                                className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
+                                style={{ background: '#6366F1' }}>
+                                <Bike size={11} />{t('convert')} <ArrowRight size={10} />
+                              </button>
+                              <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
+                                className="text-xs text-slate-400 hover:text-red-500 transition-colors">
+                                {t('cancel')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -328,6 +441,12 @@ export default function ReservationsPage() {
           )}
         </>
       )}
+      <style>{`
+        @keyframes todayPulse {
+          0%,100% { box-shadow: 0 0 0 3px #fed7aa; }
+          50%      { box-shadow: 0 0 0 6px #fdba7420; }
+        }
+      `}</style>
     </div>
   )
 }
