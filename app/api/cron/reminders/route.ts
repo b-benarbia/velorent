@@ -3,11 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { sendReminderToCustomer } from '@/lib/email'
 
 // ── Security ───────────────────────────────────────────────────────────────
-// Vercel passes Authorization: Bearer <CRON_SECRET> on every cron invocation.
-// In dev you can hit the route directly (no secret required).
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
-  if (!secret) return true // dev — no secret configured, allow
+  if (!secret) return true
   const auth = req.headers.get('authorization')
   return auth === `Bearer ${secret}`
 }
@@ -17,30 +15,44 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const now   = new Date()
-  // Window: reservations starting between now+1h and now+25h
-  // → catches the "24h before" window in a 1-hour cron cadence
-  const from  = new Date(now.getTime() + 1  * 60 * 60 * 1000)   // +1h
-  const until = new Date(now.getTime() + 25 * 60 * 60 * 1000)   // +25h
+  const now = new Date()
 
-  // Find PENDING or CONFIRMED reservations with an email, no reminder sent yet
-  const reservations = await prisma.reservation.findMany({
-    where: {
-      status:        { in: ['PENDING', 'CONFIRMED'] },
-      customerEmail: { not: null },
-      reminderSentAt: null,
-      startAt: { gte: from, lte: until },
-    },
-    include: {
-      tenant: { select: { name: true, phone: true } },
-    },
-  })
+  // ── Window 24h : startAt dans 23h–25h ─────────────────────────────────
+  const from24  = new Date(now.getTime() + 23 * 60 * 60 * 1000)
+  const until24 = new Date(now.getTime() + 25 * 60 * 60 * 1000)
 
-  let sent  = 0
+  // ── Window 2h : startAt dans 1h–3h ────────────────────────────────────
+  const from2h  = new Date(now.getTime() + 1 * 60 * 60 * 1000)
+  const until2h = new Date(now.getTime() + 3 * 60 * 60 * 1000)
+
+  const [res24h, res2h] = await Promise.all([
+    // Rappels 24h — pas encore envoyés
+    prisma.reservation.findMany({
+      where: {
+        status:          { in: ['PENDING', 'CONFIRMED'] },
+        customerEmail:   { not: null },
+        reminderSentAt:  null,
+        startAt:         { gte: from24, lte: until24 },
+      },
+      include: { tenant: { select: { name: true, phone: true } } },
+    }),
+    // Rappels 2h — pas encore envoyés
+    prisma.reservation.findMany({
+      where: {
+        status:            { in: ['PENDING', 'CONFIRMED'] },
+        customerEmail:     { not: null },
+        reminder2hSentAt:  null,
+        startAt:           { gte: from2h, lte: until2h },
+      },
+      include: { tenant: { select: { name: true, phone: true } } },
+    }),
+  ])
+
+  let sent = 0
   let errors = 0
 
-  await Promise.allSettled(
-    reservations.map(async (r) => {
+  await Promise.allSettled([
+    ...res24h.map(async (r) => {
       try {
         await sendReminderToCustomer({
           to:           r.customerEmail!,
@@ -51,24 +63,42 @@ export async function GET(req: NextRequest) {
           startAt:      r.startAt,
           endAt:        r.endAt,
           notes:        r.notes,
-          locale:       'fr', // default — customer locale not stored yet
+          locale:       'fr',
         })
         await prisma.reservation.update({
           where: { id: r.id },
           data:  { reminderSentAt: new Date() },
         })
         sent++
-      } catch {
-        errors++
-      }
-    })
-  )
+      } catch { errors++ }
+    }),
+
+    ...res2h.map(async (r) => {
+      try {
+        await sendReminderToCustomer({
+          to:           r.customerEmail!,
+          customerName: r.customerName,
+          shopName:     r.tenant.name,
+          shopPhone:    r.tenant.phone,
+          bikeType:     r.bikeType ?? 'CITY',
+          startAt:      r.startAt,
+          endAt:        r.endAt,
+          notes:        r.notes,
+          locale:       'fr',
+        })
+        await prisma.reservation.update({
+          where: { id: r.id },
+          data:  { reminder2hSentAt: new Date() },
+        })
+        sent++
+      } catch { errors++ }
+    }),
+  ])
 
   return NextResponse.json({
-    ok:     true,
+    ok:      true,
     sent,
     errors,
-    checked: reservations.length,
-    window: { from: from.toISOString(), until: until.toISOString() },
+    checked: { '24h': res24h.length, '2h': res2h.length },
   })
 }
