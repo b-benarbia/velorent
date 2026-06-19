@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CalendarDays, Phone, Mail, Bike, Check, ArrowRight, Plus, Search, Star, X } from 'lucide-react'
+import {
+  CalendarDays, Phone, Mail, Bike, Check, ArrowRight,
+  Plus, Search, Star, X, ChevronLeft, ChevronRight,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-// BikeRecord — renamed to avoid clash with Lucide's Bike icon
 interface BikeRecord {
   id: string
   name: string
@@ -35,12 +37,11 @@ interface Reservation {
   bike?: { name: string; code: string } | null
 }
 
-// Outside component — stable reference, never recreated
+// Outside component — stable, never recreated
 function localDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// Status badge inline colours (shared between all card variants)
 const STATUS_BADGE: Record<string, { bg: string; border: string; text: string }> = {
   PENDING:   { bg: '#fffbeb', border: '#fde68a', text: '#92400e' },
   CONFIRMED: { bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46' },
@@ -50,24 +51,35 @@ const STATUS_BADGE: Record<string, { bg: string; border: string; text: string }>
 
 const INPUT_CLASS = 'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white text-slate-900'
 
+const NAV_BTN: React.CSSProperties = {
+  border: '1.5px solid #e2e8f0', background: 'white', borderRadius: 8,
+  padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+}
+
 export default function ReservationsPage() {
-  const params = useParams()
-  const router = useRouter()
-  const tenant = params.tenant as string
-  const t = useTranslations('reservations')
-  const tStatus = useTranslations('status')
+  const params   = useParams()
+  const router   = useRouter()
+  const tenant   = params.tenant as string
+  const t        = useTranslations('reservations')
+  const tStatus  = useTranslations('status')
 
   const [reservations, setReservations] = useState<Reservation[]>([])
-  const [bikes, setBikes]   = useState<BikeRecord[]>([])
+  const [bikes, setBikes]     = useState<BikeRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState('')
   const [cancelModal, setCancelModal] = useState<{ id: string; name: string } | null>(null)
   const [cancelReason, setCancelReason] = useState('')
-  const [search, setSearch] = useState('')
-  // now updates every minute — countdown stays accurate without re-fetching
-  const [now, setNow] = useState(() => new Date())
+  const [search, setSearch]   = useState('')
+  const [now, setNow]         = useState(() => new Date())
+
+  // ── Mini calendar state ───────────────────────────────────────────────────
+  const [showCal, setShowCal]           = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [calMonth, setCalMonth]         = useState(() => {
+    const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }
+  })
 
   const [form, setForm] = useState({
     customerName: '', customerPhone: '', customerEmail: '',
@@ -93,7 +105,6 @@ export default function ReservationsPage() {
     return () => { alive = false }
   }, [])
 
-  // Computed once at mount — won't drift if page stays open overnight
   const [todayStr]    = useState(() => localDateStr(new Date()))
   const [tomorrowStr] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d)
@@ -110,7 +121,6 @@ export default function ReservationsPage() {
            (r.customerEmail ?? '').toLowerCase().includes(q)
   }
 
-  // "Dans 1h45" — returns '' if startAt is already past
   function getCountdown(startAt: string): string {
     const diff = new Date(startAt).getTime() - now.getTime()
     if (diff <= 0) return ''
@@ -118,16 +128,12 @@ export default function ReservationsPage() {
     const days  = Math.floor(totalMins / 1440)
     const hours = Math.floor((totalMins % 1440) / 60)
     const mins  = totalMins % 60
-    const pre = t('countdownPrefix')
-    const dU  = t('countdownDay')
-    const hU  = t('countdownHour')
-    const mU  = t('countdownMin')
+    const pre = t('countdownPrefix'), dU = t('countdownDay'), hU = t('countdownHour'), mU = t('countdownMin')
     if (days > 0)  return `${pre} ${days}${dU} ${hours}${hU}`
     if (hours > 0) return `${pre} ${hours}${hU}${mins > 0 ? ` ${mins}${mU}` : ''}`
     return `${pre} ${mins}${mU}`
   }
 
-  // Count previous completed (CONVERTED) reservations by customer name
   function returningCount(name: string): number {
     const n = name.toLowerCase()
     return reservations.filter(r => r.status === 'CONVERTED' && r.customerName.toLowerCase() === n).length
@@ -137,10 +143,8 @@ export default function ReservationsPage() {
     e.preventDefault()
     if (!form.customerName || !form.startAt || !form.endAt) { setError(t('error')); return }
     setSaving(true); setError('')
-    const res = await fetch('/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+    const res  = await fetch('/api/reservations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
@@ -152,8 +156,7 @@ export default function ReservationsPage() {
 
   async function updateStatus(id: string, status: string, reason?: string) {
     const res = await fetch(`/api/reservations/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, cancelReason: reason }),
     })
     if (res.ok) setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
@@ -169,7 +172,20 @@ export default function ReservationsPage() {
     router.push(`/${tenant}/rentals/new?reservationId=${reservation.id}`)
   }
 
-  // ── Section arrays ────────────────────────────────────────────────────────
+  // ── Dot map for calendar: date → { pending, past } ───────────────────────
+  const reservationsByDate = useMemo(() => {
+    const map = new Map<string, { pending: number; past: number }>()
+    reservations.forEach(r => {
+      const key = localDateStr(new Date(r.startAt))
+      const cur = map.get(key) ?? { pending: 0, past: 0 }
+      if (r.status === 'PENDING' || r.status === 'CONFIRMED') cur.pending++
+      else cur.past++
+      map.set(key, cur)
+    })
+    return map
+  }, [reservations])
+
+  // ── Sections ──────────────────────────────────────────────────────────────
   const all_pending     = reservations.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
   const todayPending    = all_pending.filter(r => isToday(r.startAt) && matchesSearch(r))
   const tomorrowPending = all_pending.filter(r => isTomorrow(r.startAt) && matchesSearch(r))
@@ -177,11 +193,120 @@ export default function ReservationsPage() {
     .filter(r => !isToday(r.startAt) && !isTomorrow(r.startAt) && matchesSearch(r))
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
   const pending = all_pending
-  const past    = reservations
-    .filter(r => (r.status === 'CANCELLED' || r.status === 'CONVERTED') && matchesSearch(r))
+
+  const dateFiltered = selectedDate
+    ? reservations
+        .filter(r => localDateStr(new Date(r.startAt)) === selectedDate && matchesSearch(r))
+        .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+    : null
+
+  const past = reservations
+    .filter(r => {
+      const isHist  = r.status === 'CANCELLED' || r.status === 'CONVERTED'
+      const dateOk  = !selectedDate || localDateStr(new Date(r.startAt)) === selectedDate
+      return isHist && dateOk && matchesSearch(r)
+    })
     .sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
 
   const hasResults = todayPending.length + tomorrowPending.length + laterPending.length > 0
+
+  // ── Mini calendar renderer ────────────────────────────────────────────────
+  function renderMiniCalendar() {
+    const { year, month } = calMonth
+    const firstDow    = (new Date(year, month, 1).getDay() + 6) % 7  // Mon=0
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const monthLabel  = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' })
+      .format(new Date(year, month, 1))
+    const monthFormatted = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)
+
+    // Single-char weekday headers, Mon-first (Jan 1 2024 = Monday)
+    const dayHdrs = Array.from({ length: 7 }, (_, i) =>
+      new Intl.DateTimeFormat(undefined, { weekday: 'narrow' }).format(new Date(2024, 0, 1 + i))
+    )
+
+    const cells: (number | null)[] = [
+      ...Array(firstDow).fill(null),
+      ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ]
+    while (cells.length % 7 !== 0) cells.push(null)
+
+    const prevMonth = () => setCalMonth(m => {
+      const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }
+    })
+    const nextMonth = () => setCalMonth(m => {
+      const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }
+    })
+
+    return (
+      <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 16,
+        padding: '14px 14px 10px', marginBottom: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+
+        {/* Month navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <button onClick={prevMonth} style={NAV_BTN}>
+            <ChevronLeft size={15} style={{ color: '#6366f1' }} />
+          </button>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{monthFormatted}</span>
+          <button onClick={nextMonth} style={NAV_BTN}>
+            <ChevronRight size={15} style={{ color: '#6366f1' }} />
+          </button>
+        </div>
+
+        {/* Weekday headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
+          {dayHdrs.map((h, i) => (
+            <div key={i} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700,
+              color: '#94a3b8', paddingBottom: 4, textTransform: 'uppercase' }}>
+              {h}
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+          {cells.map((day, i) => {
+            if (day === null) return <div key={i} />
+            const dk     = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+            const counts = reservationsByDate.get(dk)
+            const isSel  = selectedDate === dk
+            const isTd   = dk === todayStr
+
+            return (
+              <button key={i}
+                onClick={() => { setSelectedDate(isSel ? null : dk); if (!isSel) setShowCal(false) }}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  justifyContent: 'center', padding: '5px 2px', minHeight: 36,
+                  borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: isSel ? '#6366f1' : isTd ? '#eef2ff' : 'transparent',
+                }}>
+                <span style={{
+                  fontSize: 13, lineHeight: 1,
+                  fontWeight: isSel || isTd ? 700 : 400,
+                  color: isSel ? 'white' : isTd ? '#6366f1' : '#334155',
+                }}>
+                  {day}
+                </span>
+                {counts && (
+                  <div style={{ display: 'flex', gap: 2, marginTop: 3 }}>
+                    {counts.pending > 0 && (
+                      <div style={{ width: 5, height: 5, borderRadius: '50%',
+                        background: isSel ? 'rgba(255,255,255,0.85)' :
+                                    dk === todayStr ? '#f97316' : '#6366f1' }} />
+                    )}
+                    {counts.past > 0 && (
+                      <div style={{ width: 5, height: 5, borderRadius: '50%',
+                        background: isSel ? 'rgba(255,255,255,0.4)' : '#cbd5e1' }} />
+                    )}
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   // ── Shared card renderer ──────────────────────────────────────────────────
   function renderCard(r: Reservation, variant: 'today' | 'tomorrow' | 'upcoming') {
@@ -191,41 +316,30 @@ export default function ReservationsPage() {
     const startTime = new Date(r.startAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     const endDate   = new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
     const stBadge   = STATUS_BADGE[r.status] ?? { bg: '#f8fafc', border: '#e2e8f0', text: '#475569' }
-
-    const isT   = variant === 'today'
-    const isTmr = variant === 'tomorrow'
+    const isT       = variant === 'today'
+    const isTmr     = variant === 'tomorrow'
 
     const cardStyle = isT ? {
-      background: '#fff7ed',
-      border: '1.5px solid #fed7aa', borderLeft: '4px solid #f97316',
-      borderRadius: 16, padding: 16,
-      boxShadow: '0 2px 12px rgba(249,115,22,0.08)',
+      background: '#fff7ed', border: '1.5px solid #fed7aa', borderLeft: '4px solid #f97316',
+      borderRadius: 16, padding: 16, boxShadow: '0 2px 12px rgba(249,115,22,0.08)',
     } : isTmr ? {
-      background: '#fefce8',
-      border: '1.5px solid #fef08a', borderLeft: '4px solid #ca8a04',
-      borderRadius: 16, padding: 16,
-      boxShadow: '0 1px 6px rgba(202,138,4,0.06)',
+      background: '#fefce8', border: '1.5px solid #fef08a', borderLeft: '4px solid #ca8a04',
+      borderRadius: 16, padding: 16, boxShadow: '0 1px 6px rgba(202,138,4,0.06)',
     } : {
-      background: 'white',
-      border: '1.5px solid #e2e8f0',
-      borderRadius: 16, padding: 16,
+      background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 16, padding: 16,
     }
 
-    const iconColor  = isT ? '#f97316' : isTmr ? '#ca8a04' : '#cbd5e1'
-    const convertBg  = isT ? '#f97316' : isTmr ? '#ca8a04' : '#6366F1'
-    const timeColor  = isT ? '#ea580c' : '#a16207'
-    const arrowColor = isT ? '#fb923c' : '#ca8a04'
+    const iconColor = isT ? '#f97316' : isTmr ? '#ca8a04' : '#cbd5e1'
+    const convertBg = isT ? '#f97316' : isTmr ? '#ca8a04' : '#6366F1'
 
     return (
       <div key={r.id} style={cardStyle}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            {/* Row 1: name + status + returning + countdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1 }}>
                 {r.customerName}
               </p>
-              {/* Status */}
               <span style={{
                 fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
                 background: isT ? '#fff7ed' : isTmr ? '#fefce8' : stBadge.bg,
@@ -235,7 +349,6 @@ export default function ReservationsPage() {
               }}>
                 {stLabel}
               </span>
-              {/* Returning customer */}
               {retCount > 0 && (
                 <span style={{
                   display: 'flex', alignItems: 'center', gap: 3,
@@ -247,7 +360,6 @@ export default function ReservationsPage() {
                   {t('returning')}
                 </span>
               )}
-              {/* Countdown pill */}
               {countdown && (
                 <span style={{
                   fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
@@ -260,18 +372,19 @@ export default function ReservationsPage() {
               )}
             </div>
 
-            {/* Row 2: time (prominent for today/tomorrow) or date range for upcoming */}
             {(isT || isTmr) ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                <span style={{ fontSize: isT ? 22 : 17, fontWeight: 800, color: timeColor, lineHeight: 1 }}>
+                <span style={{ fontSize: isT ? 22 : 17, fontWeight: 800,
+                  color: isT ? '#ea580c' : '#a16207', lineHeight: 1 }}>
                   {startTime}
                 </span>
-                <span style={{ fontSize: 12, color: arrowColor, fontWeight: 500 }}>
+                <span style={{ fontSize: 12, color: isT ? '#fb923c' : '#ca8a04', fontWeight: 500 }}>
                   → {endDate}
                 </span>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, color: '#94a3b8', fontSize: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8,
+                color: '#94a3b8', fontSize: 12 }}>
                 <CalendarDays size={12} style={{ color: '#cbd5e1', flexShrink: 0 }} />
                 <span>
                   {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
@@ -281,56 +394,47 @@ export default function ReservationsPage() {
               </div>
             )}
 
-            {/* Row 3: contact + bike */}
             <div style={{ fontSize: 12, color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {r.customerPhone && (
                 <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                  <Phone size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  {r.customerPhone}
+                  <Phone size={11} style={{ color: iconColor, flexShrink: 0 }} />{r.customerPhone}
                 </p>
               )}
               {r.customerEmail && (
                 <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                  <Mail size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  {r.customerEmail}
+                  <Mail size={11} style={{ color: iconColor, flexShrink: 0 }} />{r.customerEmail}
                 </p>
               )}
               {r.bikeType && !r.bike && (
                 <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  {BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}
+                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />{BIKE_TYPE_LABEL[r.bikeType] ?? r.bikeType}
                 </p>
               )}
               {r.bike && (
                 <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  {r.bike.name} ({r.bike.code})
+                  <Bike size={11} style={{ color: iconColor, flexShrink: 0 }} />{r.bike.name} ({r.bike.code})
                 </p>
               )}
               {r.notes && <p style={{ margin: 0, fontStyle: 'italic', color: '#c7d0dd' }}>{r.notes}</p>}
             </div>
           </div>
 
-          {/* Action buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
             {r.status === 'PENDING' && (
-              <button
-                onClick={() => updateStatus(r.id, 'CONFIRMED')}
+              <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
                 style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: 8,
                   padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Check size={11} />{t('confirm')}
               </button>
             )}
-            <button
-              onClick={() => convertToRental(r)}
+            <button onClick={() => convertToRental(r)}
               style={{ background: convertBg, color: 'white', border: 'none', borderRadius: 8,
                 padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 4 }}>
               <Bike size={11} />{t('convert')} <ArrowRight size={10} />
             </button>
-            <button
-              onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
+            <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
               style={{ border: 'none', background: 'transparent', color: '#94a3b8',
                 fontSize: 12, cursor: 'pointer', padding: '2px 0', textAlign: 'center' as const }}>
               {t('cancel')}
@@ -342,6 +446,8 @@ export default function ReservationsPage() {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
+  const calActive = showCal || !!selectedDate
+
   return (
     <div className="max-w-3xl mx-auto">
 
@@ -360,15 +466,11 @@ export default function ReservationsPage() {
                 {t('cancelReasonLabel')}{' '}
                 <span style={{ fontWeight: 400, color: '#94a3b8' }}>{t('cancelReasonHint')}</span>
               </label>
-              <textarea
-                value={cancelReason}
-                onChange={e => setCancelReason(e.target.value)}
-                placeholder={t('cancelReasonPlaceholder')}
-                rows={3} autoFocus
+              <textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)}
+                placeholder={t('cancelReasonPlaceholder')} rows={3} autoFocus
                 style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e2e8f0',
                   borderRadius: 12, padding: '10px 14px', fontSize: 13, resize: 'none',
-                  outline: 'none', color: '#0f172a', fontFamily: 'inherit' }}
-              />
+                  outline: 'none', color: '#0f172a', fontFamily: 'inherit' }} />
             </div>
             <div style={{ padding: '0 24px 24px', display: 'flex', gap: 12 }}>
               <button onClick={handleCancel}
@@ -397,8 +499,7 @@ export default function ReservationsPage() {
             {todayPending.length > 0 && ` · ${todayPending.length} ${t('sectionToday').toLowerCase()}`}
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
+        <button onClick={() => setShowForm(!showForm)}
           style={{ background: '#6366F1', color: 'white', border: 'none', borderRadius: 12,
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -421,44 +522,35 @@ export default function ReservationsPage() {
             <div>
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('phone') || 'Phone'}</label>
               <input type="tel" value={form.customerPhone}
-                onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))}
-                className={INPUT_CLASS} />
+                onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))} className={INPUT_CLASS} />
             </div>
             <div>
               <label className="text-xs text-slate-500 font-semibold block mb-1">Email</label>
               <input type="email" value={form.customerEmail}
-                onChange={e => setForm(f => ({ ...f, customerEmail: e.target.value }))}
-                className={INPUT_CLASS} />
+                onChange={e => setForm(f => ({ ...f, customerEmail: e.target.value }))} className={INPUT_CLASS} />
             </div>
             <div>
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('start')} *</label>
               <input type="datetime-local" required value={form.startAt}
-                onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))}
-                className={INPUT_CLASS} />
+                onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))} className={INPUT_CLASS} />
             </div>
             <div>
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('end')} *</label>
               <input type="datetime-local" required value={form.endAt}
-                onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))}
-                className={INPUT_CLASS} />
+                onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))} className={INPUT_CLASS} />
             </div>
             <div className="col-span-2">
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('bikeOptional')}</label>
-              <select value={form.bikeId}
-                onChange={e => setForm(f => ({ ...f, bikeId: e.target.value }))}
-                className={INPUT_CLASS}>
+              <select value={form.bikeId} onChange={e => setForm(f => ({ ...f, bikeId: e.target.value }))} className={INPUT_CLASS}>
                 <option value="">— —</option>
                 {bikes.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} ({b.code}) — {Number(b.dailyRate).toFixed(2)} €/j
-                  </option>
+                  <option key={b.id} value={b.id}>{b.name} ({b.code}) — {Number(b.dailyRate).toFixed(2)} €/j</option>
                 ))}
               </select>
             </div>
             <div className="col-span-2">
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('notes') || 'Notes'}</label>
-              <textarea value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 rows={2} className={`${INPUT_CLASS} resize-none`} />
             </div>
           </div>
@@ -484,28 +576,67 @@ export default function ReservationsPage() {
         </form>
       )}
 
-      {/* Search bar */}
-      <div style={{ position: 'relative', marginBottom: 20 }}>
-        <Search size={15} style={{ position: 'absolute', left: 14, top: '50%',
-          transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder={t('searchPlaceholder')}
-          style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e2e8f0',
-            borderRadius: 12, padding: '10px 36px', fontSize: 13, color: '#0f172a',
-            outline: 'none', background: 'white', fontFamily: 'inherit' }}
-        />
-        {search && (
-          <button onClick={() => setSearch('')}
-            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
-              display: 'flex', alignItems: 'center' }}>
-            <X size={14} />
-          </button>
-        )}
+      {/* Search + Calendar toggle row */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: (showCal || selectedDate) ? 12 : 20 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={15} style={{ position: 'absolute', left: 14, top: '50%',
+            transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e2e8f0',
+              borderRadius: 12, padding: '10px 36px', fontSize: 13, color: '#0f172a',
+              outline: 'none', background: 'white', fontFamily: 'inherit' }} />
+          {search && (
+            <button onClick={() => setSearch('')}
+              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+                display: 'flex', alignItems: 'center' }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Calendar toggle */}
+        <button
+          onClick={() => { setShowCal(s => !s) }}
+          title={t('calBtn')}
+          style={{
+            border: `1.5px solid ${calActive ? '#6366f1' : '#e2e8f0'}`,
+            borderRadius: 12, padding: '0 14px', flexShrink: 0,
+            background: calActive ? '#eef2ff' : 'white',
+            color: calActive ? '#6366f1' : '#64748b',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 13, fontWeight: 600,
+          }}>
+          <CalendarDays size={17} />
+          {selectedDate && (
+            <span style={{ fontSize: 12, fontWeight: 700 }}>
+              {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Selected date chip (when calendar closed but date active) */}
+      {selectedDate && !showCal && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+          background: '#eef2ff', border: '1.5px solid #c7d2fe', borderRadius: 10, padding: '8px 12px' }}>
+          <CalendarDays size={14} style={{ color: '#6366f1', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#4f46e5', flex: 1 }}>
+            {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            })}
+          </span>
+          <button onClick={() => setSelectedDate(null)}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer',
+              color: '#6366f1', display: 'flex', alignItems: 'center', padding: 0 }}>
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
+      {/* Mini calendar */}
+      {showCal && renderMiniCalendar()}
 
       {loading ? (
         <div style={{ color: '#94a3b8', fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
@@ -513,87 +644,105 @@ export default function ReservationsPage() {
         </div>
       ) : (
         <>
-          {/* ── TODAY ─────────────────────────────────────────────────── */}
-          {todayPending.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7,
-                  background: 'linear-gradient(90deg,#fff7ed,#fffbeb)',
-                  border: '1.5px solid #fed7aa', borderRadius: 10, padding: '5px 12px' }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f97316',
-                    display: 'inline-block', boxShadow: '0 0 0 3px #fed7aa', flexShrink: 0,
-                    animation: 'todayPulse 1.8s ease-in-out infinite' }} />
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c',
-                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {t('sectionToday')}
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#fb923c' }}>
-                    · {todayPending.length}
-                  </span>
+          {/* ── DATE FILTER VIEW ──────────────────────────────────────── */}
+          {dateFiltered !== null ? (
+            <>
+              {dateFiltered.filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED').length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                  {dateFiltered
+                    .filter(r => r.status === 'PENDING' || r.status === 'CONFIRMED')
+                    .map(r => {
+                      const v = isToday(r.startAt) ? 'today' : isTomorrow(r.startAt) ? 'tomorrow' : 'upcoming'
+                      return renderCard(r, v)
+                    })}
                 </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {todayPending.map(r => renderCard(r, 'today'))}
-              </div>
-            </div>
-          )}
-
-          {/* ── TOMORROW ──────────────────────────────────────────────── */}
-          {tomorrowPending.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7,
-                  background: '#fefce8', border: '1.5px solid #fef08a',
-                  borderRadius: 10, padding: '5px 12px' }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ca8a04',
-                    display: 'inline-block', flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#a16207',
-                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {t('sectionTomorrow')}
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#ca8a04' }}>
-                    · {tomorrowPending.length}
-                  </span>
+              ) : (
+                <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
+                  padding: '32px 20px', textAlign: 'center', marginBottom: 24 }}>
+                  <CalendarDays size={20} style={{ color: '#e2e8f0', margin: '0 auto 8px', display: 'block' }} />
+                  <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>{t('noPending')}</p>
                 </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {tomorrowPending.map(r => renderCard(r, 'tomorrow'))}
-              </div>
-            </div>
-          )}
-
-          {/* ── UPCOMING ──────────────────────────────────────────────── */}
-          {laterPending.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              {(todayPending.length > 0 || tomorrowPending.length > 0) && (
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8',
-                  textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-                  {t('sectionUpcoming')} · {laterPending.length}
-                </p>
               )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {laterPending.map(r => renderCard(r, 'upcoming'))}
-              </div>
-            </div>
-          )}
+            </>
+          ) : (
+            <>
+              {/* ── TODAY ─────────────────────────────────────────────── */}
+              {todayPending.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7,
+                      background: 'linear-gradient(90deg,#fff7ed,#fffbeb)',
+                      border: '1.5px solid #fed7aa', borderRadius: 10, padding: '5px 12px' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f97316',
+                        display: 'inline-block', boxShadow: '0 0 0 3px #fed7aa', flexShrink: 0,
+                        animation: 'todayPulse 1.8s ease-in-out infinite' }} />
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c',
+                        textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        {t('sectionToday')}
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#fb923c' }}>· {todayPending.length}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {todayPending.map(r => renderCard(r, 'today'))}
+                  </div>
+                </div>
+              )}
 
-          {/* Empty state — search found nothing in pending */}
-          {!hasResults && pending.length > 0 && search && (
-            <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
-              padding: '40px 20px', textAlign: 'center', marginBottom: 24 }}>
-              <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>—</p>
-            </div>
-          )}
+              {/* ── TOMORROW ──────────────────────────────────────────── */}
+              {tomorrowPending.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7,
+                      background: '#fefce8', border: '1.5px solid #fef08a',
+                      borderRadius: 10, padding: '5px 12px' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ca8a04',
+                        display: 'inline-block', flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#a16207',
+                        textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        {t('sectionTomorrow')}
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#ca8a04' }}>· {tomorrowPending.length}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {tomorrowPending.map(r => renderCard(r, 'tomorrow'))}
+                  </div>
+                </div>
+              )}
 
-          {/* Empty state — genuinely no pending */}
-          {pending.length === 0 && !search && (
-            <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
-              padding: '40px 20px', textAlign: 'center', marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-                <CalendarDays size={24} style={{ color: '#e2e8f0' }} />
-              </div>
-              <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>{t('noPending')}</p>
-            </div>
+              {/* ── UPCOMING ──────────────────────────────────────────── */}
+              {laterPending.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  {(todayPending.length > 0 || tomorrowPending.length > 0) && (
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8',
+                      textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                      {t('sectionUpcoming')} · {laterPending.length}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {laterPending.map(r => renderCard(r, 'upcoming'))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty states */}
+              {!hasResults && pending.length > 0 && search && (
+                <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
+                  padding: '40px 20px', textAlign: 'center', marginBottom: 24 }}>
+                  <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>—</p>
+                </div>
+              )}
+              {pending.length === 0 && !search && (
+                <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20,
+                  padding: '40px 20px', textAlign: 'center', marginBottom: 24 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                    <CalendarDays size={24} style={{ color: '#e2e8f0' }} />
+                  </div>
+                  <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>{t('noPending')}</p>
+                </div>
+              )}
+            </>
           )}
 
           {/* ── HISTORY ───────────────────────────────────────────────── */}
@@ -637,7 +786,6 @@ export default function ReservationsPage() {
           0%,100% { box-shadow: 0 0 0 3px #fed7aa; }
           50%      { box-shadow: 0 0 0 6px #fdba7420; }
         }
-        /* Prevent iOS Safari auto-zoom on input focus (needs font-size >= 16px) */
         @media screen and (max-width: 767px) {
           input, select, textarea { font-size: 16px !important; }
         }

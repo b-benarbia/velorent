@@ -329,7 +329,8 @@
     "countdownDay": "d",
     "countdownHour": "h",
     "countdownMin": "min",
-    "returning": "Cliente fiel"
+    "returning": "Cliente fiel",
+    "calBtn": "Calendário"
   },
   "accounting": {
     "title": "Contabilidade",
