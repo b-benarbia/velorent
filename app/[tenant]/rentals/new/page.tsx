@@ -3,37 +3,38 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import CountrySelect from '../../_components/CountrySelect'
 
 interface Bike { id: string; code: string; name: string; dailyRate: number; hourlyRate: number | null; type: string; status: string }
 interface Customer { id: string; firstName: string; lastName: string; phone: string | null }
 
 const FIXED_ACCESSORIES = [
-  { type: 'HELMET',     label: 'Casque',       Icon: Shield,         hasCode: false, pricingKey: 'HELMET' },
-  { type: 'LOCK',       label: 'Cadenas',      Icon: Lock,           hasCode: true,  pricingKey: null },
-  { type: 'CHARGER',    label: 'Chargeur',     Icon: BatteryCharging,hasCode: false, pricingKey: 'CHARGER' },
-  { type: 'BASKET',     label: 'Panier',       Icon: ShoppingBasket, hasCode: false, pricingKey: 'BASKET' },
-  { type: 'CHILD_SEAT', label: 'Siège enfant', Icon: Heart,          hasCode: false, pricingKey: 'CHILD_SEAT' },
+  { type: 'HELMET',     label: 'Helmet',      tKey: 'helmet',    Icon: Shield,         hasCode: false, pricingKey: 'HELMET' },
+  { type: 'LOCK',       label: 'Lock',        tKey: 'lock',      Icon: Lock,           hasCode: true,  pricingKey: null },
+  { type: 'CHARGER',    label: 'Charger',     tKey: 'charger',   Icon: BatteryCharging,hasCode: false, pricingKey: 'CHARGER' },
+  { type: 'BASKET',     label: 'Basket',      tKey: 'basket',    Icon: ShoppingBasket, hasCode: false, pricingKey: 'BASKET' },
+  { type: 'CHILD_SEAT', label: 'Child seat',  tKey: 'childSeat', Icon: Heart,          hasCode: false, pricingKey: 'CHILD_SEAT' },
 ]
 
 const DURATIONS = [
-  { key: '1h',    label: '1h',      hours: 1 },
-  { key: '2h',    label: '2h',      hours: 2 },
-  { key: '4h',    label: '4h',      hours: 4 },
-  { key: '1day',  label: '1 jour',  hours: 10 },
-  { key: '24h',   label: '24h',     hours: 24 },
-  { key: '2days', label: '2 jours', hours: 48 },
-  { key: '3days', label: '3 jours', hours: 72 },
-  { key: '4days', label: '4 jours', hours: 96 },
-  { key: '5days', label: '5 jours', hours: 120 },
-  { key: '6days', label: '6 jours', hours: 144 },
-  { key: 'week',  label: 'Semaine', hours: 168 },
-  { key: 'extra', label: '+1j',     hours: 24 },
+  { key: '1h',    label: '1h',     hours: 1 },
+  { key: '2h',    label: '2h',     hours: 2 },
+  { key: '4h',    label: '4h',     hours: 4 },
+  { key: '1day',  label: '1 day',  hours: 10 },
+  { key: '24h',   label: '24h',    hours: 24 },
+  { key: '2days', label: '2 days', hours: 48 },
+  { key: '3days', label: '3 days', hours: 72 },
+  { key: '4days', label: '4 days', hours: 96 },
+  { key: '5days', label: '5 days', hours: 120 },
+  { key: '6days', label: '6 days', hours: 144 },
+  { key: 'week',  label: 'Week',   hours: 168 },
+  { key: 'extra', label: '+1d',    hours: 24 },
 ]
 
 const TYPE_LABEL: Record<string, string> = {
-  CITY: 'Vélo de ville', ELECTRIC: 'Électrique', MOUNTAIN: 'VTT',
-  CARGO: 'Cargo', KIDS: 'Enfant', ESCOOTER: 'Trottinette', ROAD: 'Route',
+  CITY: 'City', ELECTRIC: 'Electric', MOUNTAIN: 'Mountain',
+  CARGO: 'Cargo', KIDS: 'Kids', ESCOOTER: 'E-Scooter', ROAD: 'Road',
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; headerBg: string; selectedBg: string }> = {
@@ -59,6 +60,8 @@ export default function NewRentalPage() {
   const params = useParams()
   const searchParams = useSearchParams()
   const tenant = params.tenant as string
+  const t = useTranslations('newRental')
+  const tPayment = useTranslations('payment')
   const [fromReservation, setFromReservation] = useState(false)
 
   const [step, setStep] = useState(1)
@@ -319,7 +322,7 @@ export default function NewRentalPage() {
   const hasHelmet = (accessoryQty['HELMET'] ?? 0) > 0
   const canNextStep3 = !!form.amountPaid && (!isEscooter || hasHelmet)
 
-  const STEPS = ['Client', 'Vélo', 'Paiement', 'Signature']
+  const STEPS = [t('step1'), t('step2'), t('step3'), t('step4')]
 
   return (
     <div className="max-w-lg mx-auto">
@@ -329,9 +332,9 @@ export default function NewRentalPage() {
           onClick={() => { if (step > 1) { setStep(step - 1); if (step === 4) { setHasReadTerms(false); setHasSigned(false) } } else { router.back() } }}
           className="text-slate-400 hover:text-slate-600 text-sm transition-colors"
         >
-          ← Retour
+          {t('back')}
         </button>
-        <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Nouvelle location</h1>
+        <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{t('title')}</h1>
       </div>
 
       {/* Step indicator */}
@@ -350,19 +353,19 @@ export default function NewRentalPage() {
         ))}
       </div>
 
-      {/* ─── ÉTAPE 1 — CLIENT ─── */}
+      {/* ─── STEP 1 — CUSTOMER ─── */}
       {step === 1 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
           {fromReservation && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2 text-xs text-indigo-700 font-medium flex items-center gap-2">
-              <Check size={13} /> Infos pré-remplies depuis la réservation — vérifiez et complétez si besoin
+              <Check size={13} /> {t('prefilledFromReservation')}
             </div>
           )}
           <div className="flex justify-between items-center">
-            <h2 className="font-semibold text-slate-900 text-sm">Informations client</h2>
+            <h2 className="font-semibold text-slate-900 text-sm">{t('customerInfo')}</h2>
             <button type="button" onClick={() => { setNewCustomer(!newCustomer); setForm(f => ({ ...f, customerId: '' })) }}
               className="text-xs font-semibold hover:underline" style={{ color: '#6366F1' }}>
-              {newCustomer ? 'Client existant' : '+ Nouveau client'}
+              {newCustomer ? t('existingCustomer') : t('newCustomer')}
             </button>
           </div>
 
@@ -370,13 +373,13 @@ export default function NewRentalPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Prénom *</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('firstName')} *</label>
                   <input type="text" required value={customerForm.firstName}
                     onChange={e => setCustomerForm({ ...customerForm, firstName: e.target.value })}
                     className={INPUT} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Nom *</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('lastName')} *</label>
                   <input type="text" required value={customerForm.lastName}
                     onChange={e => setCustomerForm({ ...customerForm, lastName: e.target.value })}
                     className={INPUT} />
@@ -384,13 +387,13 @@ export default function NewRentalPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Téléphone</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('phone')}</label>
                   <input type="tel" value={customerForm.phone}
                     onChange={e => setCustomerForm({ ...customerForm, phone: e.target.value })}
                     className={INPUT} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Email</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('email')}</label>
                   <input type="email" value={customerForm.email}
                     onChange={e => setCustomerForm({ ...customerForm, email: e.target.value })}
                     className={INPUT} />
@@ -398,53 +401,53 @@ export default function NewRentalPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Document</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('documentType')}</label>
                   <select value={customerForm.documentType}
                     onChange={e => setCustomerForm({ ...customerForm, documentType: e.target.value })}
                     className={INPUT}>
-                    <option value="PASSPORT">Passeport</option>
-                    <option value="DNI">DNI</option>
-                    <option value="NIE">NIE</option>
-                    <option value="ID_CARD">Carte d&apos;identité</option>
-                    <option value="DRIVING_LICENSE">Permis</option>
-                    <option value="OTHER">Autre</option>
+                    <option value="PASSPORT">{t('passport')}</option>
+                    <option value="DNI">{t('dni')}</option>
+                    <option value="NIE">{t('nie')}</option>
+                    <option value="ID_CARD">{t('idCard')}</option>
+                    <option value="DRIVING_LICENSE">{t('drivingLicense')}</option>
+                    <option value="OTHER">{t('other')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">N° document</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('documentNumber')}</label>
                   <input type="text" value={customerForm.documentNumber}
                     onChange={e => setCustomerForm({ ...customerForm, documentNumber: e.target.value })}
                     className={INPUT} />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Nationalité</label>
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('nationality')}</label>
                 <CountrySelect
                   value={customerForm.nationality}
                   onChange={v => setCustomerForm({ ...customerForm, nationality: v })}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Adresse / Dirección</label>
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('addressLabel')}</label>
                 <input type="text" value={customerForm.address}
                   onChange={e => setCustomerForm({ ...customerForm, address: e.target.value })}
-                  placeholder="Rue, ville, pays..." className={INPUT} />
+                  placeholder={t('addressPlaceholder')} className={INPUT} />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1.5">
-                  <Camera size={12} className="text-slate-400" /> Photo pièce d&apos;identité
+                  <Camera size={12} className="text-slate-400" /> {t('documentPhoto')}
                 </label>
                 {documentPhoto ? (
                   <div className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={documentPhoto} alt="ID" className="w-full h-36 object-cover rounded-xl border border-slate-200" />
                     <button type="button" onClick={() => setDocumentPhoto(null)}
-                      className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg">✕ Refaire</button>
+                      className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg">{t('retake')}</button>
                   </div>
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
                     <Camera size={20} className="text-slate-300 mb-1" />
-                    <span className="text-xs text-slate-400">Appuyer pour photographier</span>
+                    <span className="text-xs text-slate-400">{t('takePhoto')}</span>
                     <input type="file" accept="image/*" capture="environment" className="hidden"
                       onChange={e => {
                         const file = e.target.files?.[0]
@@ -455,12 +458,12 @@ export default function NewRentalPage() {
                       }} />
                   </label>
                 )}
-                {!documentPhoto && <p className="text-xs text-slate-400 mt-1">Recommandé pour preuve légale</p>}
+                {!documentPhoto && <p className="text-xs text-slate-400 mt-1">{t('docPhotoHint')}</p>}
               </div>
             </div>
           ) : (
             <select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })} className={INPUT}>
-              <option value="">Sélectionner un client...</option>
+              <option value="">{t('selectCustomer')}</option>
               {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}{c.phone ? ` — ${c.phone}` : ''}</option>)}
             </select>
           )}
@@ -468,12 +471,12 @@ export default function NewRentalPage() {
           <button onClick={() => setStep(2)} disabled={!canNextStep1}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
             style={{ background: '#6366F1' }}>
-            Continuer →
+            {t('continue')}
           </button>
         </div>
       )}
 
-      {/* ─── ÉTAPE 2 — VÉLO ─── */}
+      {/* ─── STEP 2 — BIKE ─── */}
       {step === 2 && (() => {
         const grouped = TYPE_ORDER
           .map(type => ({ type, items: bikes.filter(b => b.type === type) }))
@@ -484,15 +487,15 @@ export default function NewRentalPage() {
         return (
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-base font-semibold text-slate-900">Choisir un vélo</h2>
+              <h2 className="text-base font-semibold text-slate-900">{t('chooseABike')}</h2>
               <div className="flex items-center gap-2">
                 {selectedBikeIds.length > 0 && (
                   <span className="text-xs font-semibold text-white px-2.5 py-1 rounded-full" style={{ background: '#6366F1' }}>
-                    {selectedBikeIds.length} sélectionné{selectedBikeIds.length > 1 ? 's' : ''}
+                    {selectedBikeIds.length} {t('selectedCount')}
                   </span>
                 )}
                 <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-medium">
-                  {bikes.length} dispo
+                  {bikes.length} {t('available')}
                 </span>
               </div>
             </div>
@@ -500,7 +503,7 @@ export default function NewRentalPage() {
             {bikes.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
                 <Bike size={28} className="text-slate-200 mx-auto mb-2" />
-                <p className="text-sm text-amber-500 font-medium">Aucun vélo disponible</p>
+                <p className="text-sm text-amber-500 font-medium">{t('noBikesAvailable')}</p>
               </div>
             ) : (
               grouped.map(({ type, items }) => {
@@ -563,18 +566,18 @@ export default function NewRentalPage() {
             <button onClick={() => setStep(3)} disabled={!canNextStep2}
               className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
               style={{ background: '#6366F1' }}>
-              Continuer →
+              {t('continue')}
             </button>
           </div>
         )
       })()}
 
-      {/* ─── ÉTAPE 3 — PAIEMENT ─── */}
+      {/* ─── STEP 3 — PAYMENT ─── */}
       {step === 3 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-5">
-          <h2 className="font-semibold text-slate-900 text-sm">Paiement à l&apos;ouverture</h2>
+          <h2 className="font-semibold text-slate-900 text-sm">{t('paymentTitle')}</h2>
 
-          {/* Vélos sélectionnés */}
+          {/* Selected bikes */}
           {selectedBikes.length > 0 && (
             <div className="rounded-xl border border-indigo-100 p-3 space-y-1" style={{ background: '#eef2ff' }}>
               {selectedBikes.map(bike => (
@@ -584,15 +587,15 @@ export default function NewRentalPage() {
                 </div>
               ))}
               {selectedBikes.length > 1 && (
-                <p className="text-xs text-indigo-400 pt-1 border-t border-indigo-200">{selectedBikes.length} vélos — prix cumulé</p>
+                <p className="text-xs text-indigo-400 pt-1 border-t border-indigo-200">{selectedBikes.length} {t('bikes')}</p>
               )}
             </div>
           )}
 
-          {/* Sélecteur de durée */}
+          {/* Duration selector */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-              Durée de location
+              {t('rentalDuration')}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {DURATIONS.map(dur => {
@@ -637,39 +640,40 @@ export default function NewRentalPage() {
                 }`}
                 style={selectedDuration === 'custom' ? { background: '#6366F1' } : {}}
               >
-                <p className="text-xs font-semibold">Autre</p>
-                <p className="text-xs mt-0.5 text-slate-300">manuel</p>
+                <p className="text-xs font-semibold">{t('customDuration')}</p>
+                <p className="text-xs mt-0.5 text-slate-300">{t('manualDuration')}</p>
               </button>
             </div>
           </div>
 
-          {/* Date retour */}
+          {/* Expected return */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Retour prévu</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('plannedReturn')}</label>
             <input type="datetime-local" value={form.expectedReturnAt}
               onChange={e => setForm({ ...form, expectedReturnAt: e.target.value })}
               className={INPUT} />
           </div>
 
-          {/* Accessoires */}
+          {/* Accessories */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-              Accessoires remis
-              {isEscooter && <span className="ml-2 text-red-500 normal-case font-semibold">— Casque obligatoire</span>}
+              {t('accessories')}
+              {isEscooter && <span className="ml-2 text-red-500 normal-case font-semibold">{t('escooterHelmetNote')}</span>}
             </label>
             <div className="space-y-2">
               {FIXED_ACCESSORIES.map(acc => {
                 const qty = accessoryQty[acc.type] ?? 0
                 const codes = accessoryCodes[acc.type] ?? []
                 const accPrice = acc.pricingKey ? (pricingGrid.accessories?.[acc.pricingKey] ?? 0) : 0
+                const accLabel = t(acc.tKey as Parameters<typeof t>[0])
                 return (
                   <div key={acc.type} className={`rounded-xl border px-3 py-2.5 transition-colors ${qty > 0 ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`}>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-700 flex items-center gap-2">
                         <acc.Icon size={13} className={qty > 0 ? 'text-indigo-500' : 'text-slate-400'} />
-                        <span className={qty > 0 ? 'font-semibold text-indigo-700' : 'text-slate-600'}>{acc.label}</span>
+                        <span className={qty > 0 ? 'font-semibold text-indigo-700' : 'text-slate-600'}>{accLabel}</span>
                         {accPrice > 0 && <span className="text-xs text-slate-400">+{accPrice} €</span>}
-                        {!acc.pricingKey && <span className="text-xs text-emerald-600 font-medium">inclus</span>}
+                        {!acc.pricingKey && <span className="text-xs text-emerald-600 font-medium">{t('included')}</span>}
                       </span>
                       <div className="flex items-center gap-2">
                         <button type="button" onClick={() => changeQty(acc.type, -1, acc.hasCode)} disabled={qty === 0}
@@ -683,7 +687,7 @@ export default function NewRentalPage() {
                     {qty > 0 && acc.hasCode && (
                       <div className="mt-2 space-y-1.5">
                         {Array.from({ length: qty }).map((_, i) => (
-                          <input key={i} type="text" placeholder={`Cadenas${qty > 1 ? ` ${i + 1}` : ''} — N° (optionnel)`}
+                          <input key={i} type="text" placeholder={`${t('lockPlaceholder')}${qty > 1 ? ` ${i + 1}` : ''}`}
                             value={codes[i] ?? ''}
                             onChange={e => setAccessoryCodes(prev => {
                               const arr = [...(prev[acc.type] ?? [])]
@@ -699,25 +703,25 @@ export default function NewRentalPage() {
               })}
             </div>
             {isEscooter && !hasHelmet && (
-              <p className="text-xs text-red-500 mt-1.5 font-medium">⚠️ Casque obligatoire pour une trottinette</p>
+              <p className="text-xs text-red-500 mt-1.5 font-medium">{t('helmetWarning')}</p>
             )}
           </div>
 
-          {/* Récap prix */}
+          {/* Price summary */}
           {calculatedTotal !== null && (
             <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
               <div className="flex items-center justify-between text-emerald-800">
-                <span className="text-sm">Prix calculé</span>
+                <span className="text-sm">{t('calculatedPrice')}</span>
                 <span className="font-bold text-base text-emerald-700">{calculatedTotal.toFixed(2)} €</span>
               </div>
               {accessoriesTotal > 0 && (
                 <div className="mt-1 text-xs text-emerald-600 space-y-0.5">
                   <div className="flex justify-between">
-                    <span>Base ({DURATIONS.find(d => d.key === selectedDuration)?.label})</span>
+                    <span>{t('base')} ({DURATIONS.find(d => d.key === selectedDuration)?.label})</span>
                     <span>{basePrice?.toFixed(2)} €</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Accessoires</span>
+                    <span>{t('accessories')}</span>
                     <span>+{accessoriesTotal.toFixed(2)} €</span>
                   </div>
                 </div>
@@ -725,14 +729,14 @@ export default function NewRentalPage() {
             </div>
           )}
 
-          {/* Montant encaissé */}
+          {/* Amount collected */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-slate-500">Montant encaissé (€) *</label>
+              <label className="block text-xs font-semibold text-slate-500">{t('amountCollected')}</label>
               {calculatedTotal !== null && manualPrice && (
                 <button type="button" onClick={() => { setManualPrice(false); setForm(f => ({ ...f, amountPaid: calculatedTotal.toFixed(2) })) }}
                   className="text-xs font-semibold hover:underline" style={{ color: '#6366F1' }}>
-                  ↩ Remettre {calculatedTotal.toFixed(2)} €
+                  {t('resetPrice')} {calculatedTotal.toFixed(2)} €
                 </button>
               )}
             </div>
@@ -741,19 +745,19 @@ export default function NewRentalPage() {
               placeholder="0.00"
               className="w-full border border-slate-200 rounded-xl px-3 py-3 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white text-slate-900 transition-colors" />
             {!selectedDuration && !form.amountPaid && (
-              <p className="text-xs text-slate-400 mt-1">↑ Sélectionnez une durée pour calculer automatiquement</p>
+              <p className="text-xs text-slate-400 mt-1">{t('selectDurationHint')}</p>
             )}
           </div>
 
-          {/* Mode paiement */}
+          {/* Payment method */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-2">Mode de paiement</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-2">{t('paymentMethod')}</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { value: 'CASH',     label: 'Espèces',  Icon: Banknote },
-                { value: 'CARD',     label: 'Carte',    Icon: CreditCard },
-                { value: 'BIZUM',    label: 'Bizum',    Icon: Smartphone },
-                { value: 'TRANSFER', label: 'Virement', Icon: Building2 },
+                { value: 'CASH',     label: tPayment('cash'),     Icon: Banknote },
+                { value: 'CARD',     label: tPayment('card'),     Icon: CreditCard },
+                { value: 'BIZUM',    label: tPayment('bizum'),    Icon: Smartphone },
+                { value: 'TRANSFER', label: tPayment('transfer'), Icon: Building2 },
               ].map(pm => (
                 <button key={pm.value} type="button" onClick={() => setForm({ ...form, paymentMethod: pm.value })}
                   className={`p-2.5 rounded-xl border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
@@ -768,17 +772,17 @@ export default function NewRentalPage() {
             </div>
           </div>
 
-          {/* Caution */}
+          {/* Deposit */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Caution (€)</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('deposit')} (€)</label>
             <div className="flex gap-2">
               <input type="number" min="0" step="0.01" value={form.depositAmount}
                 onChange={e => setForm({ ...form, depositAmount: e.target.value })}
                 className={`flex-1 ${INPUT}`} />
               <div className="flex gap-1">
                 {[
-                  { value: 'CASH', label: 'Espèces', Icon: Banknote },
-                  { value: 'CARD', label: 'Carte', Icon: CreditCard },
+                  { value: 'CASH', label: tPayment('cash'), Icon: Banknote },
+                  { value: 'CARD', label: tPayment('card'), Icon: CreditCard },
                 ].map(pm => (
                   <button key={pm.value} type="button"
                     onClick={() => setForm({ ...form, depositPaymentMethod: pm.value })}
@@ -796,7 +800,7 @@ export default function NewRentalPage() {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Notes</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('notes')}</label>
             <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2}
               className={`${INPUT} resize-none`} />
           </div>
@@ -804,50 +808,50 @@ export default function NewRentalPage() {
           <button onClick={() => setStep(4)} disabled={!canNextStep3}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
             style={{ background: '#6366F1' }}>
-            Continuer → Signature
+            {t('continueSig')}
           </button>
         </div>
       )}
 
-      {/* ─── ÉTAPE 4 — SIGNATURE ─── */}
+      {/* ─── STEP 4 — SIGNATURE ─── */}
       {step === 4 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-          <h2 className="font-semibold text-slate-900 text-sm">Signature du client</h2>
+          <h2 className="font-semibold text-slate-900 text-sm">{t('signatureTitle')}</h2>
 
-          {/* Récap */}
+          {/* Summary */}
           <div className="bg-slate-50 rounded-xl p-3 text-sm space-y-1.5">
-            <p className="font-semibold text-slate-900 text-xs uppercase tracking-wider mb-2">Récapitulatif</p>
-            <p className="text-slate-500 text-xs">Client : <span className="text-slate-800 font-medium">
+            <p className="font-semibold text-slate-900 text-xs uppercase tracking-wider mb-2">{t('summary')}</p>
+            <p className="text-slate-500 text-xs">{t('step1')} : <span className="text-slate-800 font-medium">
               {newCustomer ? `${customerForm.firstName} ${customerForm.lastName}` : customers.find(c => c.id === form.customerId)?.firstName + ' ' + customers.find(c => c.id === form.customerId)?.lastName}
             </span></p>
-            <p className="text-slate-500 text-xs">Vélo{selectedBikeIds.length > 1 ? 's' : ''} : <span className="text-slate-800 font-medium">
+            <p className="text-slate-500 text-xs">{t('step2')}{selectedBikeIds.length > 1 ? 's' : ''} : <span className="text-slate-800 font-medium">
               {selectedBikeIds.map(id => {
                 const b = bikes.find(x => x.id === id)
                 return b ? `${b.name} (${b.code})` : id
               }).join(' · ')}
             </span></p>
             {selectedDuration && selectedDuration !== 'custom' && (
-              <p className="text-slate-500 text-xs">Durée : <span className="text-slate-800 font-medium">{DURATIONS.find(d => d.key === selectedDuration)?.label}</span></p>
+              <p className="text-slate-500 text-xs">{t('rentalDuration')} : <span className="text-slate-800 font-medium">{DURATIONS.find(d => d.key === selectedDuration)?.label}</span></p>
             )}
-            <p className="text-slate-500 text-xs">Payé : <span className="font-bold text-emerald-600">{form.amountPaid} € — {form.paymentMethod}</span></p>
-            {Number(form.depositAmount) > 0 && <p className="text-slate-500 text-xs">Caution : <span className="text-slate-800 font-medium">{form.depositAmount} € — {form.depositPaymentMethod === 'CARD' ? 'Carte' : 'Espèces'}</span></p>}
+            <p className="text-slate-500 text-xs">{t('amountPaid')} : <span className="font-bold text-emerald-600">{form.amountPaid} € — {tPayment(form.paymentMethod.toLowerCase() as Parameters<typeof tPayment>[0])}</span></p>
+            {Number(form.depositAmount) > 0 && <p className="text-slate-500 text-xs">{t('deposit')} : <span className="text-slate-800 font-medium">{form.depositAmount} € — {tPayment(form.depositPaymentMethod.toLowerCase() as Parameters<typeof tPayment>[0])}</span></p>}
             {FIXED_ACCESSORIES.filter(a => (accessoryQty[a.type] ?? 0) > 0).length > 0 && (
-              <p className="text-slate-500 text-xs">Accessoires : <span className="text-slate-800 font-medium">
+              <p className="text-slate-500 text-xs">{t('accessories')} : <span className="text-slate-800 font-medium">
                 {FIXED_ACCESSORIES.filter(a => (accessoryQty[a.type] ?? 0) > 0)
                   .map(a => {
                     const codes = accessoryCodes[a.type] ?? []
                     const codeStr = codes.filter(Boolean).length > 0 ? ` (${codes.filter(Boolean).join(', ')})` : ''
-                    return `${accessoryQty[a.type]}× ${a.label}${codeStr}`
+                    return `${accessoryQty[a.type]}× ${t(a.tKey as Parameters<typeof t>[0])}${codeStr}`
                   }).join(' · ')}
               </span></p>
             )}
           </div>
 
-          {/* Conditions */}
+          {/* Terms */}
           {!hasReadTerms ? (
             <div>
               <p className="text-xs font-semibold text-slate-700 mb-2">
-                📋 Le client doit lire les conditions avant de signer :
+                📋 {t('termsTitle')}
               </p>
               <div
                 className="border border-slate-200 rounded-xl bg-slate-50 overflow-y-auto text-sm text-slate-700 leading-relaxed"
@@ -872,17 +876,17 @@ export default function NewRentalPage() {
                 <p className="mb-2"><strong>8.</strong> Datos personales tratados conforme al RGPD (UE 2016/679). / <em>Personal data processed in accordance with GDPR (EU 2016/679).</em> / Données personnelles traitées conformément au RGPD.</p>
                 <p className="mt-4 text-center text-xs text-slate-400">↓ Continuar desplazándose para aceptar · Scroll down to accept · Faites défiler pour accepter ↓</p>
               </div>
-              <p className="text-xs text-slate-400 text-center mt-2">Faites défiler jusqu&apos;en bas pour débloquer la signature</p>
+              <p className="text-xs text-slate-400 text-center mt-2">{t('scrollToSign')}</p>
             </div>
           ) : (
             <div>
               <div className="flex items-center gap-2 mb-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
                 <Check size={14} className="text-emerald-600" />
-                <p className="text-sm text-emerald-700 font-medium">Conditions lues — le client peut signer</p>
+                <p className="text-sm text-emerald-700 font-medium">{t('termsRead')}</p>
               </div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-slate-500">Le client signe ici :</p>
-                <button type="button" onClick={clearSignature} className="text-xs text-red-400 hover:text-red-500 transition-colors">Effacer</button>
+                <p className="text-xs font-semibold text-slate-500">{t('signHere')}</p>
+                <button type="button" onClick={clearSignature} className="text-xs text-red-400 hover:text-red-500 transition-colors">{t('clear')}</button>
               </div>
               <canvas
                 ref={canvasRef}
@@ -890,7 +894,7 @@ export default function NewRentalPage() {
                 onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
                 onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
               />
-              {!hasSigned && <p className="text-xs text-slate-400 text-center mt-1">← Signer avec le doigt ou la souris →</p>}
+              {!hasSigned && <p className="text-xs text-slate-400 text-center mt-1">{t('signWithFinger')}</p>}
             </div>
           )}
 
@@ -899,7 +903,7 @@ export default function NewRentalPage() {
           <button onClick={handleSubmit} disabled={loading || !hasSigned}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity flex items-center justify-center gap-2"
             style={{ background: '#6366F1' }}>
-            {loading ? 'Création...' : <><Check size={15} />Confirmer et ouvrir la location</>}
+            {loading ? t('creating') : <><Check size={15} />{t('confirmOpen')}</>}
           </button>
         </div>
       )}

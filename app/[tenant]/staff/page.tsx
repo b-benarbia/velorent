@@ -2,6 +2,7 @@ import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Plus, Clock, AlertTriangle, ChevronRight, Bike } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
 
 export default async function StaffPage({
   params,
@@ -10,6 +11,8 @@ export default async function StaffPage({
 }) {
   const { tenant } = await params
   const session = await requireSession()
+  const t = await getTranslations('staff')
+  const tNav = await getTranslations('nav')
 
   const activeRentals = await prisma.rental.findMany({
     where: { tenantId: session.tenantId, status: { in: ['ACTIVE', 'OVERDUE'] } },
@@ -44,15 +47,15 @@ export default async function StaffPage({
               <Bike size={16} color="white" />
             </div>
             <div>
-              <p style={{ color: 'white', fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>Mode Staff</p>
-              <p style={{ color: '#475569', fontSize: 12 }}>{activeRentals.length} location{activeRentals.length !== 1 ? 's' : ''} active{activeRentals.length !== 1 ? 's' : ''}</p>
+              <p style={{ color: 'white', fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{t('title')}</p>
+              <p style={{ color: '#475569', fontSize: 12 }}>{activeRentals.length} {activeRentals.length !== 1 ? t('activeRentalsPlural') : t('activeRentals')}</p>
             </div>
           </div>
           <Link
             href={`/${tenant}/dashboard`}
             style={{ color: '#475569', fontSize: 12, textDecoration: 'none' }}
           >
-            Tableau de bord →
+            {t('dashboard')}
           </Link>
         </div>
       </div>
@@ -74,7 +77,7 @@ export default async function StaffPage({
           <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Plus size={22} color="white" />
           </div>
-          Nouvelle location
+          {t('newRental')}
         </Link>
 
         {/* Alertes retard */}
@@ -83,7 +86,7 @@ export default async function StaffPage({
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
               <AlertTriangle size={14} color="#ef4444" />
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ef4444' }}>
-                En retard ({overdue.length})
+                {t('overdue')} ({overdue.length})
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -125,14 +128,14 @@ export default async function StaffPage({
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <Clock size={14} color="#6366F1" />
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6366F1' }}>
-              En cours ({active.length})
+              {t('inProgress')} ({active.length})
             </span>
           </div>
 
           {active.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 20px', background: 'white', borderRadius: 12, border: '1px solid #e2e8f0' }}>
               <Bike size={32} color="#cbd5e1" style={{ margin: '0 auto 10px' }} />
-              <p style={{ color: '#94a3b8', fontSize: 14 }}>Aucune location en cours</p>
+              <p style={{ color: '#94a3b8', fontSize: 14 }}>{t('noActive')}</p>
             </div>
           )}
 
@@ -170,14 +173,14 @@ export default async function StaffPage({
                       </p>
                       <div style={{ display: 'flex', gap: 10, marginTop: 3, alignItems: 'center' }}>
                         <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                          Sorti à {fmtTime(r.startAt)}
+                          {t('exitAt')} {fmtTime(r.startAt)}
                         </span>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#6366F1' }}>
                           {fmtDuration(r.startAt)}
                         </span>
                         {r.expectedReturnAt && (
                           <span style={{ fontSize: 12, color: isLate ? '#ef4444' : '#94a3b8' }}>
-                            · retour {fmtTime(r.expectedReturnAt)}
+                            · {t('returnAt')} {fmtTime(r.expectedReturnAt)}
                           </span>
                         )}
                       </div>

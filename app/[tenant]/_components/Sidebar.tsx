@@ -13,13 +13,15 @@ import {
   Search,
 } from 'lucide-react'
 import CommandPalette from './CommandPalette'
+import LanguageSwitcher from './LanguageSwitcher'
+import { useTranslations } from 'next-intl'
 
-const NAV_ITEMS = [
-  { key: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard, section: 'Principal', badgeKey: null },
-  { key: 'rentals',      label: 'Locations',     icon: Bike,            section: 'Principal', badgeKey: 'rentals' },
-  { key: 'reservations', label: 'Réservations',  icon: CalendarDays,    section: 'Principal', badgeKey: 'reservations' },
-  { key: 'bikes',        label: 'Flotte',        icon: Wrench,          section: 'Gestion',   badgeKey: null },
-  { key: 'accounting',   label: 'Compta',        icon: Receipt,         section: 'Gestion',   badgeKey: null },
+const NAV_KEYS = [
+  { key: 'dashboard',    tKey: 'dashboard',    icon: LayoutDashboard, section: 'principal', badgeKey: null },
+  { key: 'rentals',      tKey: 'rentals',      icon: Bike,            section: 'principal', badgeKey: 'rentals' },
+  { key: 'reservations', tKey: 'reservations', icon: CalendarDays,    section: 'principal', badgeKey: 'reservations' },
+  { key: 'bikes',        tKey: 'bikes',        icon: Wrench,          section: 'gestion',   badgeKey: null },
+  { key: 'accounting',   tKey: 'accounting',   icon: Receipt,         section: 'gestion',   badgeKey: null },
 ]
 
 interface SidebarProps {
@@ -32,24 +34,34 @@ interface SidebarProps {
 
 export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, pendingReservationsCount }: SidebarProps) {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   const badges: Record<string, number> = {
     rentals: activeRentalsCount,
     reservations: pendingReservationsCount,
   }
 
+  const NAV_ITEMS = NAV_KEYS.map(item => ({ ...item, label: t(item.tKey as Parameters<typeof t>[0]) }))
+
   const nav = [
     ...NAV_ITEMS,
-    ...(role === 'OWNER' ? [{ key: 'settings', label: 'Paramètres', icon: Settings, section: 'Accès', badgeKey: null }] : []),
+    ...(role === 'OWNER' ? [{ key: 'settings', tKey: 'settings', label: t('settings'), icon: Settings, section: 'acces', badgeKey: null }] : []),
   ]
 
   const mobileNav = nav.slice(0, 5)
 
-  const sections: { label: string; items: typeof NAV_ITEMS }[] = []
+  const SECTION_LABELS: Record<string, string> = {
+    principal: 'Principal',
+    gestion: 'Gestion',
+    acces: 'Accès',
+  }
+
+  const sections: { label: string; items: typeof nav }[] = []
   for (const item of nav) {
-    const sec = sections.find(s => s.label === item.section)
+    const secLabel = SECTION_LABELS[item.section] ?? item.section
+    const sec = sections.find(s => s.label === secLabel)
     if (sec) sec.items.push(item)
-    else sections.push({ label: item.section, items: [item] })
+    else sections.push({ label: secLabel, items: [item] })
   }
 
   return (
@@ -94,7 +106,7 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: '#475569' }}
           >
             <Search size={12} style={{ color: '#334155' }} />
-            <span className="flex-1 text-left">Rechercher...</span>
+            <span className="flex-1 text-left">{t('search')}</span>
             <kbd className="text-[10px] font-mono" style={{ color: '#1e3a5f' }}>⌘K</kbd>
           </button>
         </div>
@@ -168,9 +180,10 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-medium text-white truncate">{tenantSlug}</p>
-              <p className="text-[10px]" style={{ color: '#334155' }}>{role === 'OWNER' ? 'Propriétaire' : 'Employé'}</p>
+              <p className="text-[10px]" style={{ color: '#334155' }}>{role === 'OWNER' ? t('owner') : t('employee')}</p>
             </div>
           </div>
+          <LanguageSwitcher />
           <form action="/api/auth/logout" method="POST">
             <button
               type="submit"
@@ -188,7 +201,7 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
               }}
             >
               <LogOut size={14} />
-              Déconnexion
+              {t('logout')}
             </button>
           </form>
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { CalendarDays, Phone, Mail, Bike, Check, ArrowRight, Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface Bike {
   id: string
@@ -13,8 +14,8 @@ interface Bike {
 }
 
 const BIKE_TYPE_LABEL: Record<string, string> = {
-  CITY: 'Vélo de ville', ELECTRIC: 'Électrique', MOUNTAIN: 'VTT',
-  ROAD: 'Route', CARGO: 'Cargo', KIDS: 'Enfant', ESCOOTER: 'Trottinette',
+  CITY: 'City', ELECTRIC: 'Electric', MOUNTAIN: 'Mountain',
+  ROAD: 'Road', CARGO: 'Cargo', KIDS: 'Kids', ESCOOTER: 'E-Scooter',
 }
 
 interface Reservation {
@@ -32,11 +33,11 @@ interface Reservation {
   bike?: { name: string; code: string } | null
 }
 
-const STATUS = {
-  PENDING:   { label: 'En attente', color: 'bg-amber-50 text-amber-600' },
-  CONFIRMED: { label: 'Confirmée',  color: 'bg-emerald-50 text-emerald-600' },
-  CANCELLED: { label: 'Annulée',   color: 'bg-red-50 text-red-500' },
-  CONVERTED: { label: 'Convertie', color: 'bg-indigo-50 text-indigo-600' },
+const STATUS_COLOR = {
+  PENDING:   'bg-amber-50 text-amber-600',
+  CONFIRMED: 'bg-emerald-50 text-emerald-600',
+  CANCELLED: 'bg-red-50 text-red-500',
+  CONVERTED: 'bg-indigo-50 text-indigo-600',
 }
 
 const INPUT_CLASS = 'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white text-slate-900'
@@ -45,6 +46,8 @@ export default function ReservationsPage() {
   const params = useParams()
   const router = useRouter()
   const tenant = params.tenant as string
+  const t = useTranslations('reservations')
+  const tStatus = useTranslations('status')
 
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [bikes, setBikes] = useState<Bike[]>([])
@@ -77,7 +80,7 @@ export default function ReservationsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.customerName || !form.startAt || !form.endAt) {
-      setError('Nom, date de début et date de fin sont requis.')
+      setError(t('error'))
       return
     }
     setSaving(true)
@@ -117,31 +120,31 @@ export default function ReservationsPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Réservations</h1>
-          <p className="text-sm text-slate-400 mt-0.5">{pending.length} en attente</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-slate-400 mt-0.5">{pending.length} {t('pending').toLowerCase()}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-opacity"
           style={{ background: '#6366F1' }}
         >
-          <Plus size={15} /> Nouvelle réservation
+          <Plus size={15} /> {t('new')}
         </button>
       </div>
 
       {/* New reservation form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 space-y-4">
-          <h2 className="font-semibold text-slate-900 text-sm mb-2">Nouvelle réservation</h2>
+          <h2 className="font-semibold text-slate-900 text-sm mb-2">{t('new')}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Nom du client *</label>
+              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('customerName')} *</label>
               <input type="text" required value={form.customerName}
                 onChange={e => setForm(f => ({ ...f, customerName: e.target.value }))}
-                className={INPUT_CLASS} placeholder="Prénom Nom" />
+                className={INPUT_CLASS} placeholder="First Last" />
             </div>
             <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Téléphone</label>
+              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('phone') || 'Phone'}</label>
               <input type="tel" value={form.customerPhone}
                 onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))}
                 className={INPUT_CLASS} />
@@ -153,28 +156,28 @@ export default function ReservationsPage() {
                 className={INPUT_CLASS} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Début *</label>
+              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('start')} *</label>
               <input type="datetime-local" required value={form.startAt}
                 onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))}
                 className={INPUT_CLASS} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Fin *</label>
+              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('end')} *</label>
               <input type="datetime-local" required value={form.endAt}
                 onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))}
                 className={INPUT_CLASS} />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Vélo (optionnel)</label>
+              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('bikeOptional')}</label>
               <select value={form.bikeId} onChange={e => setForm(f => ({ ...f, bikeId: e.target.value }))} className={INPUT_CLASS}>
-                <option value="">— Pas encore assigné —</option>
+                <option value="">— —</option>
                 {bikes.map(b => (
                   <option key={b.id} value={b.id}>{b.name} ({b.code}) — {Number(b.dailyRate).toFixed(2)} €/j</option>
                 ))}
               </select>
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-slate-500 font-semibold block mb-1">Notes</label>
+              <label className="text-xs text-slate-500 font-semibold block mb-1">{t('notes') || 'Notes'}</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 rows={2} className={`${INPUT_CLASS} resize-none`} />
             </div>
@@ -184,36 +187,37 @@ export default function ReservationsPage() {
             <button type="submit" disabled={saving}
               className="flex-1 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
               style={{ background: '#6366F1' }}>
-              {saving ? 'Enregistrement...' : 'Créer la réservation'}
+              {saving ? t('saving') : t('new')}
             </button>
             <button type="button" onClick={() => setShowForm(false)}
               className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-slate-100 transition-colors">
-              Annuler
+              {t('cancel')}
             </button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <div className="text-slate-400 text-sm text-center py-12">Chargement...</div>
+        <div className="text-slate-400 text-sm text-center py-12">{t('loading') || 'Loading...'}</div>
       ) : (
         <>
           {pending.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center mb-6">
               <div className="flex justify-center mb-2"><CalendarDays size={24} className="text-slate-200" /></div>
-              <p className="text-sm text-slate-400">Aucune réservation en attente</p>
+              <p className="text-sm text-slate-400">{t('noPending')}</p>
             </div>
           ) : (
             <div className="space-y-3 mb-6">
               {pending.map(r => {
-                const st = STATUS[r.status as keyof typeof STATUS]
+                const stColor = STATUS_COLOR[r.status as keyof typeof STATUS_COLOR] ?? 'bg-slate-50 text-slate-500'
+                const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
                 return (
                   <div key={r.id} className="bg-white border border-slate-200 rounded-2xl p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
                           <p className="font-semibold text-slate-900 text-sm">{r.customerName}</p>
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stColor}`}>{stLabel}</span>
                         </div>
                         <div className="text-xs text-slate-400 space-y-1">
                           {r.customerPhone && <p className="flex items-center gap-1.5"><Phone size={11} className="text-slate-300 flex-shrink-0" />{r.customerPhone}</p>}
@@ -233,17 +237,17 @@ export default function ReservationsPage() {
                           <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
                             className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
                             style={{ background: '#10b981' }}>
-                            <Check size={11} />Confirmer
+                            <Check size={11} />{t('confirm')}
                           </button>
                         )}
                         <button onClick={() => convertToRental(r)}
                           className="text-xs text-white px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
                           style={{ background: '#6366F1' }}>
-                          <Bike size={11} />Louer <ArrowRight size={10} />
+                          <Bike size={11} />{t('convert')} <ArrowRight size={10} />
                         </button>
                         <button onClick={() => updateStatus(r.id, 'CANCELLED')}
                           className="text-xs text-slate-400 hover:text-red-500 transition-colors">
-                          Annuler
+                          {t('cancel')}
                         </button>
                       </div>
                     </div>
@@ -255,10 +259,11 @@ export default function ReservationsPage() {
 
           {past.length > 0 && (
             <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">Historique</p>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">{t('history')}</p>
               <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-50 overflow-hidden">
                 {past.map(r => {
-                  const st = STATUS[r.status as keyof typeof STATUS]
+                  const stColor = STATUS_COLOR[r.status as keyof typeof STATUS_COLOR] ?? 'bg-slate-50 text-slate-500'
+                  const stLabel = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
                   return (
                     <div key={r.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
                       <div>
@@ -267,7 +272,7 @@ export default function ReservationsPage() {
                           {new Date(r.startAt).toLocaleDateString('fr-FR')} → {new Date(r.endAt).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
-                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${st.color}`}>{st.label}</span>
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${stColor}`}>{stLabel}</span>
                     </div>
                   )
                 })}

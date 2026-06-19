@@ -7,6 +7,7 @@ import {
   Shield, BatteryCharging, ShoppingBasket,
   Info, Users, Eye, EyeOff, CheckCircle2,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface StaffMember {
   id: string
@@ -19,32 +20,32 @@ const DURATIONS = [
   { key: '1h',    label: '1h' },
   { key: '2h',    label: '2h' },
   { key: '4h',    label: '4h' },
-  { key: '1day',  label: '1 jour' },
+  { key: '1day',  label: '1 day' },
   { key: '24h',   label: '24h' },
-  { key: '2days', label: '2 jours' },
-  { key: '3days', label: '3 jours' },
-  { key: '4days', label: '4 jours' },
-  { key: '5days', label: '5 jours' },
-  { key: '6days', label: '6 jours' },
-  { key: 'week',  label: 'Semaine' },
-  { key: 'extra', label: '+1j extra' },
+  { key: '2days', label: '2 days' },
+  { key: '3days', label: '3 days' },
+  { key: '4days', label: '4 days' },
+  { key: '5days', label: '5 days' },
+  { key: '6days', label: '6 days' },
+  { key: 'week',  label: 'Week' },
+  { key: 'extra', label: '+1d' },
 ] as const
 
 const BIKE_TYPES = [
-  { key: 'CITY',     label: 'Vélo ville',      Icon: Bike },
-  { key: 'ELECTRIC', label: 'Vélo électrique', Icon: Zap },
-  { key: 'MOUNTAIN', label: 'VTT',             Icon: Mountain },
-  { key: 'ESCOOTER', label: 'Trottinette',     Icon: Gauge },
-  { key: 'CARGO',    label: 'Cargo',           Icon: Package },
-  { key: 'KIDS',     label: 'Enfant',          Icon: Heart },
-  { key: 'ROAD',     label: 'Vélo route',      Icon: Flag },
+  { key: 'CITY',     label: 'City',      Icon: Bike },
+  { key: 'ELECTRIC', label: 'Electric',  Icon: Zap },
+  { key: 'MOUNTAIN', label: 'Mountain',  Icon: Mountain },
+  { key: 'ESCOOTER', label: 'E-Scooter', Icon: Gauge },
+  { key: 'CARGO',    label: 'Cargo',     Icon: Package },
+  { key: 'KIDS',     label: 'Kids',      Icon: Heart },
+  { key: 'ROAD',     label: 'Road',      Icon: Flag },
 ] as const
 
 const ACCESSORIES = [
-  { key: 'HELMET',     label: 'Casque',       Icon: Shield },
-  { key: 'CHILD_SEAT', label: 'Siège enfant', Icon: Heart },
-  { key: 'CHARGER',    label: 'Chargeur',     Icon: BatteryCharging },
-  { key: 'BASKET',     label: 'Panier',       Icon: ShoppingBasket },
+  { key: 'HELMET',     label: 'Helmet',     Icon: Shield },
+  { key: 'CHILD_SEAT', label: 'Child seat', Icon: Heart },
+  { key: 'CHARGER',    label: 'Charger',    Icon: BatteryCharging },
+  { key: 'BASKET',     label: 'Basket',     Icon: ShoppingBasket },
 ]
 
 type DurationKey = typeof DURATIONS[number]['key']
@@ -60,6 +61,7 @@ type PricingGrid = {
 export default function SettingsPage() {
   const params = useParams()
   const tenant = params.tenant as string
+  const t = useTranslations('settings')
 
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -113,10 +115,10 @@ export default function SettingsPage() {
         setTimeout(() => setPricingSaved(false), 3000)
       } else {
         const data = await res.json()
-        setPricingError(data.error ?? `Erreur ${res.status}`)
+        setPricingError(data.error ?? `${t('errorStatus')} ${res.status}`)
       }
     } catch {
-      setPricingError('Erreur réseau')
+      setPricingError(t('networkError'))
     }
     setPricingLoading(false)
   }
@@ -135,7 +137,7 @@ export default function SettingsPage() {
     if (!res.ok) {
       setError(data.error)
     } else {
-      setSuccess(`Compte créé · Email : ${form.email}`)
+      setSuccess(t('accountCreated') + form.email)
       setForm({ firstName: '', lastName: '', email: '', password: '' })
       setShowForm(false)
       loadStaff()
@@ -144,7 +146,7 @@ export default function SettingsPage() {
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Supprimer le compte de ${name} ?`)) return
+    if (!confirm(t('confirmDelete', { name }))) return
     await fetch('/api/staff', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -172,11 +174,11 @@ export default function SettingsPage() {
   return (
     <div style={{ maxWidth: 900 }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>Paramètres</h1>
-        <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>Gérez votre boutique, vos tarifs et votre équipe</p>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>{t('title')}</h1>
+        <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>{t('subtitle')}</p>
       </div>
 
-      {/* ─── COMPTE STAFF ─── */}
+      {/* ─── STAFF ACCOUNT ─── */}
       <div style={cardStyle}>
         <div style={cardHeaderStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -184,8 +186,8 @@ export default function SettingsPage() {
               <Users size={15} color="white" />
             </div>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Compte staff ({staff.length})</p>
-              <p style={{ fontSize: 11, color: '#94a3b8' }}>Accès limité : nouvelles locations + clôture + réservations</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('staffAccount')} ({staff.length})</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('staffSubtitle')}</p>
             </div>
           </div>
           <button
@@ -197,49 +199,49 @@ export default function SettingsPage() {
               fontSize: 12, fontWeight: 600, cursor: 'pointer',
             }}
           >
-            {showForm ? 'Annuler' : '+ Créer un compte'}
+            {showForm ? t('cancel') : t('createAccount')}
           </button>
         </div>
 
-        {/* Explication */}
+        {/* Info */}
         <div style={{ padding: '12px 20px', background: '#fafbff', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <Info size={14} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
           <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
-            Créez <strong>un seul compte partagé</strong> (ex: <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>staff@votreboutique.com</span>) et donnez l&apos;email + mot de passe à tous vos stagiaires. Ils se connectent sur <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>/login</span> et arrivent directement sur l&apos;interface staff.
+            {t('staffInfo')} <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>staff@yourshop.com</span> — <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>/login</span>
           </p>
         </div>
 
-        {/* Formulaire création */}
+        {/* Create form */}
         {showForm && (
           <form onSubmit={handleCreate} style={{ padding: 20, borderBottom: '1px solid #f1f5f9', background: '#fafbff' }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Nouveau compte staff</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>{t('newStaff')}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prénom</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('firstName')}</label>
                 <input type="text" required value={form.firstName}
                   onChange={e => setForm({ ...form, firstName: e.target.value })}
                   style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Nom</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('lastName')}</label>
                 <input type="text" required value={form.lastName}
                   onChange={e => setForm({ ...form, lastName: e.target.value })}
                   style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email de connexion</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('loginEmail')}</label>
               <input type="email" required value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
-                placeholder="staff@votreboutique.com"
+                placeholder="staff@yourshop.com"
                 style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Mot de passe</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('password')}</label>
               <div style={{ position: 'relative' }}>
                 <input type={showPwd ? 'text' : 'password'} required minLength={6} value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="Min. 6 caractères"
+                  placeholder={t('minPassword')}
                   style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 40px 8px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                 <button type="button" onClick={() => setShowPwd(!showPwd)}
                   style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
@@ -250,7 +252,7 @@ export default function SettingsPage() {
             {error && <p style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{error}</p>}
             <button type="submit" disabled={loading}
               style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
-              {loading ? 'Création...' : 'Créer le compte staff'}
+              {loading ? t('creating') : t('createStaff')}
             </button>
           </form>
         )}
@@ -264,7 +266,7 @@ export default function SettingsPage() {
 
         {staff.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-            Aucun compte staff — cliquez sur &quot;Créer un compte&quot; pour commencer
+            {t('noStaff')}
           </div>
         ) : (
           <div>
@@ -283,7 +285,7 @@ export default function SettingsPage() {
                   <span style={{ fontSize: 11, background: '#f0fdf4', color: '#16a34a', borderRadius: 6, padding: '3px 8px', fontWeight: 600 }}>Staff</span>
                   <button onClick={() => handleDelete(s.id, s.name)}
                     style={{ fontSize: 12, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                    Supprimer
+                    {t('deleteStaff')}
                   </button>
                 </div>
               </div>
@@ -292,12 +294,12 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* ─── TARIFS ─── */}
+      {/* ─── PRICING ─── */}
       <div style={cardStyle}>
         <div style={cardHeaderStyle}>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Grille tarifaire</p>
-            <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Saisissez vos tarifs — ils se calculent automatiquement à chaque location</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('pricing')}</p>
+            <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{t('pricingSubtitle')}</p>
           </div>
           <button
             onClick={savePricing}
@@ -311,7 +313,7 @@ export default function SettingsPage() {
               opacity: pricingLoading ? 0.6 : 1,
             }}
           >
-            {pricingLoading ? 'Sauvegarde...' : pricingSaved ? '✅ Sauvegardé' : pricingError ? '❌ Erreur' : 'Sauvegarder'}
+            {pricingLoading ? t('saving') : pricingSaved ? `✅ ${t('saved')}` : pricingError ? `❌ ${t('errorStatus')}` : t('save')}
           </button>
         </div>
 
@@ -323,7 +325,7 @@ export default function SettingsPage() {
           <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <th style={{ textAlign: 'left', paddingBottom: 8, paddingRight: 16, fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>Véhicule</th>
+                <th style={{ textAlign: 'left', paddingBottom: 8, paddingRight: 16, fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>{t('vehicle')}</th>
                 {DURATIONS.map(d => (
                   <th key={d.key} style={{ paddingBottom: 8, paddingInline: 6, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 72 }}>
                     {d.label}
@@ -361,7 +363,7 @@ export default function SettingsPage() {
         </div>
 
         <div style={{ padding: '0 20px 20px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Accessoires</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>{t('accessories')}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
             {ACCESSORIES.map(acc => (
               <div key={acc.key} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px' }}>
@@ -378,22 +380,22 @@ export default function SettingsPage() {
                   />
                   <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#cbd5e1', pointerEvents: 'none' }}>€</span>
                 </div>
-                <p style={{ fontSize: 10, color: '#cbd5e1', marginTop: 4 }}>par location</p>
+                <p style={{ fontSize: 10, color: '#cbd5e1', marginTop: 4 }}>{t('perRental')}</p>
               </div>
             ))}
           </div>
           <p style={{ fontSize: 11, color: '#cbd5e1', marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Info size={11} /> Le cadenas est inclus. Laissez vide si l&apos;accessoire est offert.
+            <Info size={11} /> {t('lockIncluded')}
           </p>
         </div>
       </div>
 
-      {/* ─── INFO BOUTIQUE ─── */}
+      {/* ─── SHOP INFO ─── */}
       <div style={{ ...cardStyle, marginBottom: 0 }}>
         <div style={{ padding: '16px 20px' }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Boutique</p>
-          <p style={{ fontSize: 13, color: '#64748b' }}>Slug : <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>{tenant}</span></p>
-          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Pour modifier le nom ou les infos du shop, contactez le support VeloRent.</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>{t('shop')}</p>
+          <p style={{ fontSize: 13, color: '#64748b' }}>{t('slug')} : <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>{tenant}</span></p>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>{t('contactSupport')}</p>
         </div>
       </div>
     </div>

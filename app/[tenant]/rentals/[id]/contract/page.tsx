@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PrintButton from './PrintButton'
+import { getTranslations } from 'next-intl/server'
 
 export default async function ContractPage({
   params,
@@ -18,6 +19,8 @@ export default async function ContractPage({
   })
 
   if (!rental) notFound()
+
+  const tRentals = await getTranslations('rentals')
 
   const PAYMENT_LABEL: Record<string, string> = {
     CASH: 'Efectivo / Espèces', CARD: 'Tarjeta / Carte bancaire',
@@ -51,7 +54,7 @@ export default async function ContractPage({
           href={`/${tenant}/rentals`}
           className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-medium hover:border-indigo-300 hover:text-indigo-600 transition-colors"
         >
-          ← Retour aux locations
+          ← {tRentals('backToList')}
         </Link>
       </div>
 

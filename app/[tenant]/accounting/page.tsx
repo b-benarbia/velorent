@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Download, TrendingUp } from 'lucide-react'
 import AnimatedNumber from '../_components/AnimatedNumber'
+import { useTranslations } from 'next-intl'
 
 interface Invoice {
   id: string
@@ -20,8 +21,8 @@ interface Invoice {
   }
 }
 
-const PAYMENT_LABEL: Record<string, string> = {
-  CASH: 'Espèces', CARD: 'Carte', BIZUM: 'Bizum', TRANSFER: 'Virement',
+const PAYMENT_LABEL_KEY: Record<string, string> = {
+  CASH: 'cash', CARD: 'card', BIZUM: 'bizum', TRANSFER: 'transfer',
 }
 
 const PAYMENT_COLOR: Record<string, string> = {
@@ -96,6 +97,9 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
 }
 
 export default function AccountingPage() {
+  const t = useTranslations('accounting')
+  const tPayment = useTranslations('payment')
+  const tCommon = useTranslations('common')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [monthFilter, setMonthFilter] = useState<string>('')
@@ -105,6 +109,8 @@ export default function AccountingPage() {
       .then(r => r.json())
       .then(data => { setInvoices(Array.isArray(data) ? data : []); setLoading(false) })
   }, [])
+
+  const getPaymentLabel = (method: string) => tPayment((PAYMENT_LABEL_KEY[method] ?? 'cash') as Parameters<typeof tPayment>[0])
 
   const months = useMemo(() =>
     Array.from(new Set(invoices.map(inv => inv.issuedAt.slice(0, 7)))).sort().reverse()
@@ -167,23 +173,23 @@ export default function AccountingPage() {
       .sort(([, a], [, b]) => b - a)
       .map(([method, amount]) => ({
         method,
-        label: PAYMENT_LABEL[method] ?? method,
+        label: tPayment((PAYMENT_LABEL_KEY[method] ?? 'cash') as Parameters<typeof tPayment>[0]),
         amount,
         pct: Math.round((amount / total) * 100),
         color: PAYMENT_COLOR[method] ?? '#6366F1',
       }))
-  }, [filtered])
+  }, [filtered, tPayment])
 
   function exportCSV() {
     const rows = [
-      ['Numéro', 'Date', 'Client', 'Vélo', 'Code', 'Paiement', 'HT (€)', 'TVA (%)', 'TTC (€)'],
+      ['#', 'Date', 'Client', 'Bike', 'Code', 'Payment', 'HT (€)', 'TVA (%)', 'TTC (€)'],
       ...filtered.map(inv => [
         inv.number,
         new Date(inv.issuedAt).toLocaleDateString('fr-FR'),
         `${inv.rental.customer.firstName} ${inv.rental.customer.lastName}`,
         inv.rental.bike.name,
         inv.rental.bike.code,
-        PAYMENT_LABEL[inv.rental.paymentMethod] ?? inv.rental.paymentMethod,
+        getPaymentLabel(inv.rental.paymentMethod),
         Number(inv.amountHt).toFixed(2),
         (Number(inv.taxRate) * 100).toFixed(0),
         Number(inv.amountTtc).toFixed(2),
@@ -201,7 +207,7 @@ export default function AccountingPage() {
 
   const monthLabel = monthFilter
     ? new Date(monthFilter + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-    : 'toute la période'
+    : t('allPeriod')
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -209,8 +215,8 @@ export default function AccountingPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Comptabilité</h1>
-          <p className="text-sm text-slate-400 mt-0.5">{filtered.length} facture{filtered.length !== 1 ? 's' : ''} · {monthLabel}</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-slate-400 mt-0.5">{filtered.length} · {monthLabel}</p>
         </div>
         <button
           onClick={exportCSV}
@@ -218,7 +224,7 @@ export default function AccountingPage() {
           className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40 transition-opacity"
           style={{ background: '#6366F1' }}
         >
-          <Download size={14} /> Exporter CSV
+          <Download size={14} /> {t('exportCsv')}
         </button>
       </div>
 
@@ -233,7 +239,7 @@ export default function AccountingPage() {
             border: !monthFilter ? 'none' : '1px solid #e2e8f0',
           }}
         >
-          Toute la période
+          {t('allPeriod')}
         </button>
         {months.map(m => {
           const active = monthFilter === m
@@ -255,38 +261,38 @@ export default function AccountingPage() {
       </div>
 
       {loading ? (
-        <div className="py-20 text-center text-slate-400 text-sm">Chargement...</div>
+        <div className="py-20 text-center text-slate-400 text-sm">{t('loading') || 'Loading...'}</div>
       ) : (
         <>
           {/* KPI cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 stagger">
             <div className="bg-white border border-slate-200 rounded-2xl p-4 card-hover">
-              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">CA TTC</p>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{t('ttcTotal')}</p>
               <p className="text-2xl font-semibold tracking-tight" style={{ color: '#6366F1' }}>
                 <AnimatedNumber value={totalTtc} decimals={2} suffix=" €" duration={800} />
               </p>
               <p className="text-xs text-slate-400 mt-1">{monthLabel}</p>
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 card-hover">
-              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">CA HT</p>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{t('htTotal')}</p>
               <p className="text-2xl font-semibold tracking-tight text-slate-900">
                 <AnimatedNumber value={totalHt} decimals={2} suffix=" €" duration={800} />
               </p>
-              <p className="text-xs text-slate-400 mt-1">hors taxes</p>
+              <p className="text-xs text-slate-400 mt-1">{t('excludingTax')}</p>
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 card-hover">
-              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">TVA collectée</p>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{t('taxCollected')}</p>
               <p className="text-2xl font-semibold tracking-tight text-amber-500">
                 <AnimatedNumber value={totalTva} decimals={2} suffix=" €" duration={800} />
               </p>
-              <p className="text-xs text-slate-400 mt-1">à reverser</p>
+              <p className="text-xs text-slate-400 mt-1">{t('taxToReturn')}</p>
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 card-hover">
-              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">Factures</p>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{t('invoices') || 'Invoices'}</p>
               <p className="text-2xl font-semibold tracking-tight text-slate-900">
                 <AnimatedNumber value={filtered.length} duration={600} />
               </p>
-              <p className="text-xs text-slate-400 mt-1">locations clôturées</p>
+              <p className="text-xs text-slate-400 mt-1">{t('invoicesCount')}</p>
             </div>
           </div>
 
@@ -295,7 +301,7 @@ export default function AccountingPage() {
             <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-semibold text-slate-900">
-                  {monthFilter ? 'CA par jour' : 'Évolution du CA'}
+                  {monthFilter ? t('revenueByDay') : t('revenueEvolution')}
                 </p>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400">
                   <TrendingUp size={12} style={{ color: '#6366F1' }} />
@@ -312,9 +318,9 @@ export default function AccountingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {/* Payment breakdown */}
               <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                <p className="text-sm font-semibold text-slate-900 mb-4">Par mode de paiement</p>
+                <p className="text-sm font-semibold text-slate-900 mb-4">{t('byPaymentMethod')}</p>
                 {paymentBreakdown.length === 0 ? (
-                  <p className="text-sm text-slate-400">Aucune donnée</p>
+                  <p className="text-sm text-slate-400">{tCommon('noResults')}</p>
                 ) : (
                   <div className="space-y-3">
                     {paymentBreakdown.map(pm => (
@@ -340,22 +346,22 @@ export default function AccountingPage() {
 
               {/* Panier moyen */}
               <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                <p className="text-sm font-semibold text-slate-900 mb-3">Panier moyen</p>
+                <p className="text-sm font-semibold text-slate-900 mb-3">{t('averageBasket')}</p>
                 <p className="text-3xl font-semibold tracking-tight mb-1" style={{ color: '#6366F1' }}>
                   <AnimatedNumber value={avgTtc} decimals={2} suffix=" €" duration={700} />
                 </p>
-                <p className="text-xs text-slate-400 mb-5">par location</p>
+                <p className="text-xs text-slate-400 mb-5">{t('perRental')}</p>
                 <div className="space-y-2.5 border-t border-slate-100 pt-4">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Location la plus haute</span>
+                    <span className="text-slate-400">{t('highest')}</span>
                     <span className="font-semibold text-slate-700">{maxTtc.toFixed(2)} €</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Médiane</span>
+                    <span className="text-slate-400">{t('median')}</span>
                     <span className="font-semibold text-slate-700">{medianTtc.toFixed(2)} €</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Location la plus basse</span>
+                    <span className="text-slate-400">{t('lowest')}</span>
                     <span className="font-semibold text-slate-700">{minTtc.toFixed(2)} €</span>
                   </div>
                 </div>
@@ -366,22 +372,22 @@ export default function AccountingPage() {
           {/* Table */}
           {filtered.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center">
-              <p className="text-slate-400 text-sm">Aucune facture{monthFilter ? ' ce mois' : ''}</p>
+              <p className="text-slate-400 text-sm">{t('noInvoices')}</p>
             </div>
           ) : (
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">Détail des factures</p>
+                <p className="text-sm font-semibold text-slate-900">{t('invoiceDetail')}</p>
                 <div className="flex items-center gap-3 text-xs text-slate-400">
-                  <span>HT total : <span className="font-semibold text-slate-700">{totalHt.toFixed(2)} €</span></span>
-                  <span>TTC total : <span className="font-semibold" style={{ color: '#6366F1' }}>{totalTtc.toFixed(2)} €</span></span>
+                  <span>{t('htTotal')} : <span className="font-semibold text-slate-700">{totalHt.toFixed(2)} €</span></span>
+                  <span>{t('ttcTotal')} : <span className="font-semibold" style={{ color: '#6366F1' }}>{totalTtc.toFixed(2)} €</span></span>
                 </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: '#F8FAFC' }}>
-                      {['Numéro', 'Date', 'Client', 'Vélo', 'Paiement', 'HT', 'TTC'].map((h, i) => (
+                      {['#', 'Date', 'Client', 'Bike', 'Pay.', 'HT', 'TTC'].map((h, i) => (
                         <th
                           key={h}
                           className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 ${i >= 5 ? 'text-right' : 'text-left'}`}
@@ -392,7 +398,7 @@ export default function AccountingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((inv, idx) => (
+                    {filtered.map((inv) => (
                       <tr
                         key={inv.id}
                         className="border-t border-slate-50 hover:bg-slate-50 transition-colors"
@@ -413,7 +419,7 @@ export default function AccountingPage() {
                             className="text-[11px] font-medium px-2 py-0.5 rounded-full"
                             style={{ background: 'rgba(99,102,241,0.08)', color: '#6366F1' }}
                           >
-                            {PAYMENT_LABEL[inv.rental.paymentMethod] ?? inv.rental.paymentMethod}
+                            {getPaymentLabel(inv.rental.paymentMethod)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right text-xs text-slate-500">{Number(inv.amountHt).toFixed(2)} €</td>

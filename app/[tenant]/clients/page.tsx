@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 interface Customer {
   id: string
@@ -20,6 +21,7 @@ export default function ClientsPage() {
   const params = useParams()
   const router = useRouter()
   const tenant = params.tenant as string
+  const t = useTranslations('clients')
 
   const [customers, setCustomers] = useState<Customer[]>([])
   const [search, setSearch] = useState('')
@@ -43,22 +45,26 @@ export default function ClientsPage() {
   })
 
   const docLabel: Record<string, string> = {
-    PASSPORT: 'Passeport', DNI: 'DNI', NIE: 'NIE',
-    ID_CARD: "CNI", DRIVING_LICENSE: 'Permis', OTHER: 'Autre',
+    PASSPORT:        t('passport'),
+    DNI:             'DNI',
+    NIE:             'NIE',
+    ID_CARD:         t('idCard'),
+    DRIVING_LICENSE: t('drivingLicense'),
+    OTHER:           t('other'),
   }
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{customers.length} client{customers.length !== 1 ? 's' : ''} enregistré{customers.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{customers.length} {t('rentalsCount').toLowerCase()}</p>
         </div>
         <Link
           href={`/${tenant}/rentals/new`}
           className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + Nouvelle location
+          + {t('newRental')}
         </Link>
       </div>
 
@@ -66,7 +72,7 @@ export default function ClientsPage() {
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Rechercher par nom, email, téléphone, numéro de pièce..."
+          placeholder={t('searchPlaceholder')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -74,10 +80,10 @@ export default function ClientsPage() {
       </div>
 
       {loading ? (
-        <div className="text-gray-400 text-sm text-center py-12">Chargement...</div>
+        <div className="text-gray-400 text-sm text-center py-12">{t('loading')}</div>
       ) : filtered.length === 0 ? (
         <div className="text-gray-400 text-sm text-center py-12">
-          {search ? 'Aucun client trouvé' : 'Aucun client enregistré'}
+          {search ? t('noResults') : t('noClients')}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
@@ -88,7 +94,6 @@ export default function ClientsPage() {
               className="w-full text-left px-5 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-4 min-w-0">
-                {/* Avatar */}
                 <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center flex-shrink-0 uppercase">
                   {c.firstName[0]}{c.lastName[0]}
                 </div>
@@ -108,7 +113,7 @@ export default function ClientsPage() {
                     <p className="text-xs font-mono text-gray-600">{c.documentNumber}</p>
                   </div>
                 ) : (
-                  <span className="text-xs text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">Sans pièce</span>
+                  <span className="text-xs text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">{t('noDocument')}</span>
                 )}
               </div>
             </button>

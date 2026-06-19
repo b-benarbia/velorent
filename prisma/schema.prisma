@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
+  
 }
 
 // ─────────────────────────────────────────────
@@ -36,8 +37,6 @@ model Tenant {
   // ex: {"valencia": 2, "outside_20km": 5, "road": 0}
   insuranceConfig Json    @default("{}")
 
-  pricingGrid     Json    @default("{}")
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -49,8 +48,6 @@ model Tenant {
   reservations Reservation[]
   invoices     Invoice[]
   partners     Partner[]
-
-  accessories  Accessory[]
 
   @@map("tenants")
 }
@@ -143,7 +140,6 @@ model Customer {
   documentNumber String?
   documentPhotoUrl String?    // Photo du document stockée
   nationality    String?
-  address        String?
   hotelName      String?      // Si client d'hôtel partenaire
   notes          String?      // Blacklist, préférences, incidents
   createdAt      DateTime     @default(now())
@@ -156,9 +152,6 @@ model Customer {
 }
 
 enum DocumentType {
-  DNI
-  NIE
-  OTHER
   PASSPORT
   ID_CARD
   DRIVING_LICENSE
@@ -213,16 +206,12 @@ model Rental {
   // Contrat
   contractPdfUrl   String?    // URL du PDF généré
   contractSigned   Boolean    @default(false)
-  openingSignature String?    // Base64 PNG signature ouverture
-  closingSignature String?    // Base64 PNG signature retour
-  staffSignature   String?    // Base64 PNG signature staff au retour
 
   // Source
   source           RentalSource @default(WALKIN)
   reservationId    String?    // Si venu d'une réservation online
   partnerId        String?    // Si venu d'un hôtel partenaire
 
-  documentPhoto    String?    // Base64 photo pièce identité
   notes            String?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
@@ -277,10 +266,9 @@ model Reservation {
   bikeId        String?           // null = "n'importe quel vélo du type"
   bikeType      BikeType?
   customerId    String?
-  customerEmail   String            // Pour notifications avant confirmation
-  customerName    String
-  customerPhone   String?
-  customerAddress String?           // Adresse postale du client
+  customerEmail String            // Pour notifications avant confirmation
+  customerName  String
+  customerPhone String?
 
   status        ReservationStatus @default(PENDING)
   source        RentalSource      @default(ONLINE)
@@ -359,31 +347,3 @@ model Partner {
 
   @@map("partners")
 }
-
-// ─────────────────────────────────────────────
-// ACCESSORY — Inventaire des accessoires
-// ─────────────────────────────────────────────
-enum AccessoryType {
-  LOCK
-  HELMET
-  CHARGER
-  BASKET
-  CHILD_SEAT
-  OTHER
-}
-
-model Accessory {
-  id        String        @id @default(uuid())
-  tenantId  String
-  type      AccessoryType
-  name      String
-  code      String?       // ex: "K-42" pour un cadenas
-  status    String        @default("AVAILABLE")
-  notes     String?
-  createdAt DateTime      @default(now())
-
-  tenant  Tenant            @relation(fields: [tenantId], references: [id])
-
-  @@map("accessories")
-}
-

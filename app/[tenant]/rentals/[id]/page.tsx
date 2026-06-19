@@ -4,16 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertTriangle, Check, FileText, Phone, Bike, Clock, CreditCard, Shield, ArrowLeft, PenLine } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface Rental {
   id: string; status: string; startAt: string; expectedReturnAt: string | null
   depositAmount: number; amountPaid: number | null; paymentMethod: string; notes: string | null
   bike: { id: string; name: string; code: string; dailyRate: number }
   customer: { id: string; firstName: string; lastName: string; phone: string | null }
-}
-
-const PAYMENT_LABEL: Record<string, string> = {
-  CASH: 'Espèces', CARD: 'Carte', BIZUM: 'Bizum', TRANSFER: 'Virement',
 }
 
 function initCanvas(canvas: HTMLCanvasElement, color: string) {
@@ -38,6 +35,8 @@ export default function RentalDetailPage() {
   const params = useParams()
   const tenant = params.tenant as string
   const id = params.id as string
+  const t = useTranslations('rentals')
+  const tPayment = useTranslations('payment')
 
   const [rental, setRental] = useState<Rental | null>(null)
   const [now, setNow] = useState(new Date())
@@ -146,6 +145,7 @@ export default function RentalDetailPage() {
   const isOverdue = rental.status === 'ACTIVE' && rental.expectedReturnAt && new Date(rental.expectedReturnAt) < now
   const isActive = rental.status === 'ACTIVE'
   const initials = `${rental.customer.firstName[0]}${rental.customer.lastName[0]}`.toUpperCase()
+  const paymentLabel = tPayment(rental.paymentMethod.toLowerCase() as Parameters<typeof tPayment>[0])
 
   return (
     <div className="max-w-lg mx-auto">
@@ -156,13 +156,13 @@ export default function RentalDetailPage() {
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 transition-colors"
         >
-          <ArrowLeft size={15} /> Locations
+          <ArrowLeft size={15} /> {t('backToList')}
         </button>
         <Link
           href={`/${tenant}/rentals/${id}/contract`}
           className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors bg-white"
         >
-          <FileText size={13} /> Contrat
+          <FileText size={13} /> {t('contract')}
         </Link>
       </div>
 
@@ -189,7 +189,7 @@ export default function RentalDetailPage() {
                   color: isOverdue ? '#dc2626' : isActive ? '#a5b4fc' : '#16a34a',
                 }}
               >
-                {isOverdue ? 'EN RETARD' : isActive ? 'EN COURS' : 'CLÔTURÉE'}
+                {isOverdue ? t('lateLabel') : isActive ? t('activeLabel') : t('closedLabel')}
               </span>
             </div>
             <p
@@ -203,8 +203,8 @@ export default function RentalDetailPage() {
               style={{ color: isOverdue ? '#ef4444' : isActive ? 'rgba(255,255,255,0.4)' : '#86efac' }}
             >
               {isActive
-                ? `Démarré le ${new Date(rental.startAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })} à ${new Date(rental.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
-                : 'Location terminée'}
+                ? `${t('startedOn')} ${new Date(rental.startAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })} ${t('at')} ${new Date(rental.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+                : t('finished')}
             </p>
           </div>
           {isActive && (
@@ -220,14 +220,14 @@ export default function RentalDetailPage() {
           )}
         </div>
 
-        {/* Retour prévu */}
+        {/* Expected return */}
         {rental.expectedReturnAt && isActive && (
           <div
             className="relative mt-4 pt-4 flex items-center justify-between"
             style={{ borderTop: isOverdue ? '1px solid #fecaca' : '1px solid rgba(255,255,255,0.08)' }}
           >
             <span className="text-xs" style={{ color: isOverdue ? '#ef4444' : 'rgba(255,255,255,0.35)' }}>
-              Retour prévu
+              {t('scheduledReturn')}
             </span>
             <span
               className="text-sm font-semibold"
@@ -239,10 +239,10 @@ export default function RentalDetailPage() {
         )}
       </div>
 
-      {/* Client + Vélo */}
+      {/* Customer + Bike */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Client</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">{t('client')}</p>
           <div className="flex items-center gap-2.5 mb-2">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
@@ -267,7 +267,7 @@ export default function RentalDetailPage() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Vélo</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">{t('bike')}</p>
           <div className="flex items-center gap-2.5 mb-2">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
@@ -283,15 +283,15 @@ export default function RentalDetailPage() {
         </div>
       </div>
 
-      {/* Détails financiers */}
+      {/* Financial details */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden mb-4">
         <div className="px-4 py-3 border-b border-slate-50">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Détails</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('details')}</p>
         </div>
         <div className="divide-y divide-slate-50">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2.5 text-sm text-slate-500">
-              <Clock size={13} className="text-slate-300" /> Ouverture
+              <Clock size={13} className="text-slate-300" /> {t('opening')}
             </div>
             <span className="text-sm font-medium text-slate-900">
               {new Date(rental.startAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
@@ -299,21 +299,21 @@ export default function RentalDetailPage() {
           </div>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2.5 text-sm text-slate-500">
-              <CreditCard size={13} className="text-slate-300" /> Paiement
+              <CreditCard size={13} className="text-slate-300" /> {t('payment')}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold" style={{ color: '#6366F1' }}>
                 {Number(rental.amountPaid ?? 0).toFixed(2)} €
               </span>
               <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(99,102,241,0.08)', color: '#6366F1' }}>
-                {PAYMENT_LABEL[rental.paymentMethod] ?? rental.paymentMethod}
+                {paymentLabel}
               </span>
             </div>
           </div>
           {Number(rental.depositAmount) > 0 && (
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2.5 text-sm text-slate-500">
-                <Shield size={13} className="text-slate-300" /> Caution
+                <Shield size={13} className="text-slate-300" /> {t('caution')}
               </div>
               <span className="text-sm font-semibold text-amber-600">
                 {Number(rental.depositAmount).toFixed(2)} €
@@ -334,19 +334,19 @@ export default function RentalDetailPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-5">
             <PenLine size={15} style={{ color: '#6366F1' }} />
-            <h2 className="text-sm font-semibold text-slate-900">Retour du vélo</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t('returnBike')}</h2>
           </div>
 
-          {/* Client signature */}
+          {/* Customer signature */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Signature client</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('customerSig')}</p>
               <button
                 type="button"
                 onClick={() => clearCanvas(canvasRef, setHasSigned)}
                 className="text-xs text-slate-400 hover:text-red-500 transition-colors"
               >
-                Effacer
+                {t('clearSig')}
               </button>
             </div>
             <div className="relative rounded-xl overflow-hidden" style={{ border: hasSigned ? '1.5px solid #6366F1' : '1.5px dashed #e2e8f0' }}>
@@ -358,13 +358,13 @@ export default function RentalDetailPage() {
               />
               {!hasSigned && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-xs text-slate-300 font-medium">Signer ici</p>
+                  <p className="text-xs text-slate-300 font-medium">{t('sigHere')}</p>
                 </div>
               )}
             </div>
             {hasSigned && (
               <p className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
-                <Check size={10} /> Signature client enregistrée
+                <Check size={10} /> {t('clientSigSaved')}
               </p>
             )}
           </div>
@@ -372,13 +372,13 @@ export default function RentalDetailPage() {
           {/* Staff signature */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Signature staff</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('staffSig')}</p>
               <button
                 type="button"
                 onClick={() => clearCanvas(staffCanvasRef, setHasStaffSigned)}
                 className="text-xs text-slate-400 hover:text-red-500 transition-colors"
               >
-                Effacer
+                {t('clearSig')}
               </button>
             </div>
             <div className="relative rounded-xl overflow-hidden" style={{ border: hasStaffSigned ? '1.5px solid #6366F1' : '1.5px dashed #e2e8f0' }}>
@@ -390,13 +390,13 @@ export default function RentalDetailPage() {
               />
               {!hasStaffSigned && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-xs text-slate-300 font-medium">Signer ici</p>
+                  <p className="text-xs text-slate-300 font-medium">{t('sigHere')}</p>
                 </div>
               )}
             </div>
             {hasStaffSigned && (
               <p className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
-                <Check size={10} /> Signature staff enregistrée
+                <Check size={10} /> {t('staffSigSaved')}
               </p>
             )}
           </div>
@@ -418,14 +418,14 @@ export default function RentalDetailPage() {
             }}
           >
             {loading
-              ? <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Clôture en cours...</>
-              : <><Check size={15} /> Confirmer le retour</>
+              ? <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> {t('closingInProgress')}</>
+              : <><Check size={15} /> {t('returnConfirm')}</>
             }
           </button>
 
           {(!hasSigned || !hasStaffSigned) && (
             <p className="text-center text-xs text-slate-400 mt-2">
-              {!hasSigned && !hasStaffSigned ? 'Les deux signatures sont requises' : !hasSigned ? 'Signature client manquante' : 'Signature staff manquante'}
+              {!hasSigned && !hasStaffSigned ? t('bothSigRequired') : !hasSigned ? t('customerSigMissing') : t('staffSigMissing')}
             </p>
           )}
         </div>

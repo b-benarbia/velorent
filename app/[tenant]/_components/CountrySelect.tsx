@@ -2,57 +2,57 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Search, X } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 
-const COUNTRIES = [
-  { code: 'FR', name: 'France',           flag: '🇫🇷' },
-  { code: 'ES', name: 'Espagne',          flag: '🇪🇸' },
-  { code: 'DE', name: 'Allemagne',        flag: '🇩🇪' },
-  { code: 'GB', name: 'Royaume-Uni',      flag: '🇬🇧' },
-  { code: 'IT', name: 'Italie',           flag: '🇮🇹' },
-  { code: 'PT', name: 'Portugal',         flag: '🇵🇹' },
-  { code: 'NL', name: 'Pays-Bas',         flag: '🇳🇱' },
-  { code: 'BE', name: 'Belgique',         flag: '🇧🇪' },
-  { code: 'CH', name: 'Suisse',           flag: '🇨🇭' },
-  { code: 'AT', name: 'Autriche',         flag: '🇦🇹' },
-  { code: 'PL', name: 'Pologne',          flag: '🇵🇱' },
-  { code: 'SE', name: 'Suède',            flag: '🇸🇪' },
-  { code: 'NO', name: 'Norvège',          flag: '🇳🇴' },
-  { code: 'DK', name: 'Danemark',         flag: '🇩🇰' },
-  { code: 'FI', name: 'Finlande',         flag: '🇫🇮' },
-  { code: 'IE', name: 'Irlande',          flag: '🇮🇪' },
-  { code: 'CZ', name: 'Tchéquie',         flag: '🇨🇿' },
-  { code: 'RO', name: 'Roumanie',         flag: '🇷🇴' },
-  { code: 'HU', name: 'Hongrie',          flag: '🇭🇺' },
-  { code: 'GR', name: 'Grèce',           flag: '🇬🇷' },
-  { code: 'HR', name: 'Croatie',          flag: '🇭🇷' },
-  { code: 'US', name: 'États-Unis',       flag: '🇺🇸' },
-  { code: 'CA', name: 'Canada',           flag: '🇨🇦' },
-  { code: 'AU', name: 'Australie',        flag: '🇦🇺' },
-  { code: 'NZ', name: 'Nouvelle-Zélande', flag: '🇳🇿' },
-  { code: 'JP', name: 'Japon',            flag: '🇯🇵' },
-  { code: 'KR', name: 'Corée du Sud',     flag: '🇰🇷' },
-  { code: 'CN', name: 'Chine',            flag: '🇨🇳' },
-  { code: 'IN', name: 'Inde',             flag: '🇮🇳' },
-  { code: 'BR', name: 'Brésil',           flag: '🇧🇷' },
-  { code: 'MX', name: 'Mexique',          flag: '🇲🇽' },
-  { code: 'AR', name: 'Argentine',        flag: '🇦🇷' },
-  { code: 'CO', name: 'Colombie',         flag: '🇨🇴' },
-  { code: 'CL', name: 'Chili',            flag: '🇨🇱' },
-  { code: 'MA', name: 'Maroc',            flag: '🇲🇦' },
-  { code: 'DZ', name: 'Algérie',          flag: '🇩🇿' },
-  { code: 'TN', name: 'Tunisie',          flag: '🇹🇳' },
-  { code: 'SN', name: 'Sénégal',          flag: '🇸🇳' },
-  { code: 'CI', name: "Côte d'Ivoire",    flag: '🇨🇮' },
-  { code: 'NG', name: 'Nigéria',          flag: '🇳🇬' },
-  { code: 'ZA', name: 'Afrique du Sud',   flag: '🇿🇦' },
-  { code: 'EG', name: 'Égypte',           flag: '🇪🇬' },
-  { code: 'SA', name: 'Arabie Saoudite',  flag: '🇸🇦' },
-  { code: 'AE', name: 'Émirats Arabes',   flag: '🇦🇪' },
-  { code: 'IL', name: 'Israël',           flag: '🇮🇱' },
-  { code: 'TR', name: 'Turquie',          flag: '🇹🇷' },
-  { code: 'RU', name: 'Russie',           flag: '🇷🇺' },
-  { code: 'UA', name: 'Ukraine',          flag: '🇺🇦' },
-  { code: 'OTHER', name: 'Autre',         flag: '🌍' },
+const COUNTRY_CODES = [
+  { code: 'FR', flag: '🇫🇷' },
+  { code: 'ES', flag: '🇪🇸' },
+  { code: 'DE', flag: '🇩🇪' },
+  { code: 'GB', flag: '🇬🇧' },
+  { code: 'IT', flag: '🇮🇹' },
+  { code: 'PT', flag: '🇵🇹' },
+  { code: 'NL', flag: '🇳🇱' },
+  { code: 'BE', flag: '🇧🇪' },
+  { code: 'CH', flag: '🇨🇭' },
+  { code: 'AT', flag: '🇦🇹' },
+  { code: 'PL', flag: '🇵🇱' },
+  { code: 'SE', flag: '🇸🇪' },
+  { code: 'NO', flag: '🇳🇴' },
+  { code: 'DK', flag: '🇩🇰' },
+  { code: 'FI', flag: '🇫🇮' },
+  { code: 'IE', flag: '🇮🇪' },
+  { code: 'CZ', flag: '🇨🇿' },
+  { code: 'RO', flag: '🇷🇴' },
+  { code: 'HU', flag: '🇭🇺' },
+  { code: 'GR', flag: '🇬🇷' },
+  { code: 'HR', flag: '🇭🇷' },
+  { code: 'US', flag: '🇺🇸' },
+  { code: 'CA', flag: '🇨🇦' },
+  { code: 'AU', flag: '🇦🇺' },
+  { code: 'NZ', flag: '🇳🇿' },
+  { code: 'JP', flag: '🇯🇵' },
+  { code: 'KR', flag: '🇰🇷' },
+  { code: 'CN', flag: '🇨🇳' },
+  { code: 'IN', flag: '🇮🇳' },
+  { code: 'BR', flag: '🇧🇷' },
+  { code: 'MX', flag: '🇲🇽' },
+  { code: 'AR', flag: '🇦🇷' },
+  { code: 'CO', flag: '🇨🇴' },
+  { code: 'CL', flag: '🇨🇱' },
+  { code: 'MA', flag: '🇲🇦' },
+  { code: 'DZ', flag: '🇩🇿' },
+  { code: 'TN', flag: '🇹🇳' },
+  { code: 'SN', flag: '🇸🇳' },
+  { code: 'CI', flag: '🇨🇮' },
+  { code: 'NG', flag: '🇳🇬' },
+  { code: 'ZA', flag: '🇿🇦' },
+  { code: 'EG', flag: '🇪🇬' },
+  { code: 'SA', flag: '🇸🇦' },
+  { code: 'AE', flag: '🇦🇪' },
+  { code: 'IL', flag: '🇮🇱' },
+  { code: 'TR', flag: '🇹🇷' },
+  { code: 'RU', flag: '🇷🇺' },
+  { code: 'UA', flag: '🇺🇦' },
 ]
 
 interface Props {
@@ -62,6 +62,16 @@ interface Props {
 }
 
 export default function CountrySelect({ value, onChange, className }: Props) {
+  const locale = useLocale()
+  const tCommon = useTranslations('common')
+
+  // Build locale-aware country name list
+  const displayNames = new Intl.DisplayNames([locale], { type: 'region' })
+  const COUNTRIES = [
+    ...COUNTRY_CODES.map(c => ({ ...c, name: displayNames.of(c.code) ?? c.code })),
+    { code: 'OTHER', flag: '🌍', name: tCommon('other') },
+  ]
+
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -76,7 +86,6 @@ export default function CountrySelect({ value, onChange, className }: Props) {
       )
     : COUNTRIES
 
-  // Fermer si clic dehors
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -88,12 +97,10 @@ export default function CountrySelect({ value, onChange, className }: Props) {
     return () => document.removeEventListener('mousedown', handle)
   }, [])
 
-  // Focus recherche à l'ouverture
   useEffect(() => {
     if (open) setTimeout(() => searchRef.current?.focus(), 50)
   }, [open])
 
-  // Navigation clavier
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') { setOpen(false); setQuery('') }
     if (e.key === 'Enter' && filtered.length === 1) {
@@ -131,7 +138,7 @@ export default function CountrySelect({ value, onChange, className }: Props) {
             <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{selected.code}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 14, color: '#94a3b8' }}>Sélectionner un pays...</span>
+          <span style={{ flex: 1, fontSize: 14, color: '#94a3b8' }}>{tCommon('search')}...</span>
         )}
         <ChevronDown
           size={14}
@@ -155,7 +162,7 @@ export default function CountrySelect({ value, onChange, className }: Props) {
           overflow: 'hidden',
           animation: 'scaleIn 0.15s cubic-bezier(0.16,1,0.3,1) both',
         }}>
-          {/* Barre de recherche */}
+          {/* Search bar */}
           <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Search size={13} color="#94a3b8" style={{ flexShrink: 0 }} />
             <input
@@ -164,7 +171,7 @@ export default function CountrySelect({ value, onChange, className }: Props) {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Rechercher un pays..."
+              placeholder={`${tCommon('search')}...`}
               style={{
                 flex: 1, border: 'none', outline: 'none', fontSize: 13,
                 color: '#0f172a', background: 'transparent',
@@ -177,11 +184,11 @@ export default function CountrySelect({ value, onChange, className }: Props) {
             )}
           </div>
 
-          {/* Liste */}
+          {/* List */}
           <div style={{ maxHeight: 220, overflowY: 'auto' }}>
             {filtered.length === 0 ? (
               <div style={{ padding: '16px', textAlign: 'center', fontSize: 13, color: '#94a3b8' }}>
-                Aucun résultat
+                {tCommon('noResults')}
               </div>
             ) : (
               filtered.map(country => (

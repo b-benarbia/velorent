@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 interface Rental {
   id: string
@@ -30,11 +31,20 @@ interface Customer {
   rentals: Rental[]
 }
 
+const STATUS_COLOR: Record<string, string> = {
+  ACTIVE:    'bg-blue-100 text-blue-700',
+  COMPLETED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-gray-100 text-gray-500',
+  OVERDUE:   'bg-red-100 text-red-700',
+}
+
 export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const tenant = params.tenant as string
   const id = params.id as string
+  const t = useTranslations('clients')
+  const tStatus = useTranslations('status')
 
   const [customer, setCustomer] = useState<Customer | null>(null)
 
@@ -42,22 +52,15 @@ export default function ClientDetailPage() {
     fetch(`/api/customers/${id}`).then(r => r.json()).then(setCustomer)
   }, [id])
 
-  if (!customer) return <div className="text-gray-400 text-sm p-6">Chargement...</div>
+  if (!customer) return <div className="text-gray-400 text-sm p-6">{t('loading')}</div>
 
   const docLabel: Record<string, string> = {
-    PASSPORT: 'Passeport', DNI: 'DNI', NIE: 'NIE',
-    ID_CARD: "Carte d'identité", DRIVING_LICENSE: 'Permis de conduire', OTHER: 'Autre',
-  }
-
-  const paymentLabel: Record<string, string> = {
-    CASH: 'Espèces', CARD: 'Carte', BIZUM: 'Bizum', TRANSFER: 'Virement',
-  }
-
-  const statusLabel: Record<string, { label: string; color: string }> = {
-    ACTIVE: { label: 'En cours', color: 'bg-blue-100 text-blue-700' },
-    COMPLETED: { label: 'Terminée', color: 'bg-green-100 text-green-700' },
-    CANCELLED: { label: 'Annulée', color: 'bg-gray-100 text-gray-500' },
-    OVERDUE: { label: 'En retard', color: 'bg-red-100 text-red-700' },
+    PASSPORT:        t('passport'),
+    DNI:             'DNI',
+    NIE:             'NIE',
+    ID_CARD:         t('idCard'),
+    DRIVING_LICENSE: t('drivingLicense'),
+    OTHER:           t('other'),
   }
 
   const totalSpent = customer.rentals
@@ -67,8 +70,10 @@ export default function ClientDetailPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-sm">← Retour</button>
-        <h1 className="text-xl font-bold text-gray-900">Fiche client</h1>
+        <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-sm">
+          {t('back')}
+        </button>
+        <h1 className="text-xl font-bold text-gray-900">{t('profile')}</h1>
       </div>
 
       {/* Identity card */}
@@ -99,15 +104,15 @@ export default function ClientDetailPage() {
             </div>
           )}
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Client depuis</p>
-            <p className="text-gray-900">{new Date(customer.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('customerSince')}</p>
+            <p className="text-gray-900">{new Date(customer.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Total dépensé</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('totalSpent')}</p>
             <p className="font-semibold text-green-700">{totalSpent.toFixed(2)} €</p>
           </div>
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Locations</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('rentalsCount')}</p>
             <p className="text-gray-900">{customer.rentals.length}</p>
           </div>
         </div>
@@ -123,24 +128,25 @@ export default function ClientDetailPage() {
       {/* ID Photo */}
       {customer.documentPhotoUrl && (
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Pièce d'identité</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t('idCard')}</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={customer.documentPhotoUrl} alt="Pièce d'identité" className="max-h-48 rounded-lg border border-gray-200 object-contain" />
+          <img src={customer.documentPhotoUrl} alt={t('idCard')} className="max-h-48 rounded-lg border border-gray-200 object-contain" />
         </div>
       )}
 
       {/* Rental history */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-5 py-3 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Historique des locations</h3>
+          <h3 className="font-semibold text-gray-900">{t('rentalHistory')}</h3>
         </div>
 
         {customer.rentals.length === 0 ? (
-          <div className="text-center text-gray-400 text-sm py-8">Aucune location</div>
+          <div className="text-center text-gray-400 text-sm py-8">{t('noRentals')}</div>
         ) : (
           <div className="divide-y divide-gray-100">
             {customer.rentals.map(r => {
-              const st = statusLabel[r.status] ?? { label: r.status, color: 'bg-gray-100 text-gray-500' }
+              const color = STATUS_COLOR[r.status] ?? 'bg-gray-100 text-gray-500'
+              const label = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
               return (
                 <Link
                   key={r.id}
@@ -153,13 +159,13 @@ export default function ClientDetailPage() {
                       <span className="font-mono text-xs text-gray-400">{r.bike.code}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(r.startAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                      {r.endAt && ` → ${new Date(r.endAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`}
+                      {new Date(r.startAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {r.endAt && ` → ${new Date(r.endAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-gray-900">{Number(r.amountPaid ?? 0).toFixed(2)} €</span>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${color}`}>{label}</span>
                   </div>
                 </Link>
               )
@@ -174,7 +180,7 @@ export default function ClientDetailPage() {
           href={`/${tenant}/rentals/new`}
           className="block text-center bg-blue-600 text-white text-sm font-medium px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors"
         >
-          + Nouvelle location pour ce client
+          + {t('newRentalCta')}
         </Link>
       </div>
     </div>

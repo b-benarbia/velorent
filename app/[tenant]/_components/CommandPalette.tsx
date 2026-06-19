@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   LayoutDashboard, Bike, CalendarDays, Receipt, Settings,
   Wrench, Plus, Search, ArrowRight,
@@ -22,20 +23,24 @@ interface Props {
 
 export default function CommandPalette({ tenant }: Props) {
   const router = useRouter()
+  const tNav = useTranslations('nav')
+  const tCommon = useTranslations('common')
+  const tRentals = useTranslations('rentals')
+  const tBikes = useTranslations('bikes')
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const commands: Command[] = [
-    { id: 'dashboard', label: 'Dashboard', description: 'Vue d\'ensemble', icon: LayoutDashboard, action: () => router.push(`/${tenant}/dashboard`), group: 'Navigation' },
-    { id: 'rentals', label: 'Locations', description: 'Locations en cours', icon: Bike, action: () => router.push(`/${tenant}/rentals`), group: 'Navigation' },
-    { id: 'reservations', label: 'Réservations', description: 'Gérer les réservations', icon: CalendarDays, action: () => router.push(`/${tenant}/reservations`), group: 'Navigation' },
-    { id: 'bikes', label: 'Flotte', description: 'Gérer les vélos', icon: Wrench, action: () => router.push(`/${tenant}/bikes`), group: 'Navigation' },
-    { id: 'accounting', label: 'Comptabilité', description: 'Factures & revenus', icon: Receipt, action: () => router.push(`/${tenant}/accounting`), group: 'Navigation' },
-    { id: 'settings', label: 'Paramètres', description: 'Configuration du shop', icon: Settings, action: () => router.push(`/${tenant}/settings`), group: 'Navigation' },
-    { id: 'new-rental', label: 'Nouvelle location', description: 'Créer une location maintenant', icon: Plus, action: () => router.push(`/${tenant}/rentals/new`), group: 'Actions' },
-    { id: 'new-bike', label: 'Ajouter un vélo', description: 'Enregistrer un nouveau véhicule', icon: Plus, action: () => router.push(`/${tenant}/bikes/new`), group: 'Actions' },
+    { id: 'dashboard',  label: tNav('dashboard'),      description: 'Overview',             icon: LayoutDashboard, action: () => router.push(`/${tenant}/dashboard`),      group: 'Navigation' },
+    { id: 'rentals',    label: tNav('rentals'),         description: 'Active rentals',        icon: Bike,            action: () => router.push(`/${tenant}/rentals`),         group: 'Navigation' },
+    { id: 'reservations',label: tNav('reservations'),   description: 'Manage reservations',   icon: CalendarDays,    action: () => router.push(`/${tenant}/reservations`),    group: 'Navigation' },
+    { id: 'bikes',      label: tNav('bikes'),           description: 'Manage fleet',          icon: Wrench,          action: () => router.push(`/${tenant}/bikes`),           group: 'Navigation' },
+    { id: 'accounting', label: tNav('accounting'),      description: 'Invoices & revenue',    icon: Receipt,         action: () => router.push(`/${tenant}/accounting`),      group: 'Navigation' },
+    { id: 'settings',   label: tNav('settings'),        description: 'Shop settings',         icon: Settings,        action: () => router.push(`/${tenant}/settings`),        group: 'Navigation' },
+    { id: 'new-rental', label: tRentals('new'),         description: 'Create a rental now',   icon: Plus,            action: () => router.push(`/${tenant}/rentals/new`),     group: 'Actions' },
+    { id: 'new-bike',   label: tBikes('add'),           description: 'Register a new vehicle',icon: Plus,            action: () => router.push(`/${tenant}/bikes/new`),       group: 'Actions' },
   ]
 
   const filtered = query.trim()
@@ -112,7 +117,7 @@ export default function CommandPalette({ tenant }: Props) {
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher une page ou action..."
+            placeholder={tNav('search')}
             className="flex-1 text-sm text-slate-900 placeholder-slate-400 outline-none bg-transparent"
           />
           <kbd className="text-[10px] font-mono bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded border border-slate-200">
@@ -123,7 +128,7 @@ export default function CommandPalette({ tenant }: Props) {
         {/* Results */}
         <div className="max-h-80 overflow-y-auto py-2">
           {flatFiltered.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">Aucun résultat</p>
+            <p className="text-sm text-slate-400 text-center py-8">{tCommon('noResults')}</p>
           ) : (
             Object.entries(groups).map(([group, items]) => (
               <div key={group}>
@@ -167,9 +172,9 @@ export default function CommandPalette({ tenant }: Props) {
 
         {/* Footer hint */}
         <div className="px-4 py-2.5 border-t border-slate-100 flex items-center gap-4 text-[11px] text-slate-400">
-          <span><kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-500">↑↓</kbd> naviguer</span>
-          <span><kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-500">↵</kbd> ouvrir</span>
-          <span><kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-500">⌘K</kbd> fermer</span>
+          <span><kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-500">↑↓</kbd> navigate</span>
+          <span><kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-500">↵</kbd> open</span>
+          <span><kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-500">⌘K</kbd> close</span>
         </div>
       </div>
     </div>
