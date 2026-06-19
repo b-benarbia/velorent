@@ -748,8 +748,9 @@ export default function BookingPage() {
                     const qty = info.accessories[acc.key] ?? 0
                     const active = qty > 0
                     return (
-                      <button key={acc.key} type="button" onClick={() => toggleAcc(acc.key)}
-                        className={`rounded-xl border p-3.5 text-left transition-all ${active ? 'border-indigo-200 bg-indigo-50' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}>
+                      <div key={acc.key}
+                        className={`rounded-xl border p-3.5 transition-all cursor-pointer select-none ${active ? 'border-indigo-200 bg-indigo-50' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
+                        onClick={() => toggleAcc(acc.key)}>
                         <div className="flex items-center justify-between mb-2">
                           <AccIcon size={18} className={active ? 'text-indigo-500' : 'text-slate-300'} />
                           {active && (
@@ -770,7 +771,7 @@ export default function BookingPage() {
                               className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold hover:bg-indigo-200 transition-colors">+</button>
                           </div>
                         )}
-                      </button>
+                      </div>
                     )
                   })}
                 </div>
