@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge, Users, Waves, Activity, FileText, Euro } from 'lucide-react'
+import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge, Users, Waves, Activity, FileText, Euro, ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import CountrySelect from '../../_components/CountrySelect'
 
@@ -84,6 +84,8 @@ export default function NewRentalPage() {
   const [selectedBikeIds, setSelectedBikeIds] = useState<string[]>([])
   const [depositType, setDepositType] = useState<'MONEY' | 'ID'>('MONEY')
   const [depositIdType, setDepositIdType] = useState('PASSPORT')
+  const [showReturnPicker, setShowReturnPicker] = useState(false)
+  const [pickerMonth, setPickerMonth] = useState(() => new Date())
 
   const [form, setForm] = useState({
     customerId: '',
@@ -264,6 +266,53 @@ export default function NewRentalPage() {
       const formatted = `${returnAt.getFullYear()}-${pad(returnAt.getMonth() + 1)}-${pad(returnAt.getDate())}T${pad(returnAt.getHours())}:${pad(returnAt.getMinutes())}`
       setForm(f => ({ ...f, expectedReturnAt: formatted }))
     }
+  }
+
+  // ── Duration label map (translated) ──────────────────────────────────
+  const DUR_LABEL: Record<string, string> = {
+    '1h': '1h', '2h': '2h', '4h': '4h', '24h': '24h',
+    '1day':  t('dur1day'),
+    '2days': t('dur2days'),
+    '3days': t('dur3days'),
+    '4days': t('dur4days'),
+    '5days': t('dur5days'),
+    '6days': t('dur6days'),
+    'week':  t('durWeek'),
+  }
+
+  // ── Return date picker helpers ────────────────────────────────────────
+  function getReturnDate(): Date | null {
+    if (!form.expectedReturnAt) return null
+    return new Date(form.expectedReturnAt)
+  }
+  function setReturnDate(d: Date) {
+    const p = (n: number) => String(n).padStart(2, '0')
+    setForm(f => ({ ...f, expectedReturnAt: `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}` }))
+  }
+  function pickDay(day: number) {
+    const cur = getReturnDate() ?? new Date()
+    setReturnDate(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth(), day, cur.getHours(), cur.getMinutes()))
+  }
+  function pickHour(delta: number) {
+    const cur = getReturnDate() ?? new Date()
+    const h = (cur.getHours() + delta + 24) % 24
+    setReturnDate(new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), h, cur.getMinutes()))
+  }
+  function pickMinute(m: number) {
+    const cur = getReturnDate() ?? new Date()
+    setReturnDate(new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), cur.getHours(), m))
+  }
+  // Calendar cells (Mon-first)
+  function buildCalendar(month: Date) {
+    const y = month.getFullYear(), mo = month.getMonth()
+    const firstDay = (new Date(y, mo, 1).getDay() + 6) % 7
+    const daysInMonth = new Date(y, mo + 1, 0).getDate()
+    const cells: (number | null)[] = [...Array(firstDay).fill(null)]
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+    while (cells.length % 7 !== 0) cells.push(null)
+    const weeks: (number | null)[][] = []
+    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+    return weeks
   }
 
   function changeQty(type: string, delta: number, hasCode: boolean) {
@@ -646,7 +695,7 @@ export default function NewRentalPage() {
                     }`}
                     style={isSelected ? { background: '#6366F1' } : {}}
                   >
-                    <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-slate-700'}`}>{dur.label}</p>
+                    <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-slate-700'}`}>{DUR_LABEL[dur.key] ?? dur.label}</p>
                     {price !== undefined ? (
                       <p className={`text-xs mt-0.5 ${isSelected ? 'text-indigo-100' : 'text-indigo-500 font-medium'}`}>{price} €</p>
                     ) : (
@@ -671,12 +720,156 @@ export default function NewRentalPage() {
             </div>
           </div>
 
-          {/* Expected return */}
+          {/* Expected return — custom picker */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t('plannedReturn')}</label>
-            <input type="datetime-local" value={form.expectedReturnAt}
-              onChange={e => setForm({ ...form, expectedReturnAt: e.target.value })}
-              className={INPUT} />
+
+            {/* Trigger button */}
+            <button
+              type="button"
+              onClick={() => setShowReturnPicker(p => !p)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                width: '100%', padding: '10px 14px', borderRadius: '10px',
+                border: '1.5px solid #e2e8f0', background: '#fff',
+                textAlign: 'left', cursor: 'pointer', fontSize: '14px',
+                color: form.expectedReturnAt ? '#0f172a' : '#94a3b8',
+              }}
+            >
+              <CalendarDays size={16} style={{ color: '#6366f1', flexShrink: 0 }} />
+              <span style={{ flex: 1 }}>
+                {form.expectedReturnAt
+                  ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(form.expectedReturnAt))
+                  : '— —'}
+              </span>
+              <Clock size={14} style={{ color: '#94a3b8' }} />
+            </button>
+
+            {/* Inline picker panel */}
+            {showReturnPicker && (
+              <div style={{
+                marginTop: '8px', borderRadius: '16px', border: '1.5px solid #e2e8f0',
+                background: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
+                padding: '16px', userSelect: 'none',
+              }}>
+                {/* Month navigation */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <button type="button"
+                    onClick={() => setPickerMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px' }}>
+                    <ChevronLeft size={18} style={{ color: '#6366f1' }} />
+                  </button>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>
+                    {new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(pickerMonth)}
+                  </span>
+                  <button type="button"
+                    onClick={() => setPickerMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px' }}>
+                    <ChevronRight size={18} style={{ color: '#6366f1' }} />
+                  </button>
+                </div>
+
+                {/* Day-of-week headers (Mon first, locale-aware) */}
+                {(() => {
+                  const baseDate = new Date(2024, 0, 1) // Monday Jan 1 2024
+                  return (
+                    <div style={{ display: 'flex', marginBottom: '4px' }}>
+                      {[0,1,2,3,4,5,6].map(i => (
+                        <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: '11px', fontWeight: 600, color: '#94a3b8', padding: '2px 0' }}>
+                          {new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + i)).slice(0, 2)}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+
+                {/* Calendar weeks */}
+                {buildCalendar(pickerMonth).map((week, wi) => {
+                  const ret = getReturnDate()
+                  const today = new Date()
+                  return (
+                    <div key={wi} style={{ display: 'flex' }}>
+                      {week.map((day, di) => {
+                        const isSelected = ret &&
+                          ret.getFullYear() === pickerMonth.getFullYear() &&
+                          ret.getMonth() === pickerMonth.getMonth() &&
+                          ret.getDate() === day
+                        const isToday = day &&
+                          today.getFullYear() === pickerMonth.getFullYear() &&
+                          today.getMonth() === pickerMonth.getMonth() &&
+                          today.getDate() === day
+                        return (
+                          <div key={di} style={{ flex: 1, padding: '2px' }}>
+                            {day ? (
+                              <button type="button" onClick={() => pickDay(day)}
+                                style={{
+                                  width: '100%', aspectRatio: '1', border: 'none', cursor: 'pointer',
+                                  borderRadius: '8px', fontSize: '13px', fontWeight: isSelected ? 700 : 400,
+                                  background: isSelected ? '#6366f1' : isToday ? '#eef2ff' : 'transparent',
+                                  color: isSelected ? '#fff' : isToday ? '#6366f1' : '#1e293b',
+                                }}>
+                                {day}
+                              </button>
+                            ) : <div />}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+
+                {/* Divider */}
+                <div style={{ margin: '14px 0 12px', borderTop: '1px solid #f1f5f9' }} />
+
+                {/* Time picker */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                  {/* Hour stepper */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button type="button" onClick={() => pickHour(-1)}
+                      style={{ border: '1.5px solid #e2e8f0', background: '#f8fafc', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <ChevronLeft size={14} style={{ color: '#6366f1' }} />
+                    </button>
+                    <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '20px', fontWeight: 700, color: '#1e293b' }}>
+                      {String(getReturnDate()?.getHours() ?? 12).padStart(2, '0')}
+                    </span>
+                    <button type="button" onClick={() => pickHour(1)}
+                      style={{ border: '1.5px solid #e2e8f0', background: '#f8fafc', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <ChevronRight size={14} style={{ color: '#6366f1' }} />
+                    </button>
+                  </div>
+                  <span style={{ fontSize: '20px', fontWeight: 700, color: '#6366f1' }}>:</span>
+                  {/* Minute chips */}
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[0, 15, 30, 45].map(m => {
+                      const selMin = getReturnDate()?.getMinutes() ?? -1
+                      const active = selMin === m
+                      return (
+                        <button key={m} type="button" onClick={() => pickMinute(m)}
+                          style={{
+                            padding: '6px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                            border: '1.5px solid', cursor: 'pointer',
+                            borderColor: active ? '#6366f1' : '#e2e8f0',
+                            background: active ? '#6366f1' : '#f8fafc',
+                            color: active ? '#fff' : '#475569',
+                          }}>
+                          {String(m).padStart(2, '0')}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Confirm button */}
+                <button type="button" onClick={() => setShowReturnPicker(false)}
+                  style={{
+                    marginTop: '14px', width: '100%', padding: '10px', borderRadius: '10px',
+                    background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                    fontWeight: 600, fontSize: '14px',
+                  }}>
+                  ✓ Confirmer
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Accessories */}
