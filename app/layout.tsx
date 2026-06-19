@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
-import { NextIntlClientProvider } from 'next-intl';
+import IntlProvider from './_providers/IntlProvider';
 import { cookies } from 'next/headers';
 
 const inter = Inter({
@@ -27,7 +27,7 @@ async function getLocaleAndMessages() {
     const cookieStore = await cookies();
     const v = cookieStore.get('locale')?.value as Locale | undefined;
     if (v && (LOCALES as readonly string[]).includes(v)) locale = v;
-  } catch { /* static prerendering — no cookies */ }
+  } catch { /* prerendering — no cookies */ }
   try {
     const messages = (await import(`../messages/${locale}.json`)).default;
     return { locale, messages };
@@ -47,14 +47,9 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col font-[family-name:var(--font-inter)]">
         <NextTopLoader color="#6366F1" height={2} showSpinner={false} />
         <Toaster position="bottom-right" richColors />
-        <NextIntlClientProvider
-          locale={locale}
-          messages={messages}
-          timeZone="Europe/Madrid"
-          now={new Date()}
-        >
+        <IntlProvider locale={locale} messages={messages}>
           {children}
-        </NextIntlClientProvider>
+        </IntlProvider>
       </body>
     </html>
   );
