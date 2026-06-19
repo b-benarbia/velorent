@@ -924,7 +924,7 @@ export default function NewRentalPage() {
                     background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
                     fontWeight: 600, fontSize: '14px',
                   }}>
-                  ✓ Confirmer
+                  ✓ {t('confirmPicker')}
                 </button>
               </div>
             )}
@@ -1269,10 +1269,10 @@ export default function NewRentalPage() {
             <Check size={36} color="#fff" strokeWidth={3} />
           </div>
           <p className="success-text" style={{ marginTop: 20, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
-            Location créée !
+            {t('successTitle')}
           </p>
           <p className="success-text" style={{ marginTop: 6, fontSize: 14, color: '#64748b' }}>
-            Ouverture du contrat...
+            {t('successSub')}
           </p>
         </div>
       )}

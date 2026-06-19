@@ -31,20 +31,16 @@ type Props = {
     title: string; new: string; active: string; noActive: string
     inProgress: string; closeArrow: string; lateReturn: string
     history: string; client: string; bike: string; noHistory: string
+    kpiRevenue: string; kpiActive: string; kpiOverdue: string
+    tabAll: string; tabActive: string; tabOverdue: string
+    tabCompleted: string; tabCancelled: string
+    searchPlaceholder: string; inProgressLabel: string
   }
   statusLabels: Record<string, string>
 }
 
 const TABS = ['all', 'active', 'overdue', 'completed', 'cancelled'] as const
 type Tab = typeof TABS[number]
-
-const TAB_LABELS: Record<Tab, string> = {
-  all: 'Toutes',
-  active: 'En cours',
-  overdue: 'En retard',
-  completed: 'Terminées',
-  cancelled: 'Annulées',
-}
 
 export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabels }: Props) {
   const [search, setSearch] = useState('')
@@ -97,7 +93,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <TrendingUp size={13} style={{ color: '#6366f1' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CA aujourd'hui</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{labels.kpiRevenue}</span>
           </div>
           <p style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>{kpi.revenueToday.toFixed(0)} €</p>
         </div>
@@ -107,7 +103,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <Clock size={13} style={{ color: '#16a34a' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>En cours</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{labels.kpiActive}</span>
           </div>
           <p style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>{kpi.activeCount}</p>
         </div>
@@ -118,7 +114,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <TriangleAlert size={13} style={{ color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>En retard</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{labels.kpiOverdue}</span>
           </div>
           <p style={{ fontSize: '20px', fontWeight: 800, color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8' }}>{kpi.overdueCount}</p>
         </div>
@@ -131,7 +127,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher client, vélo, code..."
+          placeholder={labels.searchPlaceholder}
           style={{
             width: '100%', paddingLeft: '36px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px',
             borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff',
@@ -163,7 +159,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
                 background: active ? '#6366f1' : '#fff',
                 color: active ? '#fff' : '#64748b',
               }}>
-              {TAB_LABELS[t]} {count > 0 && <span style={{ opacity: 0.7 }}>· {count}</span>}
+              {labels[`tab${t.charAt(0).toUpperCase() + t.slice(1)}` as keyof typeof labels]} {count > 0 && <span style={{ opacity: 0.7 }}>· {count}</span>}
             </button>
           )
         })}
@@ -211,7 +207,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
                           {rental.customer.firstName} {rental.customer.lastName}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5 truncate">
-                          {rental.bike.name} · <span className="font-mono">{rental.bike.code}</span> · {durationLabel} en cours
+                          {rental.bike.name} · <span className="font-mono">{rental.bike.code}</span> · {durationLabel} {labels.inProgressLabel}
                         </p>
                         {isOverdue && (
                           <p className="text-xs text-red-500 font-medium mt-0.5 flex items-center gap-1">

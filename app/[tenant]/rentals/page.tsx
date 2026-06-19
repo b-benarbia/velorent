@@ -53,17 +53,27 @@ export default async function RentalsPage({
       }))}
       kpi={{ revenueToday, activeCount, overdueCount }}
       labels={{
-        title:      t('title'),
-        new:        t('new'),
-        active:     t('active'),
-        noActive:   t('noActive'),
-        inProgress: t('inProgress'),
-        closeArrow: t('closeArrow'),
-        lateReturn: t('lateReturn'),
-        history:    t('history'),
-        client:     t('client'),
-        bike:       t('bike'),
-        noHistory:  t('noHistory'),
+        title:             t('title'),
+        new:               t('new'),
+        active:            t('active'),
+        noActive:          t('noActive'),
+        inProgress:        t('inProgress'),
+        closeArrow:        t('closeArrow'),
+        lateReturn:        t('lateReturn'),
+        history:           t('history'),
+        client:            t('client'),
+        bike:              t('bike'),
+        noHistory:         t('noHistory'),
+        kpiRevenue:        t('kpiRevenue'),
+        kpiActive:         t('kpiActive'),
+        kpiOverdue:        t('kpiOverdue'),
+        tabAll:            t('tabAll'),
+        tabActive:         t('tabActive'),
+        tabOverdue:        t('tabOverdue'),
+        tabCompleted:      t('tabCompleted'),
+        tabCancelled:      t('tabCancelled'),
+        searchPlaceholder: t('searchPlaceholder'),
+        inProgressLabel:   t('inProgressLabel'),
       }}
       statusLabels={statusLabels}
     />
