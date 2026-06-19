@@ -247,6 +247,78 @@ export async function sendContractToCustomer({
   })
 }
 
+// ── Email REÇU de retour au CLIENT ────────────────────────────────────────
+export async function sendReceiptToCustomer({
+  to, customerName, shopName, shopPhone, bikeName, bikeCode,
+  startAt, endAt, amountPaid, depositAmount, depositReturned,
+  contractNumber,
+}: {
+  to:              string
+  customerName:    string
+  shopName:        string
+  shopPhone?:      string | null
+  bikeName:        string
+  bikeCode:        string
+  startAt:         Date
+  endAt:           Date
+  amountPaid:      number
+  depositAmount:   number
+  depositReturned: boolean
+  contractNumber:  string
+}) {
+  const fmtFR  = (d: Date) => d.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+  const duration = (() => {
+    const ms = endAt.getTime() - startAt.getTime()
+    const h  = Math.floor(ms / 3_600_000)
+    const d  = Math.floor(h / 24)
+    if (d >= 1) return `${d} jour${d > 1 ? 's' : ''}`
+    return `${h}h`
+  })()
+
+  const depositLine = depositAmount > 0
+    ? `<tr><td style="padding:6px 0;color:#64748b;font-size:13px">Caution</td><td style="padding:6px 0;text-align:right;font-size:13px;font-weight:700;color:${depositReturned ? '#16a34a' : '#dc2626'}">${depositReturned ? `✅ ${depositAmount.toFixed(2)} € rendue` : `⚠️ ${depositAmount.toFixed(2)} € retenue`}</td></tr>`
+    : ''
+
+  const html = `
+  <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 16px;color:#0f172a">
+    <div style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);border-radius:16px;padding:28px 32px;margin-bottom:24px">
+      <p style="font-size:26px;margin:0 0 4px;font-weight:800;color:#fff;letter-spacing:-0.5px">✅ Merci pour votre location !</p>
+      <p style="font-size:14px;color:rgba(255,255,255,0.7);margin:0">${shopName}</p>
+    </div>
+
+    <p style="font-size:15px;line-height:1.6">Bonjour <strong>${customerName}</strong>,</p>
+    <p style="font-size:15px;line-height:1.6;color:#475569">
+      Votre vélo <strong>${bikeName}</strong> (${bikeCode}) a bien été restitué.
+      Merci d'avoir choisi <strong>${shopName}</strong> — à bientôt !
+    </p>
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin:20px 0">
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#94a3b8;margin:0 0 12px">Récapitulatif · Contrat N° ${contractNumber}</p>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Véhicule</td><td style="padding:6px 0;text-align:right;font-size:13px;font-weight:700">${bikeName} <span style="color:#6366f1">${bikeCode}</span></td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Départ</td><td style="padding:6px 0;text-align:right;font-size:13px">${fmtFR(startAt)}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Retour</td><td style="padding:6px 0;text-align:right;font-size:13px">${fmtFR(endAt)}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Durée</td><td style="padding:6px 0;text-align:right;font-size:13px;font-weight:600">${duration}</td></tr>
+        <tr style="border-top:1px solid #e2e8f0"><td style="padding:10px 0 6px;color:#64748b;font-size:13px">Montant payé</td><td style="padding:10px 0 6px;text-align:right;font-size:16px;font-weight:800;color:#16a34a">${amountPaid.toFixed(2)} €</td></tr>
+        ${depositLine}
+      </table>
+    </div>
+
+    ${shopPhone ? `<p style="font-size:13px;color:#64748b;margin-top:16px">📞 Une question ? Contactez-nous : <strong>${shopPhone}</strong></p>` : ''}
+
+    <p style="font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;margin-top:24px">
+      Reçu envoyé automatiquement par VeloRent · ${shopName}
+    </p>
+  </div>`
+
+  return resend.emails.send({
+    from:    FROM,
+    to,
+    subject: `✅ Retour confirmé — ${bikeName} · ${shopName}`,
+    html,
+  })
+}
+
 // ── Email RAPPEL au CLIENT (envoi manuel par le gérant) ──
 export async function sendReminderToCustomer({
   to, customerName, shopName, shopPhone, bikeType, startAt, endAt, notes, locale = 'fr',

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { sendReceiptToCustomer } from '@/lib/email'
 
 export async function POST(
   req: NextRequest,
@@ -14,9 +15,13 @@ export async function POST(
     const body = await req.json()
     const { closingSignature, staffSignature } = body
 
-    const rental = await prisma.rental.findFirst({
-      where: { id, tenantId: session.tenantId },
-    })
+    const [rental, tenant] = await Promise.all([
+      prisma.rental.findFirst({
+        where: { id, tenantId: session.tenantId },
+        include: { customer: true, bike: true },
+      }),
+      prisma.tenant.findUnique({ where: { id: session.tenantId } }),
+    ])
 
     if (!rental) return NextResponse.json({ error: 'Location introuvable' }, { status: 404 })
     if (rental.status !== 'ACTIVE') return NextResponse.json({ error: 'Location déjà clôturée' }, { status: 409 })
@@ -38,7 +43,7 @@ export async function POST(
       })
 
       await tx.bike.update({
-        where: { id: rental.bikeId },
+        where: { id: closed.bikeId },
         data: { status: 'AVAILABLE' },
       })
 
@@ -61,6 +66,26 @@ export async function POST(
 
       return closed
     })
+
+    // ── Reçu email au client (fire-and-forget) ─────────────────────────────
+    const customerEmail = result.customer.email
+    if (customerEmail) {
+      const contractNumber = `${new Date(result.startAt).getFullYear()}-${result.id.slice(0, 8).toUpperCase()}`
+      sendReceiptToCustomer({
+        to:              customerEmail,
+        customerName:    `${result.customer.firstName} ${result.customer.lastName}`,
+        shopName:        tenant?.name ?? '',
+        shopPhone:       tenant?.phone,
+        bikeName:        result.bike.name,
+        bikeCode:        result.bike.code,
+        startAt:         result.startAt,
+        endAt:           returnAt,
+        amountPaid:      Number(result.amountPaid ?? 0),
+        depositAmount:   Number(result.depositAmount ?? 0),
+        depositReturned: true,
+        contractNumber,
+      }).catch(err => console.error('Receipt email error:', err))
+    }
 
     return NextResponse.json(result)
   } catch (err: unknown) {
