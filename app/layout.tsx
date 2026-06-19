@@ -22,8 +22,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+  // Fallback during static prerendering (/_not-found) where no request context exists
+  let locale = 'fr'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let messages: any = {}
+  try {
+    locale = await getLocale()
+    messages = await getMessages()
+  } catch {
+    messages = (await import('../messages/fr.json')).default
+  }
 
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`}>
