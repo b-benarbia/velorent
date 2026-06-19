@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { renderToBuffer } from '@react-pdf/renderer'
+import React from 'react'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { ContractPDF, type ContractData } from '@/lib/pdf/contract'
+import { sendContractToCustomer } from '@/lib/email'
 
 export async function GET() {
   const session = await getSession()
@@ -75,6 +79,60 @@ export async function POST(req: NextRequest) {
 
     return r
   })
+
+  // ── Send signed contract PDF to customer (non-blocking) ─────────────────
+  if (customer.email) {
+    const contractNumber = `${new Date(rental.startAt).getFullYear()}-${rental.id.slice(0, 8).toUpperCase()}`
+    const accessories: { label: string; qty: number; codes?: string[] }[] =
+      Array.isArray(rental.accessories) ? rental.accessories as { label: string; qty: number; codes?: string[] }[] : []
+
+    const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
+
+    const fmtES = (d: Date) => d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    const fmtTime = (d: Date) => d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+
+    const pdfData: ContractData = {
+      contractNumber,
+      generatedAt: new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      tenant: { name: tenant?.name ?? '', address: tenant?.address, phone: tenant?.phone, email: tenant?.email },
+      customer: {
+        firstName: customer.firstName, lastName: customer.lastName,
+        nationality: customer.nationality, phone: customer.phone, email: customer.email,
+        documentType: customer.documentType, documentNumber: customer.documentNumber,
+        documentPhotoUrl: customer.documentPhotoUrl,
+      },
+      bike: { name: bike.name, code: bike.code, serialNumber: bike.serialNumber, type: bike.type },
+      rental: {
+        startAt:        fmtES(rental.startAt),
+        startTime:      fmtTime(rental.startAt),
+        expectedReturn: rental.expectedReturnAt
+          ? new Date(rental.expectedReturnAt).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+          : null,
+        paymentMethod: rental.paymentMethod,
+        amountPaid:    Number(rental.amountPaid ?? 0).toFixed(2),
+        depositAmount: Number(rental.depositAmount ?? 0).toFixed(2),
+        depositMethod: (rental.rateSnapshot as { depositPaymentMethod?: string })?.depositPaymentMethod ?? 'CASH',
+        lockNumber:    rental.lockNumber,
+        accessories,
+        openingSignature: rental.openingSignature,
+        staffSignature:   rental.staffSignature,
+      },
+    }
+
+    // Fire-and-forget — don't block the response
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    renderToBuffer(React.createElement(ContractPDF, { data: pdfData }) as any)
+      .then(pdfBuffer =>
+        sendContractToCustomer({
+          to:             customer.email!,
+          customerName:   `${customer.firstName} ${customer.lastName}`,
+          shopName:       tenant?.name ?? '',
+          contractNumber,
+          pdfBuffer,
+        })
+      )
+      .catch(err => console.error('Contract email error:', err))
+  }
 
   return NextResponse.json(rental, { status: 201 })
   } catch (err: unknown) {

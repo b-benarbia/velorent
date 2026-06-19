@@ -202,6 +202,51 @@ export async function sendReservationCancelledToCustomer({
   })
 }
 
+// ── Email CONTRAT signé au CLIENT ─────────────────────────────────────────
+export async function sendContractToCustomer({
+  to, customerName, shopName, contractNumber, pdfBuffer,
+}: {
+  to: string
+  customerName: string
+  shopName: string
+  contractNumber: string
+  pdfBuffer: Buffer
+}) {
+  const html = `
+  <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 16px;color:#0f172a">
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:16px;padding:28px 32px;margin-bottom:24px">
+      <p style="font-size:26px;margin:0 0 4px;font-weight:800;color:#fff;letter-spacing:-0.5px">📄 Votre contrat</p>
+      <p style="font-size:14px;color:#64748b;margin:0">${shopName}</p>
+    </div>
+    <p style="font-size:15px;line-height:1.6">Bonjour <strong>${customerName}</strong>,</p>
+    <p style="font-size:15px;line-height:1.6;color:#475569">
+      Merci pour votre location chez <strong>${shopName}</strong>. Vous trouverez ci-joint votre contrat signé
+      <strong>N° ${contractNumber}</strong> au format PDF.
+    </p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin:20px 0">
+      <p style="font-size:12px;color:#64748b;margin:0 0 4px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">Conservez ce document</p>
+      <p style="font-size:13px;color:#475569;margin:0">
+        Ce contrat constitue la preuve de votre location et liste le matériel qui vous a été confié.
+        Gardez-le précieusement, notamment en cas de vol ou sinistre.
+      </p>
+    </div>
+    <p style="font-size:13px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;margin-top:24px">
+      Envoyé automatiquement par VeloRent · ${shopName}
+    </p>
+  </div>`
+
+  return resend.emails.send({
+    from:    FROM,
+    to,
+    subject: `📄 Votre contrat de location — ${shopName} (N° ${contractNumber})`,
+    html,
+    attachments: [{
+      filename: `contrat-${contractNumber}.pdf`,
+      content:  pdfBuffer.toString('base64'),
+    }],
+  })
+}
+
 // ── Email RAPPEL au CLIENT (envoi manuel par le gérant) ──
 export async function sendReminderToCustomer({
   to, customerName, shopName, shopPhone, bikeType, startAt, endAt, notes, locale = 'fr',

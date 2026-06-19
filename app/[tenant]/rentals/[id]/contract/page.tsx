@@ -51,6 +51,14 @@ export default async function ContractPage({
       {/* Toolbar — hidden on print */}
       <div className="no-print flex gap-3 mb-6 p-4">
         <PrintButton />
+        <a
+          href={`/api/rentals/${id}/contract-pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors"
+        >
+          ⬇ PDF
+        </a>
         <Link
           href={`/${tenant}/rentals`}
           className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-medium hover:border-indigo-300 hover:text-indigo-600 transition-colors"
