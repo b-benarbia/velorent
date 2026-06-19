@@ -38,8 +38,19 @@ export async function POST(
       startAt:      reservation.startAt,
       endAt:        reservation.endAt,
       notes:        reservation.notes,
-      locale:       'fr', // default — customer locale not stored yet
+      locale:       'fr',
     })
+
+    // Mark both reminder flags so the auto cron doesn't double-send
+    const now = new Date()
+    await prisma.reservation.update({
+      where: { id: reservation.id },
+      data: {
+        reminderSentAt:   reservation.reminderSentAt   ?? now,
+        reminder2hSentAt: reservation.reminder2hSentAt ?? now,
+      },
+    })
+
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur email'
