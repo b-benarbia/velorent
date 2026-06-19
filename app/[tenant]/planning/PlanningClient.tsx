@@ -169,12 +169,12 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
     <div style={{ fontFamily:'inherit', paddingBottom:24 }}>
 
       {/* ── Header ── */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14, flexWrap:'wrap', gap:10 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <CalendarDays size={18} style={{ color:'#6366f1' }} />
           <span style={{ fontSize:18, fontWeight:600, color:'#0f172a' }}>{labels.title}</span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
           <button onClick={() => setWeekOffset(0)}
             style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:8,
               border:'1.5px solid #e2e8f0', background:'#fff', cursor:'pointer', color:'#6366f1' }}>
@@ -185,7 +185,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
               padding:'4px 7px', cursor:'pointer', display:'flex', alignItems:'center' }}>
             <ChevronLeft size={15} style={{ color:'#6366f1' }} />
           </button>
-          <span style={{ fontSize:12, fontWeight:600, color:'#1e293b', minWidth:180, textAlign:'center' }}>
+          <span style={{ fontSize:12, fontWeight:600, color:'#1e293b', minWidth:110, textAlign:'center' }}>
             {weekLabel}
           </span>
           <button onClick={() => setWeekOffset(w => w+1)}
@@ -226,9 +226,10 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
         })}
       </div>
 
-      {/* ── Calendar grid ── */}
-      <div style={{ borderRadius:16, border:'1.5px solid #e2e8f0', background:'#fff',
-        overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+      {/* ── Calendar grid — scrollable on mobile ── */}
+      <div style={{ overflowX:'auto', borderRadius:16,
+        border:'1.5px solid #e2e8f0', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+      <div style={{ minWidth:460, background:'#fff', borderRadius:16, overflow:'hidden' }}>
 
         {/* Day header row */}
         <div style={{ display:'flex', borderBottom:'1px solid #f1f5f9', background:'#fafafa' }}>
@@ -275,7 +276,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
               </div>
               <div style={{ flex:1, padding:'5px 10px', display:'flex', alignItems:'center' }}>
                 <span style={{ fontSize:10, color:'#94a3b8', fontWeight:500 }}>
-                  {group.bikes.length} vélo{group.bikes.length > 1 ? 's' : ''}
+                  {group.bikes.length} {labels.groupBikes}
                 </span>
               </div>
             </div>
@@ -370,7 +371,8 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
             })}
           </div>
         ))}
-      </div>
+      </div>{/* end inner min-width */}
+      </div>{/* end scroll wrapper */}
 
       {/* ── Legend ── */}
       <div style={{ display:'flex', gap:16, marginTop:12, flexWrap:'wrap' }}>

@@ -411,7 +411,7 @@ export default function ReservationsPage() {
         <form onSubmit={handleSubmit}
           style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 20, padding: 20, marginBottom: 24 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 0, marginBottom: 16 }}>{t('new')}</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="text-xs text-slate-500 font-semibold block mb-1">{t('customerName')} *</label>
               <input type="text" required value={form.customerName}
@@ -636,6 +636,10 @@ export default function ReservationsPage() {
         @keyframes todayPulse {
           0%,100% { box-shadow: 0 0 0 3px #fed7aa; }
           50%      { box-shadow: 0 0 0 6px #fdba7420; }
+        }
+        /* Prevent iOS Safari auto-zoom on input focus (needs font-size >= 16px) */
+        @media screen and (max-width: 767px) {
+          input, select, textarea { font-size: 16px !important; }
         }
       `}</style>
     </div>
