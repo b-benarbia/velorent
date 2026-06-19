@@ -48,6 +48,7 @@ model Tenant {
   reservations Reservation[]
   invoices     Invoice[]
   partners     Partner[]
+  accessories  Accessory[]
 
   @@map("tenants")
 }
@@ -351,4 +352,20 @@ model Partner {
   reservations Reservation[]
 
   @@map("partners")
+}
+
+model Accessory {
+  id        String   @id @default(uuid())
+  tenantId  String
+  type      String   // LOCK | HELMET | CHARGER | BASKET | CHILD_SEAT | OTHER
+  name      String
+  code      String?
+  status    String   @default("AVAILABLE") // AVAILABLE | RENTED | LOST | MAINTENANCE
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("accessories")
 }
