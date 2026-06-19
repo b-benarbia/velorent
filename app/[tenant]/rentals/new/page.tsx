@@ -241,14 +241,14 @@ export default function NewRentalPage() {
     }
   }, [calculatedTotal, manualPrice])
 
-  // Auto-remplir la caution selon le type de vélo sélectionné
+  // Auto-remplir la caution : 1 caution par type unique (pas par quantité)
   useEffect(() => {
     if (selectedBikeIds.length === 0) return
+    const uniqueTypes = new Set(
+      selectedBikeIds.map(id => bikes.find(b => b.id === id)?.type).filter(Boolean)
+    )
     let total = 0
-    for (const bikeId of selectedBikeIds) {
-      const bike = bikes.find(b => b.id === bikeId)
-      if (bike) total += depositConfig[bike.type] ?? 0
-    }
+    uniqueTypes.forEach(type => { total += depositConfig[type!] ?? 0 })
     setForm(f => ({ ...f, depositAmount: total.toFixed(2) }))
   }, [selectedBikeIds, bikes, depositConfig])
 
