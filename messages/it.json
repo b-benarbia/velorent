@@ -10,7 +10,8 @@
     "logout": "Esci",
     "search": "Cerca...",
     "owner": "Proprietario",
-    "employee": "Dipendente"
+    "employee": "Dipendente",
+    "planning": "Pianificazione"
   },
   "common": {
     "save": "Salva",

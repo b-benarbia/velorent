@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Search,
+  CalendarRange,
 } from 'lucide-react'
 import CommandPalette from './CommandPalette'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -20,6 +21,7 @@ const NAV_KEYS = [
   { key: 'dashboard',    tKey: 'dashboard',    icon: LayoutDashboard, section: 'principal', badgeKey: null },
   { key: 'rentals',      tKey: 'rentals',      icon: Bike,            section: 'principal', badgeKey: 'rentals' },
   { key: 'reservations', tKey: 'reservations', icon: CalendarDays,    section: 'principal', badgeKey: 'reservations' },
+  { key: 'planning',     tKey: 'planning',     icon: CalendarRange,   section: 'principal', badgeKey: null },
   { key: 'bikes',        tKey: 'bikes',        icon: Wrench,          section: 'gestion',   badgeKey: null },
   { key: 'accounting',   tKey: 'accounting',   icon: Receipt,         section: 'gestion',   badgeKey: null },
 ]

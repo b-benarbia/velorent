@@ -10,7 +10,8 @@
     "logout": "Uitloggen",
     "search": "Zoeken...",
     "owner": "Eigenaar",
-    "employee": "Medewerker"
+    "employee": "Medewerker",
+    "planning": "Planning"
   },
   "common": {
     "save": "Opslaan",

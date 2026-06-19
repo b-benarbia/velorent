@@ -10,7 +10,8 @@
     "logout": "Déconnexion",
     "search": "Rechercher...",
     "owner": "Propriétaire",
-    "employee": "Employé"
+    "employee": "Employé",
+    "planning": "Planning"
   },
   "common": {
     "save": "Sauvegarder",

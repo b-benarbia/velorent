@@ -10,7 +10,8 @@
     "logout": "Log out",
     "search": "Search...",
     "owner": "Owner",
-    "employee": "Employee"
+    "employee": "Employee",
+    "planning": "Planning"
   },
   "common": {
     "save": "Save",
