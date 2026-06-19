@@ -61,12 +61,8 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
     }
   }, [value])
 
-  // Scroll selected time into view when picker opens
-  useEffect(() => {
-    if (!open || !timeRef.current) return
-    const el = timeRef.current.querySelector(`[data-time="${selTime}"]`) as HTMLElement | null
-    if (el) setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
-  }, [open, selTime])
+  // After picking date, scroll page to reveal time section
+  // (no inner overflow scroll — time slots display fully)
 
   function emit(date: string, time: string) {
     if (!date || !time) return
@@ -80,8 +76,8 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
   function pickDate(dk: string) {
     setSelDate(dk)
     emit(dk, selTime)
-    // scroll to time section after picking date
-    setTimeout(() => timeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 80)
+    // Scroll page to reveal time slots below calendar (mobile UX)
+    setTimeout(() => timeRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 100)
   }
 
   function pickTime(t: string) {
@@ -133,7 +129,7 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
           width: '100%', textAlign: 'left', boxSizing: 'border-box',
           background: open ? '#f8faff' : 'white',
           border: `1.5px solid ${open ? '#6366f1' : '#e2e8f0'}`,
-          borderRadius: 12, padding: '11px 14px',
+          borderRadius: 12, padding: '13px 14px', minHeight: 48,
           color: displayVal ? '#0f172a' : '#94a3b8',
           cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
           display: 'flex', alignItems: 'center', gap: 8,
@@ -193,20 +189,21 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
               ))}
             </div>
 
-            {/* Day grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+            {/* Day grid — 44px min height for Apple touch target compliance */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
               {cells.map((day, i) => {
-                if (day === null) return <div key={i} />
+                if (day === null) return <div key={i} style={{ minHeight: 44 }} />
                 const dk = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
                 const isSel = selDate === dk
                 const isTd  = dk === today
                 return (
                   <button key={i} type="button" onClick={() => pickDate(dk)} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    minHeight: 34, borderRadius: 8, border: 'none', cursor: 'pointer',
+                    minHeight: 44, borderRadius: 9, border: 'none', cursor: 'pointer',
                     background: isSel ? '#6366f1' : isTd ? '#eef2ff' : 'transparent',
-                    fontSize: 12, fontWeight: isSel || isTd ? 700 : 400,
+                    fontSize: 13, fontWeight: isSel || isTd ? 700 : 400,
                     color: isSel ? 'white' : isTd ? '#6366f1' : '#334155',
+                    WebkitTapHighlightColor: 'transparent',
                   }}>
                     {day}
                   </button>
@@ -231,8 +228,9 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
                 </span>
               )}
             </div>
+            {/* No maxHeight / overflow — all slots visible, no nested scroll on mobile */}
             <div ref={timeRef}
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, maxHeight: 150, overflowY: 'auto' }}>
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5 }}>
               {TIME_SLOTS.map(t => {
                 const isSel = selTime === t
                 return (
@@ -241,12 +239,14 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
                     onClick={() => pickTime(t)}
                     disabled={!selDate}
                     style={{
-                      padding: '7px 2px', borderRadius: 8,
+                      padding: '10px 4px', borderRadius: 9,
                       border: `1.5px solid ${isSel ? '#6366f1' : '#e2e8f0'}`,
                       background: isSel ? '#6366f1' : 'white',
                       color: isSel ? 'white' : selDate ? '#334155' : '#c4c9d4',
-                      fontSize: 11, fontWeight: isSel ? 700 : 400,
+                      fontSize: 13, fontWeight: isSel ? 700 : 400,
                       cursor: selDate ? 'pointer' : 'default',
+                      minHeight: 44,
+                      WebkitTapHighlightColor: 'transparent',
                     }}>
                     {t}
                   </button>
