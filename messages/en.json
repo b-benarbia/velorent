@@ -171,6 +171,8 @@
     "idCard": "ID Card",
     "drivingLicense": "Driving license",
     "other": "Other",
+    "depositMoney": "Amount",
+    "depositId": "ID Document",
     "step1": "Customer",
     "step2": "Bike",
     "step3": "Payment",

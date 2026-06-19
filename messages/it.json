@@ -171,6 +171,8 @@
     "idCard": "Carta d'identità",
     "drivingLicense": "Patente di guida",
     "other": "Altro",
+    "depositMoney": "Importo",
+    "depositId": "Documento d'identità",
     "step1": "Cliente",
     "step2": "Bici",
     "step3": "Pagamento",

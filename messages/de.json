@@ -171,6 +171,8 @@
     "idCard": "Personalausweis",
     "drivingLicense": "Führerschein",
     "other": "Sonstiges",
+    "depositMoney": "Betrag",
+    "depositId": "Ausweisdokument",
     "step1": "Kunde",
     "step2": "Fahrrad",
     "step3": "Zahlung",

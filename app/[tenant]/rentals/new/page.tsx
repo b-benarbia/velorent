@@ -804,8 +804,8 @@ export default function NewRentalPage() {
             {/* Toggle Argent / Pièce d'identité */}
             <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 12, padding: 3, marginBottom: 12, width: 'fit-content' }}>
               {[
-                { value: 'MONEY', label: 'Montant',           Icon: Euro },
-                { value: 'ID',    label: 'Pièce d\'identité', Icon: FileText },
+                { value: 'MONEY', label: t('depositMoney'), Icon: Euro },
+                { value: 'ID',    label: t('depositId'),    Icon: FileText },
               ].map(opt => {
                 const OptIcon = opt.Icon
                 return (
@@ -850,12 +850,12 @@ export default function NewRentalPage() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 {[
-                  { value: 'PASSPORT',        label: 'Passport' },
-                  { value: 'DNI',             label: 'DNI' },
-                  { value: 'NIE',             label: 'NIE' },
-                  { value: 'ID_CARD',         label: 'Carte d\'identité' },
-                  { value: 'DRIVING_LICENSE', label: 'Permis de conduire' },
-                  { value: 'OTHER',           label: 'Autre' },
+                  { value: 'PASSPORT',        label: t('passport') },
+                  { value: 'DNI',             label: t('dni') },
+                  { value: 'NIE',             label: t('nie') },
+                  { value: 'ID_CARD',         label: t('idCard') },
+                  { value: 'DRIVING_LICENSE', label: t('drivingLicense') },
+                  { value: 'OTHER',           label: t('other') },
                 ].map(doc => {
                   const active = depositIdType === doc.value
                   return (

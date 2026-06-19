@@ -171,6 +171,8 @@
     "idCard": "Identiteitskaart",
     "drivingLicense": "Rijbewijs",
     "other": "Anders",
+    "depositMoney": "Bedrag",
+    "depositId": "Identiteitsdocument",
     "step1": "Klant",
     "step2": "Fiets",
     "step3": "Betaling",

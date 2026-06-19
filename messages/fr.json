@@ -171,6 +171,8 @@
     "idCard": "Carte d'identité",
     "drivingLicense": "Permis de conduire",
     "other": "Autre",
+    "depositMoney": "Montant",
+    "depositId": "Pièce d'identité",
     "step1": "Client",
     "step2": "Vélo",
     "step3": "Paiement",
