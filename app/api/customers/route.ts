@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { firstName, lastName, email, phone, documentType, documentNumber, nationality, address, notes, documentPhoto } = body
+    const { firstName, lastName, email, phone, documentType, documentNumber, nationality, notes, documentPhoto } = body
 
     if (!firstName || !lastName) {
       return NextResponse.json({ error: 'Prénom et nom requis' }, { status: 400 })
@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
         documentType: documentType || 'PASSPORT',
         documentNumber: documentNumber || null,
         nationality: nationality || null,
-        address: address || null,
         notes: notes || null,
         documentPhotoUrl: documentPhoto || null,
       },
