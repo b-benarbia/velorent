@@ -1,5 +1,6 @@
 import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
+import { getServerT } from '@/lib/server-t'
 import PlanningClient from './PlanningClient'
 
 export default async function PlanningPage({
@@ -9,6 +10,7 @@ export default async function PlanningPage({
 }) {
   const { tenant } = await params
   const session = await requireSession()
+  const t = await getServerT('planning')
 
   const [bikes, rentals] = await Promise.all([
     prisma.bike.findMany({
@@ -57,6 +59,25 @@ export default async function PlanningPage({
           groupSize: groupCounts.get(groupKey) ?? 1,
         }
       })}
+      labels={{
+        title:           t('title'),
+        today:           t('today'),
+        kpiActive:       t('kpiActive'),
+        kpiOverdue:      t('kpiOverdue'),
+        kpiAvailable:    t('kpiAvailable'),
+        filterAll:       t('filterAll'),
+        statusActive:    t('statusActive'),
+        statusOverdue:   t('statusOverdue'),
+        statusCompleted: t('statusCompleted'),
+        statusCancelled: t('statusCancelled'),
+        legendActive:    t('legendActive'),
+        legendOverdue:   t('legendOverdue'),
+        legendCompleted: t('legendCompleted'),
+        legendAvailable: t('legendAvailable'),
+        legendGroup:     t('legendGroup'),
+        groupBikes:      t('groupBikes'),
+        noBikes:         t('noBikes'),
+      }}
     />
   )
 }

@@ -1,33 +1,41 @@
 'use client'
 
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Link2, CalendarDays } from 'lucide-react'
 
 // ── Types ────────────────────────────────────────────────────────────────
-type BikeRow = { id: string; code: string; name: string; type: string }
+type BikeRow  = { id: string; code: string; name: string; type: string }
 type RentalEvent = {
   id: string; bikeId: string; customerId: string; customerName: string
   status: string; startAt: string; endAt: string
   groupKey: string; groupSize: number
 }
+type PlanningLabels = {
+  title: string; today: string
+  kpiActive: string; kpiOverdue: string; kpiAvailable: string
+  filterAll: string
+  statusActive: string; statusOverdue: string; statusCompleted: string; statusCancelled: string
+  legendActive: string; legendOverdue: string; legendCompleted: string
+  legendAvailable: string; legendGroup: string; groupBikes: string; noBikes: string
+}
 
-// ── Constants ────────────────────────────────────────────────────────────
+// ── Palette ──────────────────────────────────────────────────────────────
 const ACCENT_COLORS = [
   '#6366f1','#14b8a6','#f97316','#ec4899',
   '#f59e0b','#0ea5e9','#a855f7','#84cc16',
 ]
-function accentColor(customerId: string): string {
+function accentColor(id: string): string {
   let h = 0
-  for (const c of customerId) h = ((h * 31) + c.charCodeAt(0)) & 0x7fffffff
+  for (const c of id) h = ((h * 31) + c.charCodeAt(0)) & 0x7fffffff
   return ACCENT_COLORS[h % ACCENT_COLORS.length]
 }
 
-const STATUS_STYLE: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  ACTIVE:    { bg: '#eef2ff', border: '#6366f1', text: '#3730a3', dot: '#6366f1' },
-  OVERDUE:   { bg: '#fff1f2', border: '#f43f5e', text: '#9f1239', dot: '#f43f5e' },
-  COMPLETED: { bg: '#f1f5f9', border: '#cbd5e1', text: '#475569', dot: '#94a3b8' },
-  CANCELLED: { bg: '#f8fafc', border: '#e2e8f0', text: '#94a3b8', dot: '#cbd5e1' },
+const STATUS: Record<string, { bg: string; hover: string; border: string; text: string; dot: string }> = {
+  ACTIVE:    { bg:'#eef2ff', hover:'#6366f1', border:'#6366f1', text:'#3730a3', dot:'#6366f1' },
+  OVERDUE:   { bg:'#fff1f2', hover:'#f43f5e', border:'#f43f5e', text:'#9f1239', dot:'#f43f5e' },
+  COMPLETED: { bg:'#f1f5f9', hover:'#475569', border:'#cbd5e1', text:'#475569', dot:'#94a3b8' },
+  CANCELLED: { bg:'#f8fafc', hover:'#94a3b8', border:'#e2e8f0', text:'#94a3b8', dot:'#cbd5e1' },
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -46,8 +54,12 @@ function getMondayOfWeek(d: Date): Date {
 function addDays(d: Date, n: number): Date {
   const r = new Date(d); r.setDate(r.getDate() + n); return r
 }
-function sameDay(a: Date, b: Date): boolean {
+function sameDay(a: Date, b: Date) {
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate()
+}
+// Normalize to local midnight to avoid UTC off-by-one
+function localMidnight(d: Date): Date {
+  const r = new Date(d); r.setHours(0,0,0,0); return r
 }
 function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime()-a.getTime())/86400000)
@@ -58,60 +70,67 @@ interface Props {
   tenant: string
   bikes: BikeRow[]
   rentals: RentalEvent[]
+  labels: PlanningLabels
 }
 
-type TooltipData = {
-  x: number; y: number
-  rental: RentalEvent
-}
+type TooltipData = { x: number; y: number; rental: RentalEvent }
 
-export default function PlanningClient({ tenant, bikes, rentals }: Props) {
+const ROW_H = 52
+
+export default function PlanningClient({ tenant, bikes, rentals, labels }: Props) {
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
   const [weekOffset, setWeekOffset] = useState(0)
-  const [typeFilter, setTypeFilter] = useState<string>('ALL')
-  const [tooltip, setTooltip] = useState<TooltipData | null>(null)
+  const [typeFilter, setTypeFilter]  = useState('ALL')
+  const [tooltip, setTooltip]        = useState<TooltipData | null>(null)
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  // ── Week days ──────────────────────────────────────────────────────
+  // ── Week days ─────────────────────────────────────────────────────
   const weekStart = useMemo(() => addDays(getMondayOfWeek(today), weekOffset * 7), [today, weekOffset])
   const days = useMemo(() => Array.from({length:7}, (_,i) => addDays(weekStart, i)), [weekStart])
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart])
 
-  // ── Filtered bikes ─────────────────────────────────────────────────
-  const visibleBikes = useMemo(() => {
-    const types = [...new Set(bikes.map(b => b.type))]
-    return typeFilter === 'ALL' ? bikes : bikes.filter(b => b.type === typeFilter)
-  }, [bikes, typeFilter])
+  const weekLabel = useMemo(() => {
+    const fmt = (d: Date) => new Intl.DateTimeFormat(undefined, { day:'numeric', month:'short' }).format(d)
+    const m1 = new Intl.DateTimeFormat(undefined, { month:'long' }).format(days[0])
+    const m2 = new Intl.DateTimeFormat(undefined, { month:'long' }).format(days[6])
+    return m1 === m2
+      ? `${fmt(days[0])} – ${days[6].getDate()} ${m1} ${days[0].getFullYear()}`
+      : `${fmt(days[0])} – ${fmt(days[6])} ${days[0].getFullYear()}`
+  }, [days])
 
+  // ── Filtered bikes ────────────────────────────────────────────────
   const allTypes = useMemo(() => [...new Set(bikes.map(b => b.type))], [bikes])
+  const visibleBikes = useMemo(
+    () => typeFilter === 'ALL' ? bikes : bikes.filter(b => b.type === typeFilter),
+    [bikes, typeFilter]
+  )
 
-  // ── Rentals for the visible week, grouped by bike ──────────────────
+  // ── Rentals per bike for the current week ─────────────────────────
   const rentalsByBike = useMemo(() => {
     const wEnd = new Date(weekEnd); wEnd.setHours(23,59,59,999)
     const map = new Map<string, RentalEvent[]>()
     bikes.forEach(b => map.set(b.id, []))
     rentals.forEach(r => {
       const start = new Date(r.startAt)
-      const end = new Date(r.endAt)
+      const end   = new Date(r.endAt)
       if (end < weekStart || start > wEnd) return
-      const list = map.get(r.bikeId)
-      if (list) list.push(r)
+      map.get(r.bikeId)?.push(r)
     })
     return map
   }, [bikes, rentals, weekStart, weekEnd])
 
-  // ── Block geometry ────────────────────────────────────────────────
+  // ── Block geometry — uses localMidnight to avoid UTC rounding bug ─
   function getBlockGeometry(rental: RentalEvent) {
     const wEnd = new Date(weekEnd); wEnd.setHours(23,59,59,999)
     const rStart = new Date(rental.startAt)
-    const rEnd = new Date(rental.endAt)
+    const rEnd   = new Date(rental.endAt)
 
     const clampedStart = rStart < weekStart ? weekStart : rStart
     const clampedEnd   = rEnd   > wEnd      ? wEnd      : rEnd
 
-    const startIdx = Math.round(daysBetween(weekStart, clampedStart))
-    const endIdx   = Math.round(daysBetween(weekStart, clampedEnd))
+    // Normalize to local midnight before computing day index
+    const startIdx = daysBetween(weekStart, localMidnight(clampedStart))
+    const endIdx   = daysBetween(weekStart, localMidnight(clampedEnd))
 
     const fromPrev = rStart < weekStart
     const toNext   = rEnd   > wEnd
@@ -123,56 +142,52 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
     return { startIdx: safeStart, span, fromPrev, toNext }
   }
 
-  // ── KPI counts for the current week ──────────────────────────────
+  // ── KPI for current week ──────────────────────────────────────────
   const weekStats = useMemo(() => {
-    const wEnd = new Date(weekEnd); wEnd.setHours(23,59,59,999)
     let active=0, overdue=0, available=0
     bikes.forEach(b => {
-      const hasActive = (rentalsByBike.get(b.id) ?? []).some(r => r.status==='ACTIVE'||r.status==='OVERDUE')
-      if (!hasActive) available++
+      const hasOccupied = (rentalsByBike.get(b.id) ?? []).some(
+        r => r.status==='ACTIVE' || r.status==='OVERDUE'
+      )
+      if (!hasOccupied) available++
       ;(rentalsByBike.get(b.id) ?? []).forEach(r => {
-        if (r.status==='ACTIVE') active++
+        if (r.status==='ACTIVE')  active++
         if (r.status==='OVERDUE') overdue++
       })
     })
     return { active, overdue, available }
-  }, [bikes, rentalsByBike, weekEnd])
+  }, [bikes, rentalsByBike])
 
-  // ── Month label ───────────────────────────────────────────────────
-  const weekLabel = useMemo(() => {
-    const fmt = (d: Date) => new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' }).format(d)
-    const m1 = new Intl.DateTimeFormat(undefined, { month: 'long' }).format(days[0])
-    const m2 = new Intl.DateTimeFormat(undefined, { month: 'long' }).format(days[6])
-    return m1 === m2
-      ? `${fmt(days[0])} – ${days[6].getDate()} ${m1} ${days[0].getFullYear()}`
-      : `${fmt(days[0])} – ${fmt(days[6])} ${days[0].getFullYear()}`
-  }, [days])
-
-  // ── Tooltip handlers ──────────────────────────────────────────────
+  // ── Tooltip ───────────────────────────────────────────────────────
   const showTip = useCallback((e: React.MouseEvent, rental: RentalEvent) => {
     setTooltip({ x: e.clientX, y: e.clientY, rental })
     setHoveredGroup(rental.groupKey)
   }, [])
   const hideTip = useCallback(() => { setTooltip(null); setHoveredGroup(null) }, [])
 
-  const LABEL_W = 72
-  const ROW_H   = 52
-  const HDR_H   = 44
+  const statusLabel: Record<string,string> = {
+    ACTIVE:    labels.statusActive,
+    OVERDUE:   labels.statusOverdue,
+    COMPLETED: labels.statusCompleted,
+    CANCELLED: labels.statusCancelled,
+  }
+  const fmtDateTime = (s: string) =>
+    new Intl.DateTimeFormat(undefined, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }).format(new Date(s))
 
   return (
-    <div style={{ fontFamily: 'inherit', paddingBottom: 24 }}>
+    <div style={{ fontFamily:'inherit', paddingBottom:24 }}>
 
       {/* ── Header ── */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <CalendarDays size={18} style={{ color:'#6366f1' }} />
-          <span style={{ fontSize:18, fontWeight:600, color:'var(--color-text-primary, #0f172a)' }}>Planning</span>
+          <span style={{ fontSize:18, fontWeight:600, color:'#0f172a' }}>{labels.title}</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <button onClick={() => setWeekOffset(0)}
             style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:8,
               border:'1.5px solid #e2e8f0', background:'#fff', cursor:'pointer', color:'#6366f1' }}>
-            Aujourd'hui
+            {labels.today}
           </button>
           <button onClick={() => setWeekOffset(w => w-1)}
             style={{ border:'1.5px solid #e2e8f0', background:'#fff', borderRadius:8,
@@ -193,45 +208,40 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
       {/* ── KPI strip ── */}
       <div style={{ display:'flex', gap:8, marginBottom:14 }}>
         {[
-          { label:'En cours',   val:weekStats.active,    c:'#6366f1', bg:'#eef2ff', bc:'#c7d2fe' },
-          { label:'En retard',  val:weekStats.overdue,   c:'#f43f5e', bg:'#fff1f2', bc:'#fecdd3' },
-          { label:'Disponibles',val:weekStats.available, c:'#16a34a', bg:'#f0fdf4', bc:'#bbf7d0' },
+          { label:labels.kpiActive,    val:weekStats.active,    c:'#6366f1', bg:'#eef2ff', bc:'#c7d2fe' },
+          { label:labels.kpiOverdue,   val:weekStats.overdue,   c:'#f43f5e', bg:'#fff1f2', bc:'#fecdd3' },
+          { label:labels.kpiAvailable, val:weekStats.available, c:'#16a34a', bg:'#f0fdf4', bc:'#bbf7d0' },
         ].map(k => (
-          <div key={k.label} style={{ flex:1, background:k.bg, border:`1px solid ${k.bc}`,
-            borderRadius:12, padding:'10px 12px' }}>
-            <p style={{ fontSize:10, fontWeight:700, color:k.c, textTransform:'uppercase',
-              letterSpacing:'0.06em', marginBottom:4 }}>{k.label}</p>
+          <div key={k.label} style={{ flex:1, background:k.bg, border:`1px solid ${k.bc}`, borderRadius:12, padding:'10px 12px' }}>
+            <p style={{ fontSize:10, fontWeight:700, color:k.c, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{k.label}</p>
             <p style={{ fontSize:20, fontWeight:800, color:'#0f172a' }}>{k.val}</p>
           </div>
         ))}
       </div>
 
-      {/* ── Type filters ── */}
+      {/* ── Type filter chips ── */}
       <div style={{ display:'flex', gap:6, marginBottom:12, overflowX:'auto', paddingBottom:2 }}>
         {['ALL', ...allTypes].map(t => {
           const active = typeFilter === t
           return (
             <button key={t} onClick={() => setTypeFilter(t)}
-              style={{ flexShrink:0, padding:'5px 12px', borderRadius:20, fontSize:12,
-                fontWeight:600, border:`1.5px solid ${active ? '#6366f1' : '#e2e8f0'}`,
+              style={{ flexShrink:0, padding:'5px 12px', borderRadius:20, fontSize:12, fontWeight:600,
+                border:`1.5px solid ${active ? '#6366f1' : '#e2e8f0'}`,
                 background: active ? '#6366f1' : '#fff',
                 color: active ? '#fff' : '#64748b', cursor:'pointer', transition:'all .15s' }}>
-              {t === 'ALL' ? 'Tous les vélos' : (TYPE_LABEL[t] ?? t)}
+              {t === 'ALL' ? labels.filterAll : (TYPE_LABEL[t] ?? t)}
             </button>
           )
         })}
       </div>
 
       {/* ── Calendar grid ── */}
-      <div ref={containerRef}
-        style={{ borderRadius:16, border:'1.5px solid #e2e8f0', background:'#fff',
-          overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+      <div style={{ borderRadius:16, border:'1.5px solid #e2e8f0', background:'#fff',
+        overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
 
         {/* Day header row */}
         <div style={{ display:'flex', borderBottom:'1px solid #f1f5f9', background:'#fafafa' }}>
-          {/* Bike label column */}
-          <div style={{ width:LABEL_W, flexShrink:0, borderRight:'1px solid #f1f5f9' }} />
-          {/* Day headers */}
+          <div style={{ width:72, flexShrink:0, borderRight:'1px solid #f1f5f9' }} />
           {days.map((d, i) => {
             const isToday = sameDay(d, today)
             const dow = new Intl.DateTimeFormat(undefined, { weekday:'short' }).format(d).slice(0,3)
@@ -239,13 +249,11 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
               <div key={i} style={{ flex:1, textAlign:'center', padding:'6px 2px',
                 borderRight: i<6 ? '1px solid #f1f5f9' : 'none',
                 background: isToday ? '#f5f3ff' : 'transparent' }}>
-                <p style={{ fontSize:10, fontWeight:600, color: isToday ? '#6366f1' : '#94a3b8',
-                  textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:2 }}>{dow}</p>
-                <div style={{
-                  width:24, height:24, borderRadius:'50%', margin:'0 auto',
+                <p style={{ fontSize:10, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:2,
+                  color: isToday ? '#6366f1' : '#94a3b8' }}>{dow}</p>
+                <div style={{ width:24, height:24, borderRadius:'50%', margin:'0 auto',
                   background: isToday ? '#6366f1' : 'transparent',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                }}>
+                  display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <p style={{ fontSize:13, fontWeight: isToday ? 700 : 500,
                     color: isToday ? '#fff' : '#1e293b' }}>{d.getDate()}</p>
                 </div>
@@ -257,20 +265,18 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
         {/* Bike rows */}
         {visibleBikes.length === 0 ? (
           <div style={{ padding:40, textAlign:'center', color:'#94a3b8', fontSize:14 }}>
-            Aucun vélo disponible pour ce filtre
+            {labels.noBikes}
           </div>
         ) : visibleBikes.map((bike, bi) => {
           const bikeRentals = rentalsByBike.get(bike.id) ?? []
-
           return (
-            <div key={bike.id}
-              style={{ display:'flex', borderBottom: bi < visibleBikes.length-1 ? '1px solid #f1f5f9' : 'none',
-                minHeight:ROW_H }}>
+            <div key={bike.id} style={{ display:'flex',
+              borderBottom: bi < visibleBikes.length-1 ? '1px solid #f1f5f9' : 'none',
+              minHeight:ROW_H }}>
 
               {/* Bike label */}
-              <div style={{ width:LABEL_W, flexShrink:0, padding:'8px 10px',
-                borderRight:'1px solid #f1f5f9', background:'#fafafa',
-                display:'flex', flexDirection:'column', justifyContent:'center' }}>
+              <div style={{ width:72, flexShrink:0, padding:'8px 10px', borderRight:'1px solid #f1f5f9',
+                background:'#fafafa', display:'flex', flexDirection:'column', justifyContent:'center' }}>
                 <p style={{ fontSize:12, fontWeight:700, color:'#0f172a', lineHeight:1.2 }}>{bike.code}</p>
                 <p style={{ fontSize:10, color:'#94a3b8', marginTop:2 }}>{TYPE_LABEL[bike.type] ?? bike.type}</p>
               </div>
@@ -278,80 +284,77 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
               {/* Days area */}
               <div style={{ flex:1, position:'relative', minHeight:ROW_H }}>
 
-                {/* Grid lines + today highlight (background layer) */}
-                <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none', zIndex:0 }}>
+                {/* Grid bg + today column */}
+                <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none' }}>
                   {days.map((d, i) => (
-                    <div key={i} style={{
-                      flex:1, height:'100%',
+                    <div key={i} style={{ flex:1, height:'100%',
                       borderRight: i<6 ? '1px solid #f9fafb' : 'none',
-                      background: sameDay(d, today) ? '#f5f3ff' : 'transparent',
-                    }} />
+                      background: sameDay(d, today) ? '#f5f3ff' : 'transparent' }} />
                   ))}
                 </div>
 
-                {/* Available dots (when no rental on a day) */}
+                {/* Free-slot dots */}
                 <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none', zIndex:1 }}>
                   {days.map((d, i) => {
                     const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999)
-                    const hasRental = bikeRentals.some(r => {
+                    const busy = bikeRentals.some(r => {
                       const rs = new Date(r.startAt), re = new Date(r.endAt)
                       return rs <= dayEnd && re >= d
                     })
                     return (
                       <div key={i} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {!hasRental && (
-                          <div style={{ width:5, height:5, borderRadius:'50%', background:'#d1fae5' }} />
-                        )}
+                        {!busy && <div style={{ width:5, height:5, borderRadius:'50%', background:'#d1fae5' }} />}
                       </div>
                     )
                   })}
                 </div>
 
-                {/* Rental blocks (event layer) */}
+                {/* Rental blocks */}
                 <div style={{ position:'absolute', inset:0, zIndex:2, pointerEvents:'none' }}>
                   {bikeRentals.map(rental => {
                     const { startIdx, span, fromPrev, toNext } = getBlockGeometry(rental)
-                    const ss = STATUS_STYLE[rental.status] ?? STATUS_STYLE.COMPLETED
+                    const ss = STATUS[rental.status] ?? STATUS.COMPLETED
                     const accent = accentColor(rental.customerId)
                     const isGrouped = rental.groupSize > 1
                     const isHovered = hoveredGroup === rental.groupKey
 
-                    const leftPct = (startIdx / 7) * 100
+                    const leftPct  = (startIdx / 7) * 100
                     const widthPct = (span / 7) * 100
+                    const pad = 3
 
                     return (
-                      <div key={rental.id}
+                      <div key={rental.id} style={{ pointerEvents:'auto' }}
                         onMouseEnter={e => showTip(e, rental)}
-                        onMouseLeave={hideTip}
-                        style={{ pointerEvents:'auto' }}>
-                        <Link href={`/${tenant}/rentals/${rental.id}`} style={{ textDecoration:'none' }}>
+                        onMouseLeave={hideTip}>
+                        <Link href={`/${tenant}/rentals/${rental.id}`} style={{ textDecoration:'none', display:'block' }}>
                           <div style={{
                             position:'absolute',
                             top:6, height: ROW_H - 12,
-                            left:`calc(${leftPct}% + ${fromPrev ? 0 : 3}px)`,
-                            width:`calc(${widthPct}% - ${fromPrev ? 0 : 3}px - ${toNext ? 0 : 3}px)`,
-                            background: isHovered ? ss.border : ss.bg,
-                            border:`1.5px solid ${isHovered ? ss.border : ss.border}`,
-                            borderLeft:`3px solid ${accent}`,
-                            borderRadius: `${fromPrev ? 0 : 8}px ${toNext ? 0 : 8}px ${toNext ? 0 : 8}px ${fromPrev ? 0 : 8}px`,
+                            left: `calc(${leftPct}% + ${fromPrev ? 0 : pad}px)`,
+                            width:`calc(${widthPct}% - ${fromPrev ? 0 : pad}px - ${toNext ? 0 : pad}px)`,
+                            // Hover: solid darker fill; idle: light tint
+                            background: isHovered ? ss.hover : ss.bg,
+                            border: `1.5px solid ${isHovered ? ss.hover : ss.border}`,
+                            borderLeft: `3px solid ${accent}`,
+                            borderRadius: `${fromPrev?0:8}px ${toNext?0:8}px ${toNext?0:8}px ${fromPrev?0:8}px`,
                             display:'flex', alignItems:'center', gap:4, paddingLeft:6, paddingRight:6,
-                            overflow:'hidden', cursor:'pointer', transition:'all .12s',
-                            boxShadow: isHovered ? `0 2px 8px ${ss.border}40` : 'none',
+                            overflow:'hidden', cursor:'pointer',
+                            transition:'background .12s, border-color .12s, box-shadow .12s, transform .1s',
+                            boxShadow: isHovered ? `0 4px 12px ${ss.hover}55` : 'none',
+                            transform: isHovered ? 'translateY(-1px)' : 'none',
                           }}>
                             {/* Status dot */}
-                            <div style={{
-                              width:6, height:6, borderRadius:'50%',
-                              background: ss.dot, flexShrink:0,
-                              animation: rental.status==='OVERDUE' ? 'pulse 1.5s infinite' : 'none',
-                            }} />
-                            {/* Customer name */}
-                            <span style={{ fontSize:11, fontWeight:600, color: isHovered ? '#fff' : ss.text,
-                              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', flex:1 }}>
+                            <div style={{ width:6, height:6, borderRadius:'50%', flexShrink:0,
+                              background: isHovered ? 'rgba(255,255,255,0.7)' : ss.dot }} />
+                            {/* Name */}
+                            <span style={{ fontSize:11, fontWeight:600, flex:1,
+                              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+                              color: isHovered ? '#fff' : ss.text }}>
                               {span >= 2 ? rental.customerName : rental.customerName.split(' ')[0]}
                             </span>
-                            {/* Group indicator */}
+                            {/* Group icon */}
                             {isGrouped && (
-                              <Link2 size={10} style={{ color: isHovered ? '#fff' : accent, flexShrink:0 }} />
+                              <Link2 size={10} style={{ color: isHovered ? 'rgba(255,255,255,0.8)' : accent, flexShrink:0 }} />
                             )}
                           </div>
                         </Link>
@@ -368,63 +371,60 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
       {/* ── Legend ── */}
       <div style={{ display:'flex', gap:16, marginTop:12, flexWrap:'wrap' }}>
         {[
-          { label:'En cours',   bg:'#eef2ff', border:'#6366f1', dot:'#6366f1' },
-          { label:'En retard',  bg:'#fff1f2', border:'#f43f5e', dot:'#f43f5e' },
-          { label:'Terminé',    bg:'#f1f5f9', border:'#cbd5e1', dot:'#94a3b8' },
-          { label:'Disponible', bg:'transparent', border:'transparent', dot:'#d1fae5' },
+          { label:labels.legendActive,    bg:'#eef2ff', dot:'#6366f1' },
+          { label:labels.legendOverdue,   bg:'#fff1f2', dot:'#f43f5e' },
+          { label:labels.legendCompleted, bg:'#f1f5f9', dot:'#94a3b8' },
         ].map(l => (
           <div key={l.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-              {l.label === 'Disponible' ? (
-                <div style={{ width:6, height:6, borderRadius:'50%', background:'#d1fae5', border:'1px solid #86efac' }} />
-              ) : (
-                <div style={{ width:28, height:12, borderRadius:4, background:l.bg,
-                  border:`1.5px solid ${l.border}`, borderLeft:`3px solid ${l.dot}` }} />
-              )}
-            </div>
+            <div style={{ width:28, height:12, borderRadius:4, background:l.bg,
+              border:`1.5px solid ${l.dot}`, borderLeft:`3px solid ${l.dot}` }} />
             <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{l.label}</span>
           </div>
         ))}
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <div style={{ width:6, height:6, borderRadius:'50%', background:'#d1fae5', border:'1px solid #86efac' }} />
+          <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{labels.legendAvailable}</span>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <Link2 size={12} style={{ color:'#6366f1' }} />
-          <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>Groupe (même client)</span>
+          <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{labels.legendGroup}</span>
         </div>
       </div>
 
-      {/* ── Tooltip ── */}
+      {/* ── Tooltip — rendered in-flow, position:fixed avoids overflow clipping ── */}
       {tooltip && (() => {
         const r = tooltip.rental
-        const ss = STATUS_STYLE[r.status] ?? STATUS_STYLE.COMPLETED
+        const ss = STATUS[r.status] ?? STATUS.COMPLETED
         const accent = accentColor(r.customerId)
-        const fmtDate = (s: string) => new Intl.DateTimeFormat(undefined, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }).format(new Date(s))
-        const statusLabel: Record<string,string> = { ACTIVE:'En cours', OVERDUE:'En retard', COMPLETED:'Terminé', CANCELLED:'Annulé' }
+        const tipX = typeof window !== 'undefined'
+          ? Math.min(tooltip.x + 14, window.innerWidth - 220)
+          : tooltip.x + 14
         return (
           <div style={{
             position:'fixed', zIndex:9999, pointerEvents:'none',
-            left: Math.min(tooltip.x + 12, window.innerWidth - 210),
-            top: tooltip.y - 10,
+            left: tipX, top: tooltip.y - 12,
             background:'#0f172a', borderRadius:12, padding:'10px 14px',
-            boxShadow:'0 8px 24px rgba(0,0,0,0.25)', minWidth:190,
+            boxShadow:'0 8px 24px rgba(0,0,0,0.3)', minWidth:195,
           }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-              <div style={{ width:3, height:32, borderRadius:2, background:accent, flexShrink:0 }} />
+              <div style={{ width:3, height:36, borderRadius:2, background:accent, flexShrink:0 }} />
               <div>
-                <p style={{ fontSize:13, fontWeight:700, color:'#f1f5f9', marginBottom:1 }}>{r.customerName}</p>
+                <p style={{ fontSize:13, fontWeight:700, color:'#f1f5f9', marginBottom:4 }}>{r.customerName}</p>
                 <span style={{ fontSize:11, fontWeight:600, padding:'2px 7px', borderRadius:6,
-                  background: ss.bg, color: ss.text }}>{statusLabel[r.status] ?? r.status}</span>
+                  background: ss.bg, color: ss.text }}>
+                  {statusLabel[r.status] ?? r.status}
+                </span>
               </div>
             </div>
-            <p style={{ fontSize:11, color:'#64748b', marginBottom:3 }}>
-              {fmtDate(r.startAt)}
-            </p>
-            <p style={{ fontSize:11, color:'#64748b' }}>
-              → {fmtDate(r.endAt)}
-            </p>
+            <p style={{ fontSize:11, color:'#64748b', marginBottom:3 }}>{fmtDateTime(r.startAt)}</p>
+            <p style={{ fontSize:11, color:'#64748b' }}>→ {fmtDateTime(r.endAt)}</p>
             {r.groupSize > 1 && (
-              <div style={{ marginTop:8, padding:'4px 8px', background:'rgba(99,102,241,0.15)',
+              <div style={{ marginTop:8, padding:'4px 8px', background:'rgba(99,102,241,0.18)',
                 borderRadius:6, display:'flex', alignItems:'center', gap:5 }}>
                 <Link2 size={11} style={{ color:'#a5b4fc' }} />
-                <span style={{ fontSize:11, color:'#a5b4fc', fontWeight:600 }}>Groupe · {r.groupSize} vélos</span>
+                <span style={{ fontSize:11, color:'#a5b4fc', fontWeight:600 }}>
+                  {labels.legendGroup.split('(')[0].trim()} · {r.groupSize} {labels.groupBikes}
+                </span>
               </div>
             )}
           </div>
@@ -432,10 +432,7 @@ export default function PlanningClient({ tenant, bikes, rentals }: Props) {
       })()}
 
       <style>{`
-        @keyframes pulse {
-          0%,100% { opacity:1 }
-          50% { opacity:0.4 }
-        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
       `}</style>
     </div>
   )

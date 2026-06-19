@@ -457,6 +457,25 @@
     "other": "Ander",
     "loading": "Laden..."
   },
+  "planning": {
+    "title": "Planning",
+    "today": "Vandaag",
+    "kpiActive": "Actief",
+    "kpiOverdue": "Te laat",
+    "kpiAvailable": "Beschikbaar",
+    "filterAll": "Alle fietsen",
+    "statusActive": "Actief",
+    "statusOverdue": "Te laat",
+    "statusCompleted": "Voltooid",
+    "statusCancelled": "Geannuleerd",
+    "legendActive": "Actief",
+    "legendOverdue": "Te laat",
+    "legendCompleted": "Voltooid",
+    "legendAvailable": "Beschikbaar",
+    "legendGroup": "Groep (zelfde klant)",
+    "groupBikes": "fietsen",
+    "noBikes": "Geen fietsen beschikbaar voor dit filter"
+  },
   "accessories": {
     "title": "Accessoires",
     "newTitle": "Nieuw accessoire",

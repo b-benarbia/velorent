@@ -457,6 +457,25 @@
     "other": "Outro",
     "loading": "Carregando..."
   },
+  "planning": {
+    "title": "Planeamento",
+    "today": "Hoje",
+    "kpiActive": "Ativos",
+    "kpiOverdue": "Atrasados",
+    "kpiAvailable": "Disponíveis",
+    "filterAll": "Todas as bicicletas",
+    "statusActive": "Ativo",
+    "statusOverdue": "Atrasado",
+    "statusCompleted": "Concluído",
+    "statusCancelled": "Cancelado",
+    "legendActive": "Ativo",
+    "legendOverdue": "Atrasado",
+    "legendCompleted": "Concluído",
+    "legendAvailable": "Disponível",
+    "legendGroup": "Grupo (mesmo cliente)",
+    "groupBikes": "bicicletas",
+    "noBikes": "Nenhuma bicicleta disponível para este filtro"
+  },
   "accessories": {
     "title": "Acessórios",
     "newTitle": "Novo acessório",

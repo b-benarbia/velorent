@@ -457,6 +457,25 @@
     "other": "Other",
     "loading": "Loading..."
   },
+  "planning": {
+    "title": "Planning",
+    "today": "Today",
+    "kpiActive": "Active",
+    "kpiOverdue": "Overdue",
+    "kpiAvailable": "Available",
+    "filterAll": "All bikes",
+    "statusActive": "Active",
+    "statusOverdue": "Overdue",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "legendActive": "Active",
+    "legendOverdue": "Overdue",
+    "legendCompleted": "Completed",
+    "legendAvailable": "Available",
+    "legendGroup": "Group (same customer)",
+    "groupBikes": "bikes",
+    "noBikes": "No bikes available for this filter"
+  },
   "accessories": {
     "title": "Accessories",
     "newTitle": "New accessory",

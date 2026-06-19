@@ -457,6 +457,25 @@
     "other": "Andere",
     "loading": "Wird geladen..."
   },
+  "planning": {
+    "title": "Planung",
+    "today": "Heute",
+    "kpiActive": "Aktiv",
+    "kpiOverdue": "Überfällig",
+    "kpiAvailable": "Verfügbar",
+    "filterAll": "Alle Räder",
+    "statusActive": "Aktiv",
+    "statusOverdue": "Überfällig",
+    "statusCompleted": "Abgeschlossen",
+    "statusCancelled": "Storniert",
+    "legendActive": "Aktiv",
+    "legendOverdue": "Überfällig",
+    "legendCompleted": "Abgeschlossen",
+    "legendAvailable": "Verfügbar",
+    "legendGroup": "Gruppe (gleicher Kunde)",
+    "groupBikes": "Räder",
+    "noBikes": "Keine Räder für diesen Filter verfügbar"
+  },
   "accessories": {
     "title": "Zubehör",
     "newTitle": "Neues Zubehör",

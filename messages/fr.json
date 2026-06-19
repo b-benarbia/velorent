@@ -457,6 +457,25 @@
     "other": "Autre",
     "loading": "Chargement..."
   },
+  "planning": {
+    "title": "Planning",
+    "today": "Aujourd'hui",
+    "kpiActive": "En cours",
+    "kpiOverdue": "En retard",
+    "kpiAvailable": "Disponibles",
+    "filterAll": "Tous les vélos",
+    "statusActive": "En cours",
+    "statusOverdue": "En retard",
+    "statusCompleted": "Terminé",
+    "statusCancelled": "Annulé",
+    "legendActive": "En cours",
+    "legendOverdue": "En retard",
+    "legendCompleted": "Terminé",
+    "legendAvailable": "Disponible",
+    "legendGroup": "Groupe (même client)",
+    "groupBikes": "vélos",
+    "noBikes": "Aucun vélo disponible pour ce filtre"
+  },
   "accessories": {
     "title": "Accessoires",
     "newTitle": "Nouvel accessoire",
