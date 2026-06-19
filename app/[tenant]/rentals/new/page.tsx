@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge, Users, Waves, Activity } from 'lucide-react'
+import { Shield, Lock, BatteryCharging, ShoppingBasket, Heart, Banknote, CreditCard, Smartphone, Building2, Check, Camera, Bike, Zap, Mountain, Package, Flag, Gauge, Users, Waves, Activity, FileText, Euro } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import CountrySelect from '../../_components/CountrySelect'
 
@@ -804,21 +804,25 @@ export default function NewRentalPage() {
             {/* Toggle Argent / Pièce d'identité */}
             <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 12, padding: 3, marginBottom: 12, width: 'fit-content' }}>
               {[
-                { value: 'MONEY', label: '💶 Montant', },
-                { value: 'ID',    label: '🪪 Pièce d\'identité' },
-              ].map(opt => (
-                <button key={opt.value} type="button"
-                  onClick={() => setDepositType(opt.value as 'MONEY' | 'ID')}
-                  style={{
-                    padding: '7px 16px', borderRadius: 10, border: 'none', fontSize: 12, fontWeight: 600,
-                    cursor: 'pointer', transition: 'all .15s',
-                    background: depositType === opt.value ? 'white' : 'transparent',
-                    color: depositType === opt.value ? '#4f46e5' : '#64748b',
-                    boxShadow: depositType === opt.value ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
-                  }}>
-                  {opt.label}
-                </button>
-              ))}
+                { value: 'MONEY', label: 'Montant',           Icon: Euro },
+                { value: 'ID',    label: 'Pièce d\'identité', Icon: FileText },
+              ].map(opt => {
+                const OptIcon = opt.Icon
+                return (
+                  <button key={opt.value} type="button"
+                    onClick={() => setDepositType(opt.value as 'MONEY' | 'ID')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '7px 16px', borderRadius: 10, border: 'none', fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', transition: 'all .15s',
+                      background: depositType === opt.value ? 'white' : 'transparent',
+                      color: depositType === opt.value ? '#4f46e5' : '#64748b',
+                      boxShadow: depositType === opt.value ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
+                    }}>
+                    <OptIcon size={13} /> {opt.label}
+                  </button>
+                )
+              })}
             </div>
 
             {depositType === 'MONEY' ? (
@@ -852,19 +856,24 @@ export default function NewRentalPage() {
                   { value: 'ID_CARD',         label: 'Carte d\'identité' },
                   { value: 'DRIVING_LICENSE', label: 'Permis de conduire' },
                   { value: 'OTHER',           label: 'Autre' },
-                ].map(doc => (
-                  <button key={doc.value} type="button"
-                    onClick={() => setDepositIdType(doc.value)}
-                    style={{
-                      padding: '10px 8px', borderRadius: 10, border: `2px solid ${depositIdType === doc.value ? '#6366F1' : '#e2e8f0'}`,
-                      background: depositIdType === doc.value ? '#eef2ff' : 'white',
-                      color: depositIdType === doc.value ? '#4f46e5' : '#64748b',
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all .15s',
-                      textAlign: 'center' as const,
-                    }}>
-                    🪪 {doc.label}
-                  </button>
-                ))}
+                ].map(doc => {
+                  const active = depositIdType === doc.value
+                  return (
+                    <button key={doc.value} type="button"
+                      onClick={() => setDepositIdType(doc.value)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        padding: '10px 8px', borderRadius: 10,
+                        border: `1.5px solid ${active ? '#6366F1' : '#e2e8f0'}`,
+                        background: active ? '#eef2ff' : 'white',
+                        color: active ? '#4f46e5' : '#64748b',
+                        fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all .15s',
+                      }}>
+                      <FileText size={12} />
+                      {doc.label}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -909,7 +918,10 @@ export default function NewRentalPage() {
               <p className="text-slate-500 text-xs">{t('deposit')} : <span className="text-slate-800 font-medium">{form.depositAmount} € — {tPayment(form.depositPaymentMethod.toLowerCase() as Parameters<typeof tPayment>[0])}</span></p>
             )}
             {depositType === 'ID' && (
-              <p className="text-slate-500 text-xs">{t('deposit')} : <span className="text-indigo-700 font-semibold">🪪 {depositIdType.replace('_', ' ')}</span></p>
+              <p className="text-slate-500 text-xs" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {t('deposit')} : <FileText size={12} color="#4f46e5" style={{ flexShrink: 0 }} />
+                <span className="text-indigo-700 font-semibold">{depositIdType.replace('_', ' ')}</span>
+              </p>
             )}
             {FIXED_ACCESSORIES.filter(a => (accessoryQty[a.type] ?? 0) > 0).length > 0 && (
               <p className="text-slate-500 text-xs">{t('accessories')} : <span className="text-slate-800 font-medium">
