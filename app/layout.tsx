@@ -4,7 +4,8 @@ import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
+import { cookies } from 'next/headers';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,20 +18,35 @@ export const metadata: Metadata = {
   description: "Gestion de location de vélos",
 };
 
+const LOCALES = ['fr', 'en', 'es', 'de', 'it', 'nl', 'pt'];
+const DEFAULT_LOCALE = 'fr';
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fallback during static prerendering (/_not-found) where no request context exists
-  let locale = 'fr'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let messages: any = {}
+  // Read locale from cookie directly (bypasses next-intl request context issue)
+  let locale = DEFAULT_LOCALE;
   try {
-    locale = await getLocale()
-    messages = await getMessages()
+    const cookieStore = await cookies();
+    const cookieLocale = cookieStore.get('locale')?.value;
+    if (cookieLocale && LOCALES.includes(cookieLocale)) {
+      locale = cookieLocale;
+    }
   } catch {
-    messages = (await import('../messages/fr.json')).default
+    // No cookie context during static prerendering
+  }
+
+  // MUST be called before any other next-intl server function
+  setRequestLocale(locale);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let messages: any = {};
+  try {
+    messages = await getMessages();
+  } catch {
+    messages = (await import(`../messages/${locale}.json`)).default;
   }
 
   return (
@@ -38,7 +54,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col font-[family-name:var(--font-inter)]">
         <NextTopLoader color="#6366F1" height={2} showSpinner={false} />
         <Toaster position="bottom-right" richColors />
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>
       </body>
