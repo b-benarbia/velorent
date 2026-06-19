@@ -4,7 +4,6 @@ import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
 import { cookies } from 'next/headers';
 
 const inter = Inter({
@@ -18,36 +17,30 @@ export const metadata: Metadata = {
   description: "Gestion de location de vélos",
 };
 
-const LOCALES = ['fr', 'en', 'es', 'de', 'it', 'nl', 'pt'];
-const DEFAULT_LOCALE = 'fr';
+const LOCALES = ['fr', 'en', 'es', 'de', 'it', 'nl', 'pt'] as const;
+type Locale = typeof LOCALES[number];
+const DEFAULT_LOCALE: Locale = 'fr';
+
+async function getLocaleAndMessages() {
+  let locale: Locale = DEFAULT_LOCALE;
+  try {
+    const cookieStore = await cookies();
+    const v = cookieStore.get('locale')?.value as Locale | undefined;
+    if (v && (LOCALES as readonly string[]).includes(v)) locale = v;
+  } catch { /* static prerendering — no cookies */ }
+  try {
+    const messages = (await import(`../messages/${locale}.json`)).default;
+    return { locale, messages };
+  } catch {
+    const messages = (await import('../messages/fr.json')).default;
+    return { locale: DEFAULT_LOCALE, messages };
+  }
+}
 
 export default async function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  // Read locale from cookie directly (bypasses next-intl request context issue)
-  let locale = DEFAULT_LOCALE;
-  try {
-    const cookieStore = await cookies();
-    const cookieLocale = cookieStore.get('locale')?.value;
-    if (cookieLocale && LOCALES.includes(cookieLocale)) {
-      locale = cookieLocale;
-    }
-  } catch {
-    // No cookie context during static prerendering
-  }
-
-  // MUST be called before any other next-intl server function
-  setRequestLocale(locale);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let messages: any = {};
-  try {
-    messages = await getMessages();
-  } catch {
-    messages = (await import(`../messages/${locale}.json`)).default;
-  }
+}: Readonly<{ children: React.ReactNode }>) {
+  const { locale, messages } = await getLocaleAndMessages();
 
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`}>
