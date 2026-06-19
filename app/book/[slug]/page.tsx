@@ -203,11 +203,11 @@ function Calendar({
   const [viewMonth, setViewMonth] = useState(() => {
     const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1)
   })
-  const year = viewMonth.getFullYear()
+  const year  = viewMonth.getFullYear()
   const month = viewMonth.getMonth()
   const firstOffset = dayMon(new Date(year, month, 1))
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const totalCells = Math.ceil((firstOffset + daysInMonth) / 7) * 7
+  const totalCells  = Math.ceil((firstOffset + daysInMonth) / 7) * 7
   const today = startOfDay(new Date())
 
   const cells = Array.from({ length: totalCells }, (_, i) => {
@@ -215,59 +215,68 @@ function Calendar({
     return d >= 1 && d <= daysInMonth ? d : null
   })
 
-  const prevMonth = () => setViewMonth(new Date(year, month - 1, 1))
-  const nextMonth = () => setViewMonth(new Date(year, month + 1, 1))
+  // Group into rows of 7
+  const weeks: (number | null)[][] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
 
   return (
     <div>
       {/* Month nav */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <button onClick={() => setViewMonth(new Date(year, month - 1, 1))}
+          style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
           <ChevronLeft size={18} />
         </button>
-        <p className="text-sm font-black text-slate-900">{MONTH_NAMES[lang][month]} {year}</p>
-        <button onClick={nextMonth} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors">
+        <p style={{ fontSize: 14, fontWeight: 900, color: '#0f172a' }}>{MONTH_NAMES[lang][month]} {year}</p>
+        <button onClick={() => setViewMonth(new Date(year, month + 1, 1))}
+          style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
           <ChevronRight size={18} />
         </button>
       </div>
 
       {/* Day headers */}
-      <div className="grid grid-cols-7 mb-1">
+      <div style={{ display: 'flex', marginBottom: 4 }}>
         {DAY_NAMES[lang].map(d => (
-          <div key={d} className="text-center text-[10px] font-bold text-slate-400 py-1">{d}</div>
+          <div key={d} style={{ flex: 1, textAlign: 'center', fontSize: 10, fontWeight: 700, color: '#94a3b8', padding: '4px 0' }}>{d}</div>
         ))}
       </div>
 
-      {/* Days */}
-      <div className="grid grid-cols-7 gap-y-0.5">
-        {cells.map((day, i) => {
-          if (!day) return <div key={i} className="h-9" />
-          const date = new Date(year, month, day)
-          const isPast = date < today
-          const isStart = startDate && sameDay(date, startDate)
-          const isEnd = endDate && sameDay(date, endDate)
-          const inRange = startDate && endDate && date > startDate && date < endDate
-          const isToday = sameDay(date, today)
+      {/* Weeks */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {weeks.map((week, wi) => (
+          <div key={wi} style={{ display: 'flex' }}>
+            {week.map((day, di) => {
+              if (!day) return <div key={di} style={{ flex: 1, height: 36 }} />
+              const date = new Date(year, month, day)
+              const isPast   = date < today
+              const isStart  = !!(startDate && sameDay(date, startDate))
+              const isEnd    = !!(endDate   && sameDay(date, endDate))
+              const inRange  = !!(startDate && endDate && date > startDate && date < endDate)
+              const isToday  = sameDay(date, today)
 
-          return (
-            <button key={i} disabled={isPast} onClick={() => onSelect(date)}
-              className={[
-                'relative h-9 w-full text-sm font-semibold transition-all select-none',
-                isPast ? 'text-slate-200 cursor-not-allowed' : '',
-                isStart ? 'bg-indigo-600 text-white rounded-l-xl shadow-sm' : '',
-                isEnd ? 'bg-indigo-600 text-white rounded-r-xl shadow-sm' : '',
-                isStart && !endDate ? 'rounded-xl' : '',
-                isEnd && !startDate ? 'rounded-xl' : '',
-                inRange ? 'bg-indigo-100 text-indigo-700 rounded-none' : '',
-                !isStart && !isEnd && !inRange && !isPast ? 'text-slate-700 hover:bg-indigo-50 rounded-lg' : '',
-              ].join(' ')}>
-              {day}
-              {isToday && !isStart && !isEnd && (
-                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-indigo-400" />
-              )}
-            </button>
-          )
-        })}
+              const bgColor  = isStart || isEnd ? '#6366f1' : inRange ? '#e0e7ff' : 'transparent'
+              const txtColor = isStart || isEnd ? '#fff' : inRange ? '#4338ca' : isPast ? '#e2e8f0' : '#334155'
+              const radius   = isStart ? '10px 0 0 10px' : isEnd ? '0 10px 10px 0' : inRange ? '0' : '8px'
+              const singleDay = isStart && !endDate
+
+              return (
+                <button key={di} disabled={isPast} onClick={() => onSelect(date)}
+                  style={{
+                    flex: 1, height: 36, border: 'none', cursor: isPast ? 'not-allowed' : 'pointer',
+                    background: bgColor, color: txtColor,
+                    borderRadius: singleDay ? '10px' : radius,
+                    fontSize: 13, fontWeight: 600, position: 'relative',
+                    transition: 'all 0.15s',
+                  }}>
+                  {day}
+                  {isToday && !isStart && !isEnd && (
+                    <span style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#818cf8', display: 'block' }} />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </div>
     </div>
   )
