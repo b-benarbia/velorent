@@ -12,6 +12,7 @@ import {
   LogOut,
   Search,
   CalendarRange,
+  MoreHorizontal,
 } from 'lucide-react'
 import CommandPalette from './CommandPalette'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -50,7 +51,9 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
     ...(role === 'OWNER' ? [{ key: 'settings', tKey: 'settings', label: t('settings'), icon: Settings, section: 'acces', badgeKey: null }] : []),
   ]
 
-  const mobileNav = nav.slice(0, 5)
+  // Mobile nav: dashboard, rentals, reservations, planning, bikes (+ accounting if 6th)
+  // We pick the 5 most important — settings can be reached via the top bar "..." or separately
+  const mobileNav = nav.filter(i => ['dashboard','rentals','reservations','planning','bikes'].includes(i.key))
 
   const SECTION_LABELS: Record<string, string> = {
     principal: 'Principal',
@@ -231,10 +234,10 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
 
       {/* ── MOBILE BOTTOM NAV ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-20 border-t px-2 py-1 safe-area-pb"
-        style={{ background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.06)' }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-20 border-t px-1 py-1 safe-area-pb"
+        style={{ background: 'rgba(15,23,42,0.97)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.06)' }}
       >
-        <div className="flex justify-around">
+        <div className="flex justify-around items-center">
           {mobileNav.map((item) => {
             const href = `/${tenant}/${item.key}`
             const isActive = pathname.startsWith(href)
@@ -244,14 +247,14 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
               <Link
                 key={item.key}
                 href={href}
-                className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all relative"
-                style={{ color: isActive ? '#6366F1' : '#334155' }}
+                className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all relative"
+                style={{ color: isActive ? '#6366F1' : '#475569' }}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-                <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                <Icon size={19} strokeWidth={isActive ? 2.5 : 1.8} />
+                <span className="text-[9px] font-semibold leading-none mt-0.5">{item.label}</span>
                 {badgeCount > 0 && (
                   <span
-                    className="absolute top-1 right-1 text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5"
+                    className="absolute top-1 right-0.5 text-[8px] font-bold min-w-[13px] h-[13px] flex items-center justify-center rounded-full px-0.5"
                     style={{ background: '#6366F1', color: '#fff' }}
                   >
                     {badgeCount > 9 ? '9+' : badgeCount}
@@ -260,6 +263,50 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
               </Link>
             )
           })}
+          {/* More — accounting + settings */}
+          <div className="relative group">
+            <button
+              className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all"
+              style={{
+                color: (pathname.includes('/accounting') || pathname.includes('/settings')) ? '#6366F1' : '#475569',
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}
+              onClick={() => {
+                const el = document.getElementById('mobile-more-menu')
+                if (el) el.classList.toggle('hidden')
+              }}
+            >
+              <MoreHorizontal size={19} strokeWidth={1.8} />
+              <span className="text-[9px] font-semibold leading-none mt-0.5">Plus</span>
+            </button>
+            {/* More menu popup */}
+            <div
+              id="mobile-more-menu"
+              className="hidden absolute bottom-full right-0 mb-2 w-44 rounded-2xl border overflow-hidden shadow-2xl z-50"
+              style={{ background: '#0F172A', borderColor: 'rgba(255,255,255,0.08)' }}
+            >
+              <Link
+                href={`/${tenant}/accounting`}
+                onClick={() => document.getElementById('mobile-more-menu')?.classList.add('hidden')}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium border-b"
+                style={{ color: '#a5b4fc', borderColor: 'rgba(255,255,255,0.06)' }}
+              >
+                <Receipt size={15} style={{ color: '#6366F1' }} />
+                {t('accounting')}
+              </Link>
+              {role === 'OWNER' && (
+                <Link
+                  href={`/${tenant}/settings`}
+                  onClick={() => document.getElementById('mobile-more-menu')?.classList.add('hidden')}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium"
+                  style={{ color: '#a5b4fc' }}
+                >
+                  <Settings size={15} style={{ color: '#6366F1' }} />
+                  {t('settings')}
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </nav>
     </>

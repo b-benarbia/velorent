@@ -2,6 +2,8 @@ import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import Sidebar from './_components/Sidebar'
 import PageTransition from './_components/PageTransition'
 
@@ -54,9 +56,26 @@ export default async function TenantLayout({
         activeRentalsCount={activeRentalsCount}
         pendingReservationsCount={pendingReservationsCount}
       />
-      <main className="flex-1 md:ml-56 mt-14 md:mt-0 mb-16 md:mb-0 p-4 md:p-6">
+      <main className="flex-1 md:ml-56 mt-14 md:mt-0 mb-24 md:mb-0 p-4 md:p-6">
         <PageTransition>{children}</PageTransition>
       </main>
+      {/* Mobile FAB — New Rental */}
+      <Link
+        href={`/${tenant}/rentals/new`}
+        className="md:hidden fixed z-30 flex items-center justify-center"
+        style={{
+          bottom: 'calc(64px + max(12px, env(safe-area-inset-bottom)))',
+          right: 20,
+          width: 52,
+          height: 52,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%)',
+          boxShadow: '0 4px 20px rgba(99,102,241,0.45)',
+          color: '#fff',
+        }}
+      >
+        <Plus size={22} strokeWidth={2.5} />
+      </Link>
     </div>
   )
 }

@@ -377,14 +377,16 @@ export default function AccountingPage() {
             </div>
           ) : (
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900">{t('invoiceDetail')}</p>
                 <div className="flex items-center gap-3 text-xs text-slate-400">
-                  <span>{t('htTotal')} : <span className="font-semibold text-slate-700">{totalHt.toFixed(2)} €</span></span>
+                  <span className="hidden sm:inline">{t('htTotal')} : <span className="font-semibold text-slate-700">{totalHt.toFixed(2)} €</span></span>
                   <span>{t('ttcTotal')} : <span className="font-semibold" style={{ color: '#6366F1' }}>{totalTtc.toFixed(2)} €</span></span>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: '#F8FAFC' }}>
@@ -432,6 +434,47 @@ export default function AccountingPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-slate-50">
+                {filtered.map((inv) => {
+                  const bikeName = (inv.rental.bikes?.[0]?.bike ?? inv.rental.bike)?.name ?? '—'
+                  const bikeCode = (inv.rental.bikes?.[0]?.bike ?? inv.rental.bike)?.code ?? ''
+                  const extraBikes = (inv.rental.bikes?.length ?? 0) > 1 ? ` +${inv.rental.bikes.length - 1}` : ''
+                  return (
+                    <div key={inv.id} className="px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 truncate">
+                            {inv.rental.customer.firstName} {inv.rental.customer.lastName}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">
+                            {bikeName}{extraBikes}
+                            {bikeCode && <span className="font-mono ml-1">{bikeCode}</span>}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-bold" style={{ color: '#6366F1' }}>
+                            {Number(inv.amountTtc).toFixed(2)} €
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            {new Date(inv.issuedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(99,102,241,0.08)', color: '#6366F1' }}
+                        >
+                          {getPaymentLabel(inv.rental.paymentMethod)}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-300">{inv.number}</span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

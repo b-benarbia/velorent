@@ -16,6 +16,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  /* Prevent any accidental horizontal scroll on mobile */
+  overflow-x: hidden;
+}
+
+/* Ensure the root never causes horizontal scroll */
+html {
+  overflow-x: hidden;
 }
 
 /* ── Tabular numbers ── */

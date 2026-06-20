@@ -172,8 +172,159 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
   }, [bikes, rentalsByBike])
 
 
+  // ── Mobile day state ─────────────────────────────────────────────
+  const [dayOffset, setDayOffset] = useState(0)
+  const mobileDay = useMemo(() => {
+    const d = new Date(today)
+    d.setDate(d.getDate() + dayOffset)
+    return d
+  }, [today, dayOffset])
+  const mobileDayLabel = useMemo(() =>
+    new Intl.DateTimeFormat(locale, { weekday:'long', day:'numeric', month:'long' }).format(mobileDay)
+  , [mobileDay, locale])
+
+  // Rentals active on mobileDay
+  const mobileDayRentals = useMemo(() => {
+    const dayEnd = new Date(mobileDay); dayEnd.setHours(23,59,59,999)
+    return rentals.filter(r => {
+      const rs = new Date(r.startAt), re = new Date(r.endAt)
+      return rs <= dayEnd && re >= mobileDay
+    })
+  }, [rentals, mobileDay])
+
+  // KPI for mobile day
+  const mobileDayStats = useMemo(() => {
+    let active=0, overdue=0, available=0
+    const dayEnd = new Date(mobileDay); dayEnd.setHours(23,59,59,999)
+    bikes.forEach(b => {
+      const busy = mobileDayRentals.some(r => {
+        const ids = r.bikeIds.length > 0 ? r.bikeIds : r.bikeId ? [r.bikeId] : []
+        return ids.includes(b.id)
+      })
+      if (!busy) available++
+    })
+    mobileDayRentals.forEach(r => {
+      if (r.status==='ACTIVE')  active++
+      if (r.status==='OVERDUE') overdue++
+    })
+    return { active, overdue, available }
+  }, [bikes, mobileDayRentals, mobileDay])
+
   return (
     <div style={{ fontFamily:'inherit', paddingBottom:24 }}>
+
+      {/* ── MOBILE VIEW (< md) ── */}
+      <div className="md:hidden">
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <CalendarDays size={17} style={{ color:'#6366f1' }} />
+            <span style={{ fontSize:16, fontWeight:700, color:'#0f172a' }}>{labels.title}</span>
+          </div>
+          <button onClick={() => setDayOffset(0)}
+            style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:8,
+              border:'1.5px solid #6366f1', background:'#eef2ff', cursor:'pointer', color:'#6366f1' }}>
+            {labels.today}
+          </button>
+        </div>
+
+        {/* Day navigator */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14,
+          background:'#fff', border:'1.5px solid #e2e8f0', borderRadius:14, padding:'10px 12px' }}>
+          <button onClick={() => setDayOffset(d => d-1)}
+            style={{ border:'1.5px solid #e2e8f0', background:'#f8fafc', borderRadius:8,
+              padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center' }}>
+            <ChevronLeft size={16} style={{ color:'#6366f1' }} />
+          </button>
+          <div style={{ flex:1, textAlign:'center' }}>
+            <p style={{ fontSize:13, fontWeight:700, color:'#0f172a', textTransform:'capitalize' }}>
+              {mobileDayLabel}
+            </p>
+          </div>
+          <button onClick={() => setDayOffset(d => d+1)}
+            style={{ border:'1.5px solid #e2e8f0', background:'#f8fafc', borderRadius:8,
+              padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center' }}>
+            <ChevronRight size={16} style={{ color:'#6366f1' }} />
+          </button>
+        </div>
+
+        {/* KPI strip */}
+        <div style={{ display:'flex', gap:8, marginBottom:14 }}>
+          {[
+            { label:labels.kpiActive,    val:mobileDayStats.active,    c:'#6366f1', bg:'#eef2ff', bc:'#c7d2fe' },
+            { label:labels.kpiOverdue,   val:mobileDayStats.overdue,   c:'#f43f5e', bg:'#fff1f2', bc:'#fecdd3' },
+            { label:labels.kpiAvailable, val:mobileDayStats.available, c:'#16a34a', bg:'#f0fdf4', bc:'#bbf7d0' },
+          ].map(k => (
+            <div key={k.label} style={{ flex:1, background:k.bg, border:`1px solid ${k.bc}`, borderRadius:12, padding:'10px 10px' }}>
+              <p style={{ fontSize:9, fontWeight:700, color:k.c, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:3 }}>{k.label}</p>
+              <p style={{ fontSize:22, fontWeight:800, color:'#0f172a' }}>{k.val}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Rentals list for the day */}
+        {mobileDayRentals.length === 0 ? (
+          <div style={{ background:'#fff', border:'1.5px solid #e2e8f0', borderRadius:16, padding:'40px 16px', textAlign:'center' }}>
+            <div style={{ width:40, height:40, borderRadius:'50%', background:'#f0fdf4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:'#d1fae5' }} />
+            </div>
+            <p style={{ fontSize:14, color:'#94a3b8', fontWeight:500 }}>{labels.legendAvailable}</p>
+          </div>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {mobileDayRentals.map(rental => {
+              const ss = STATUS[rental.status] ?? STATUS.COMPLETED
+              const accent = accentColor(rental.customerId)
+              const startFmt = new Intl.DateTimeFormat(locale, { hour:'2-digit', minute:'2-digit' }).format(new Date(rental.startAt))
+              const endFmt   = new Intl.DateTimeFormat(locale, { hour:'2-digit', minute:'2-digit' }).format(new Date(rental.endAt))
+              const ids = rental.bikeIds.length > 0 ? rental.bikeIds : rental.bikeId ? [rental.bikeId] : []
+              const bikeLabels = ids.map(id => bikes.find(b => b.id === id)?.code ?? id).join(', ')
+              return (
+                <Link key={rental.id + rental.bikeIds.join('')} href={`/${tenant}/rentals/${rental.id}`}
+                  style={{ textDecoration:'none', display:'block' }}>
+                  <div style={{
+                    background:ss.bg, borderRadius:14,
+                    border:`1.5px solid ${ss.border}`,
+                    borderLeft:`4px solid ${accent}`,
+                    padding:'12px 14px',
+                    display:'flex', alignItems:'center', gap:12,
+                  }}>
+                    <div style={{ width:8, height:8, borderRadius:'50%', flexShrink:0, background:ss.dot }} />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontSize:14, fontWeight:700, color:'#0f172a', marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                        {rental.customerName}
+                      </p>
+                      <p style={{ fontSize:12, color:'#64748b', fontWeight:500 }}>
+                        {bikeLabels} · {startFmt} → {endFmt}
+                      </p>
+                    </div>
+                    {rental.groupSize > 1 && (
+                      <Link2 size={12} style={{ color:accent, flexShrink:0 }} />
+                    )}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Legend */}
+        <div style={{ display:'flex', gap:12, marginTop:14, flexWrap:'wrap' }}>
+          {[
+            { label:labels.legendActive,    bg:'#eef2ff', dot:'#6366f1' },
+            { label:labels.legendOverdue,   bg:'#fff1f2', dot:'#f43f5e' },
+            { label:labels.legendCompleted, bg:'#f1f5f9', dot:'#94a3b8' },
+          ].map(l => (
+            <div key={l.label} style={{ display:'flex', alignItems:'center', gap:5 }}>
+              <div style={{ width:20, height:10, borderRadius:3, background:l.bg, border:`1.5px solid ${l.dot}`, borderLeft:`3px solid ${l.dot}` }} />
+              <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── DESKTOP VIEW (≥ md) ── */}
+      <div className="hidden md:block">
 
       {/* ── Header ── */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14, flexWrap:'wrap', gap:10 }}>
@@ -233,7 +384,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
         })}
       </div>
 
-      {/* ── Calendar grid — scrollable on mobile ── */}
+      {/* ── Calendar grid — scrollable on very small desktop ── */}
       <div style={{ overflowX:'auto', borderRadius:16,
         border:'1.5px solid #e2e8f0', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
       <div style={{ minWidth:460, background:'#fff', borderRadius:16, overflow:'hidden' }}>
@@ -404,6 +555,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
         </div>
       </div>
 
+      </div>{/* end desktop wrapper */}
     </div>
   )
 }
