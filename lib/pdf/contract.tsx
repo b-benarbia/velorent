@@ -215,7 +215,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
 
   return (
     <Document title={`Contrat ${contractNumber}`} author={tenant.name}>
-      <Page size="A4" style={s.page}>
+      <Page size="A4" style={s.page} wrap={false}>
 
         {/* ══ HEADER ══════════════════════════════════════════════════════ */}
         <View style={s.header}>
