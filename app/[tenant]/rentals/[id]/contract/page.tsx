@@ -26,13 +26,10 @@ export default async function ContractPage({
     getServerT('contract'),
   ])
 
-  // Locale pour le formatage des dates
   const LOCALE_MAP: Record<string, string> = {
     fr: 'fr-FR', es: 'es-ES', en: 'en-GB', de: 'de-DE',
     it: 'it-IT', nl: 'nl-NL', pt: 'pt-PT',
   }
-  // Récupère la locale depuis le cookie (déjà lu par getServerT via getLocale)
-  // On relit ici pour le formatage des dates
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
   const rawLocale = cookieStore.get('locale')?.value ?? 'fr'
@@ -43,9 +40,8 @@ export default async function ContractPage({
     TRANSFER: 'Virement / Transfer', ONLINE: 'Online', HOTEL: 'Hotel',
   }
   const DOC: Record<string, string> = {
-    PASSPORT: 'Passport / Passeport', DNI: 'DNI', NIE: 'NIE',
-    ID_CARD: "Carte d'identité / ID Card", DRIVING_LICENSE: 'Permis / License',
-    OTHER: 'Autre / Other',
+    PASSPORT: 'Passport', DNI: 'DNI', NIE: 'NIE',
+    ID_CARD: 'ID Card', DRIVING_LICENSE: 'License', OTHER: 'Document',
   }
   const BIKE_TYPE: Record<string, string> = {
     CITY: 'City', MTB: 'MTB', ROAD: 'Road', ELECTRIC: 'Electric',
@@ -56,6 +52,7 @@ export default async function ContractPage({
   const generatedAt = new Date().toLocaleString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   const isCompleted = rental.status === 'COMPLETED'
   const depositMethod = (rental.rateSnapshot as { depositPaymentMethod?: string })?.depositPaymentMethod
+  const isSigned = !!(rental.openingSignature && rental.staffSignature)
 
   const fmtFull = (d: Date | string) =>
     new Date(d).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -63,6 +60,17 @@ export default async function ContractPage({
     new Date(d).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short', year: 'numeric' })
   const fmtTime = (d: Date | string) =>
     new Date(d).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })
+
+  const clauses: { key: string; red: boolean }[] = [
+    { key: 'clause1', red: false },
+    { key: 'clause2', red: false },
+    { key: 'clause3', red: false },
+    { key: 'clause4', red: true  },
+    { key: 'clause5', red: false },
+    { key: 'clause6', red: false },
+    { key: 'clause7', red: false },
+    { key: 'clause8', red: false },
+  ]
 
   return (
     <>
@@ -93,141 +101,134 @@ export default async function ContractPage({
 
         .doc {
           font-family: 'Inter', -apple-system, system-ui, sans-serif;
-          max-width: 700px;
+          max-width: 720px;
           margin: 0 auto 48px;
           background: white;
           border: 1px solid #E2E8F0;
           border-radius: 4px;
           overflow: hidden;
-          box-shadow: 0 2px 8px rgba(15,23,42,0.07), 0 16px 48px rgba(15,23,42,0.06);
+          box-shadow: 0 2px 8px rgba(15,23,42,0.06), 0 20px 60px rgba(15,23,42,0.08);
         }
-
         .lbl {
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #94A3B8;
-          margin-bottom: 4px;
+          font-size: 9px; font-weight: 700; letter-spacing: 0.13em;
+          text-transform: uppercase; color: #94A3B8; margin-bottom: 3px;
         }
-        .val {
-          font-size: 14px;
-          font-weight: 600;
-          color: #0F172A;
-        }
+        .val { font-size: 14px; font-weight: 600; color: #0F172A; }
         .mono { font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
-
-        .row { display: flex; gap: 24px; }
-        .cell { display: flex; flex-direction: column; flex: 1; }
-
         .sep { height: 1px; background: #F1F5F9; }
-
-        .clause {
-          display: flex;
-          gap: 10px;
-          padding: 7px 0;
-          border-bottom: 1px solid #F8FAFC;
-          align-items: flex-start;
-          font-size: 11px;
-          color: #374151;
-          line-height: 1.6;
-        }
-        .clause:last-child { border-bottom: none; }
-        .cnum {
-          min-width: 18px; height: 18px; border-radius: 50%;
-          background: #F1F5F9; color: #64748B;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 8px; font-weight: 800; flex-shrink: 0; margin-top: 2px;
-        }
-        .cnum.red { background: #FEE2E2; color: #DC2626; }
-        .clause-tr { color: #CBD5E1; font-size: 10px; font-style: italic; }
       `}</style>
 
       <div className="doc">
 
         {/* ── HEADER ─────────────────────────────────────── */}
-        <div style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)', padding: '20px 28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg, #4338CA 0%, #6366F1 100%)', padding: '22px 28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
 
-            {/* Boutique */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.15)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/>
-                  <path d="M8 17.5h7M15 6l2.5 4h-8l1-4z"/><path d="M12 6V3.5"/><path d="M17.5 10.5L19 17.5"/>
-                </svg>
-              </div>
+            {/* Shop identity */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {rental.tenant.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={rental.tenant.logoUrl}
+                  alt={rental.tenant.name}
+                  style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.3)', background: 'white' }}
+                />
+              ) : (
+                <div style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.15)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/>
+                    <path d="M8 17.5h7M15 6l2.5 4h-8l1-4z"/><path d="M12 6V3.5"/><path d="M17.5 10.5L19 17.5"/>
+                  </svg>
+                </div>
+              )}
               <div>
-                <p style={{ color: 'white', fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1 }}>{rental.tenant.name}</p>
-                {rental.tenant.phone && <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, marginTop: 3 }}>{rental.tenant.phone}</p>}
+                <p style={{ color: 'white', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1 }}>{rental.tenant.name}</p>
+                <div style={{ display: 'flex', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
+                  {rental.tenant.phone && <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>{rental.tenant.phone}</span>}
+                  {rental.tenant.email && <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{rental.tenant.email}</span>}
+                </div>
               </div>
             </div>
 
-            {/* Contrat ref */}
+            {/* Contract ref */}
             <div style={{ textAlign: 'right' }}>
+              <span style={{
+                display: 'inline-block', marginBottom: 8,
+                padding: '3px 10px', borderRadius: 20,
+                background: isCompleted ? 'rgba(255,255,255,0.15)' : 'rgba(110,231,183,0.25)',
+                border: isCompleted ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(110,231,183,0.5)',
+                fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', color: 'white',
+              }}>
+                {isCompleted ? `✓ ${t('closed')}` : `● ${t('active')}`}
+              </span>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>{t('title')}</p>
-              <p className="mono" style={{ color: 'white', fontSize: 20, fontWeight: 800, letterSpacing: '0.06em' }}>{num}</p>
-              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 6, alignItems: 'center' }}>
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{generatedAt}</span>
-                <span style={{
-                  padding: '2px 8px', borderRadius: 20,
-                  background: isCompleted ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', color: 'white',
-                }}>
-                  {isCompleted ? `✓ ${t('closed')}` : `● ${t('active')}`}
-                </span>
-              </div>
+              <p className="mono" style={{ color: 'white', fontSize: 22, fontWeight: 800, letterSpacing: '0.05em', lineHeight: 1 }}>{num}</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>{generatedAt}</p>
             </div>
           </div>
         </div>
 
         {/* ── DATE STRIP ──────────────────────────────────── */}
-        <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '10px 28px', display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-          <div>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>{t('departure')}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize' }}>{fmtFull(rental.startAt)}</span>
-            <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>{fmtTime(rental.startAt)}</span>
+        <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '12px 28px', display: 'flex', gap: 0 }}>
+          <div style={{ flex: 1, paddingRight: 24, borderRight: '1px solid #E2E8F0' }}>
+            <p className="lbl" style={{ marginBottom: 4 }}>{t('departure')}</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize', lineHeight: 1.3 }}>
+              {fmtFull(rental.startAt)}{' '}
+              <span style={{ color: '#64748B', fontWeight: 500 }}>{fmtTime(rental.startAt)}</span>
+            </p>
           </div>
           {rental.expectedReturnAt && (
-            <div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>{t('expectedReturn')}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize' }}>{fmtFull(rental.expectedReturnAt)}</span>
-              <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>{fmtTime(rental.expectedReturnAt)}</span>
+            <div style={{ flex: 1, paddingLeft: 24, paddingRight: rental.endAt ? 24 : 0, borderRight: rental.endAt ? '1px solid #E2E8F0' : undefined }}>
+              <p className="lbl" style={{ marginBottom: 4 }}>{t('expectedReturn')}</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize', lineHeight: 1.3 }}>
+                {fmtFull(rental.expectedReturnAt)}{' '}
+                <span style={{ color: '#64748B', fontWeight: 500 }}>{fmtTime(rental.expectedReturnAt)}</span>
+              </p>
             </div>
           )}
           {rental.endAt && (
-            <div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#16A34A', textTransform: 'uppercase', marginRight: 8 }}>{t('actualReturn')}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', textTransform: 'capitalize' }}>{fmtFull(rental.endAt)}</span>
-              <span style={{ fontSize: 12, color: '#4ADE80', marginLeft: 6 }}>{fmtTime(rental.endAt)}</span>
+            <div style={{ flex: 1, paddingLeft: 24 }}>
+              <p className="lbl" style={{ marginBottom: 4, color: '#16A34A' }}>{t('actualReturn')}</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#16A34A', textTransform: 'capitalize', lineHeight: 1.3 }}>
+                {fmtFull(rental.endAt)}{' '}
+                <span style={{ fontWeight: 500 }}>{fmtTime(rental.endAt)}</span>
+              </p>
             </div>
           )}
         </div>
 
         {/* ── CLIENT + PAIEMENT ───────────────────────────── */}
-        <div style={{ padding: '22px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
+        <div style={{ padding: '24px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
 
           {/* Client */}
           <div>
-            <p className="lbl" style={{ marginBottom: 14 }}>{t('client')}</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 10, lineHeight: 1.2 }}>
+            <p className="lbl" style={{ marginBottom: 12 }}>{t('client')}</p>
+            <p style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', marginBottom: 14, lineHeight: 1.15, letterSpacing: '-0.02em' }}>
               {rental.customer.firstName} {rental.customer.lastName}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {rental.customer.nationality && (
-                <div><span className="lbl">{t('nationality')} · </span><span className="val" style={{ fontSize: 13 }}>{rental.customer.nationality}</span></div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                  <span className="lbl" style={{ marginBottom: 0, minWidth: 72, flexShrink: 0 }}>{t('nationality')}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{rental.customer.nationality}</span>
+                </div>
               )}
               {rental.customer.phone && (
-                <div><span className="lbl">{t('phone')} · </span><span className="val mono" style={{ fontSize: 13 }}>{rental.customer.phone}</span></div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                  <span className="lbl" style={{ marginBottom: 0, minWidth: 72, flexShrink: 0 }}>{t('phone')}</span>
+                  <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{rental.customer.phone}</span>
+                </div>
               )}
               {rental.customer.email && (
-                <div><span className="lbl">Email · </span><span className="val" style={{ fontSize: 12 }}>{rental.customer.email}</span></div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                  <span className="lbl" style={{ marginBottom: 0, minWidth: 72, flexShrink: 0 }}>Email</span>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>{rental.customer.email}</span>
+                </div>
               )}
               {rental.customer.documentNumber && (
-                <div style={{ marginTop: 4, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
-                  <p className="lbl" style={{ marginBottom: 4 }}>{DOC[rental.customer.documentType ?? ''] ?? 'Document'}</p>
-                  <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#0F172A', letterSpacing: '0.06em' }}>
+                <div style={{ marginTop: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px' }}>
+                  <p className="lbl" style={{ marginBottom: 5 }}>{DOC[rental.customer.documentType ?? ''] ?? t('document')}</p>
+                  <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
                     {rental.customer.documentNumber}
                   </p>
                 </div>
@@ -237,34 +238,36 @@ export default async function ContractPage({
 
           {/* Paiement */}
           <div>
-            <p className="lbl" style={{ marginBottom: 14 }}>{t('payment')}</p>
+            <p className="lbl" style={{ marginBottom: 12 }}>{t('payment')}</p>
 
-            {/* Montant */}
-            <div style={{ background: '#F0F4FF', borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
-              <p className="lbl" style={{ marginBottom: 4 }}>{t('amountPaid')}</p>
-              <p className="mono" style={{ fontSize: 30, fontWeight: 800, color: '#4F46E5', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                {Number(rental.amountPaid ?? 0).toFixed(2)}<span style={{ fontSize: 18 }}> €</span>
+            <div style={{ background: 'linear-gradient(135deg, #EEF2FF 0%, #F0F4FF 100%)', borderRadius: 12, padding: '16px 18px', marginBottom: 12, border: '1px solid #E0E7FF' }}>
+              <p className="lbl" style={{ marginBottom: 6, color: '#818CF8' }}>{t('amountPaid')}</p>
+              <p className="mono" style={{ fontSize: 32, fontWeight: 800, color: '#4338CA', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                {Number(rental.amountPaid ?? 0).toFixed(2)}<span style={{ fontSize: 20, fontWeight: 600 }}> €</span>
               </p>
-              <p style={{ fontSize: 11, color: '#6366F1', marginTop: 4, fontWeight: 600 }}>{PAY[rental.paymentMethod] ?? rental.paymentMethod}</p>
+              <p style={{ fontSize: 11, color: '#6366F1', marginTop: 7, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                {PAY[rental.paymentMethod] ?? rental.paymentMethod}
+              </p>
             </div>
 
-            {/* Caution */}
             {Number(rental.depositAmount) > 0 && (
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
-                <p className="lbl" style={{ marginBottom: 4 }}>{t('deposit')}</p>
-                <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
-                  {Number(rental.depositAmount).toFixed(2)} €
-                </p>
-                <p style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
-                  {depositMethod === 'CARD' ? t('depositCard') : t('depositCash')} · {t('depositRefundable')}
-                </p>
+              <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px 14px', marginBottom: 10 }}>
+                <p className="lbl" style={{ marginBottom: 5 }}>{t('deposit')}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p className="mono" style={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>
+                    {Number(rental.depositAmount).toFixed(2)} €
+                  </p>
+                  <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>
+                    {depositMethod === 'CARD' ? t('depositCard') : t('depositCash')} · {t('depositRefundable')}
+                  </span>
+                </div>
               </div>
             )}
 
             {rental.lockNumber && (
-              <div style={{ marginTop: 10 }}>
-                <p className="lbl">{t('lockNumber')}</p>
-                <p className="val mono">{rental.lockNumber}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
+                <span className="lbl" style={{ marginBottom: 0 }}>{t('lockNumber')}</span>
+                <span className="mono val" style={{ fontSize: 15, color: '#4338CA' }}>{rental.lockNumber}</span>
               </div>
             )}
           </div>
@@ -277,41 +280,40 @@ export default async function ContractPage({
             <div style={{ padding: '16px 28px' }}>
               <p className="lbl" style={{ marginBottom: 10 }}>{t('document')}</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={rental.customer.documentPhotoUrl} alt="ID" style={{ maxHeight: 140, borderRadius: 6, border: '1px solid #E2E8F0', objectFit: 'contain' }} />
+              <img src={rental.customer.documentPhotoUrl} alt="ID" style={{ maxHeight: 130, borderRadius: 8, border: '1px solid #E2E8F0', objectFit: 'contain' }} />
             </div>
           </>
         )}
 
         {/* ── VÉHICULE ────────────────────────────────────── */}
         <div className="sep" />
-        <div style={{ padding: '18px 28px' }}>
-          <p className="lbl" style={{ marginBottom: 12 }}>{t('vehicle')}</p>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ padding: '20px 28px' }}>
+          <p className="lbl" style={{ marginBottom: 14 }}>{t('vehicle')}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 160 }}>
-              <p style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>{rental.bike.name}</p>
+              <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 5, letterSpacing: '-0.01em' }}>{rental.bike.name}</p>
               {rental.bike.type && (
-                <span style={{ display: 'inline-block', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 4, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: '#64748B', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <span style={{ display: 'inline-block', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 5, padding: '2px 9px', fontSize: 10, fontWeight: 800, color: '#4338CA', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                   {BIKE_TYPE[rental.bike.type] ?? rental.bike.type}
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
               <div>
                 <p className="lbl">{t('vehicleCode')}</p>
-                <p className="val mono" style={{ fontSize: 16, color: '#6366F1' }}>{rental.bike.code}</p>
+                <p className="val mono" style={{ fontSize: 17, color: '#4338CA', letterSpacing: '0.04em' }}>{rental.bike.code}</p>
               </div>
               {rental.bike.serialNumber && (
-                <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 10 }}>
+                <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 12 }}>
                   <p className="lbl" style={{ color: '#DC2626' }}>{t('serialNumber')} · {t('serialCritical')}</p>
-                  <p className="val mono" style={{ fontSize: 16 }}>{rental.bike.serialNumber}</p>
+                  <p className="val mono" style={{ fontSize: 17 }}>{rental.bike.serialNumber}</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Accessories */}
           {Array.isArray(rental.accessories) && (rental.accessories as unknown[]).length > 0 && (
-            <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span className="lbl" style={{ marginBottom: 0, marginRight: 4 }}>{t('accessories')} ·</span>
               {(rental.accessories as { label: string; qty?: number; codes?: string[] }[]).map((a, i) => (
                 <span key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 5, padding: '3px 9px', fontSize: 12, fontWeight: 600, color: '#334155' }}>
@@ -327,54 +329,79 @@ export default async function ContractPage({
 
         {/* ── CONDITIONS ──────────────────────────────────── */}
         <div className="sep" />
-        <div style={{ padding: '18px 28px' }}>
-          <p className="lbl" style={{ marginBottom: 12 }}>{t('conditions')}</p>
-          <div>
-            {([
-              { n:'1', red:false, key:'clause1' },
-              { n:'2', red:false, key:'clause2' },
-              { n:'3', red:false, key:'clause3' },
-              { n:'4', red:true,  key:'clause4' },
-              { n:'5', red:false, key:'clause5' },
-              { n:'6', red:false, key:'clause6' },
-              { n:'7', red:false, key:'clause7' },
-              { n:'8', red:false, key:'clause8' },
-            ] as { n: string; red: boolean; key: string }[]).map(c => (
-              <div key={c.n} className="clause">
-                <div className={`cnum${c.red ? ' red' : ''}`}>{c.n}</div>
-                <div>
-                  <span style={{ fontWeight: c.red ? 700 : 400, color: c.red ? '#DC2626' : '#1E293B' }}>{t(c.key)}</span>
-                </div>
+        <div style={{ padding: '20px 28px' }}>
+          <p className="lbl" style={{ marginBottom: 14 }}>{t('conditions')}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {clauses.map((c, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                gap: 12,
+                padding: '10px 12px',
+                borderRadius: 6,
+                background: c.red ? '#FFF5F5' : 'transparent',
+                borderLeft: `3px solid ${c.red ? '#DC2626' : '#EEF2FF'}`,
+              }}>
+                <span style={{
+                  minWidth: 20, height: 20, borderRadius: 4,
+                  background: c.red ? '#FEE2E2' : '#F1F5F9',
+                  color: c.red ? '#DC2626' : '#94A3B8',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 9, fontWeight: 800, flexShrink: 0, marginTop: 1,
+                }}>{i + 1}</span>
+                <p style={{
+                  fontSize: 11.5,
+                  color: c.red ? '#991B1B' : '#374151',
+                  fontWeight: c.red ? 700 : 400,
+                  lineHeight: 1.75,
+                  margin: 0,
+                }}>{t(c.key)}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── SIGNATURES ──────────────────────────────────── */}
-        <div style={{ background: '#FAFBFF', borderTop: '1px solid #E2E8F0', padding: '20px 28px' }}>
-          <p className="lbl" style={{ marginBottom: 16 }}>{t('signatures')}</p>
+        <div style={{ background: '#FAFBFF', borderTop: '1px solid #E8EEFF', padding: '22px 28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <p className="lbl" style={{ marginBottom: 0 }}>{t('signatures')}</p>
+            {isSigned && (
+              <span style={{
+                fontSize: 10, fontWeight: 800, color: '#16A34A',
+                background: '#F0FDF4', border: '1px solid #86EFAC',
+                borderRadius: 20, padding: '3px 12px', letterSpacing: '0.07em',
+              }}>
+                ✓ {tRentals('signed')}
+              </span>
+            )}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-
-            {[
-              { label: t('sigClientDeparture'), sub: fmtShort(rental.startAt), img: rental.openingSignature, accent: '#6366F1' },
-              { label: t('sigClientReturn'), sub: rental.endAt ? fmtShort(rental.endAt) : '— / — / ——', img: rental.closingSignature, accent: '#64748B' },
-              { label: t('sigResponsible'), sub: rental.tenant.name, img: rental.staffSignature, accent: '#6366F1' },
-            ].map((sig, i) => (
+            {([
+              { label: t('sigClientDeparture'), sub: fmtShort(rental.startAt), img: rental.openingSignature, accent: '#4338CA' },
+              { label: t('sigClientReturn'),    sub: rental.endAt ? fmtShort(rental.endAt) : '—', img: rental.closingSignature, accent: '#64748B' },
+              { label: t('sigResponsible'),     sub: rental.tenant.name, img: rental.staffSignature, accent: '#4338CA' },
+            ] as { label: string; sub: string; img: string | null; accent: string }[]).map((sig, i) => (
               <div key={i}>
-                <p className="lbl" style={{ marginBottom: 6, textAlign: 'center' }}>{sig.label}</p>
+                <p style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  color: sig.img ? sig.accent : '#CBD5E1', marginBottom: 8, textAlign: 'center',
+                }}>{sig.label}</p>
                 <div style={{
-                  height: 80, borderRadius: 8, overflow: 'hidden',
-                  border: sig.img ? `1.5px solid ${sig.accent}22` : '1.5px dashed #E2E8F0',
-                  background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  height: 90, borderRadius: 8, overflow: 'hidden',
+                  border: sig.img ? `1.5px solid ${sig.accent}33` : '1.5px dashed #E2E8F0',
+                  background: sig.img ? `${sig.accent}06` : '#FAFAFA',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   {sig.img
                     // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={sig.img} alt="" style={{ maxHeight: '100%', width: '100%', objectFit: 'contain', padding: 6 }} />
-                    : <span style={{ fontSize: 10, color: '#E2E8F0' }}>—</span>
+                    ? <img src={sig.img} alt="" style={{ maxHeight: '100%', width: '100%', objectFit: 'contain', padding: 8 }} />
+                    : <span style={{ fontSize: 11, color: '#D1D5DB', fontWeight: 500 }}>—</span>
                   }
                 </div>
-                <div style={{ marginTop: 7, paddingTop: 6, borderTop: `2px solid ${sig.img ? sig.accent : '#E2E8F0'}`, opacity: sig.img ? 1 : 0.4 }}>
-                  <p style={{ fontSize: 9, textAlign: 'center', color: sig.img ? sig.accent : '#94A3B8', fontWeight: 700 }}>{sig.sub}</p>
+                <div style={{ marginTop: 8, borderTop: `2px solid ${sig.img ? sig.accent : '#E2E8F0'}`, paddingTop: 6 }}>
+                  <p style={{
+                    fontSize: 9, textAlign: 'center', fontWeight: 700, letterSpacing: '0.04em',
+                    color: sig.img ? sig.accent : '#94A3B8',
+                  }}>{sig.sub}</p>
                 </div>
               </div>
             ))}
@@ -382,9 +409,9 @@ export default async function ContractPage({
         </div>
 
         {/* ── FOOTER ──────────────────────────────────────── */}
-        <div style={{ borderTop: '1px solid #E2E8F0', padding: '10px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 10, color: '#CBD5E1' }}>{rental.tenant.name} · {t('generatedBy')}</span>
-          <span className="mono" style={{ fontSize: 10, color: '#CBD5E1' }}>{num}</span>
+        <div style={{ borderTop: '1px solid #F1F5F9', padding: '10px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFAFA' }}>
+          <span style={{ fontSize: 9.5, color: '#CBD5E1', letterSpacing: '0.03em' }}>{rental.tenant.name} · {t('generatedBy')}</span>
+          <span className="mono" style={{ fontSize: 9.5, color: '#CBD5E1' }}>{num}</span>
         </div>
 
       </div>
