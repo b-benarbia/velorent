@@ -81,7 +81,7 @@ interface ShopInfo {
 
 // ─── Shared UI primitives ────────────────────────────────────────────────────
 const card: React.CSSProperties = { background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24, overflow: 'hidden' }
-const cardHead: React.CSSProperties = { padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+const cardHead: React.CSSProperties = { padding: '14px 18px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }
 const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e2e8f0', borderRadius: 10, padding: '9px 13px', fontSize: 14, color: '#0f172a', outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 5, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }
 
@@ -235,6 +235,17 @@ export default function SettingsPage() {
 
   return (
     <div style={{ maxWidth: 960 }}>
+      <style>{`
+        .settings-shop-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+        @media (min-width: 480px) { .settings-shop-grid { grid-template-columns: 1fr 1fr; } }
+        .settings-deposit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media (min-width: 640px) { .settings-deposit-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 900px) { .settings-deposit-grid { grid-template-columns: repeat(5, 1fr); } }
+        .settings-acc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        @media (min-width: 640px) { .settings-acc-grid { grid-template-columns: repeat(4, 1fr); } }
+        .settings-card-padding { padding: 18px; }
+        @media (min-width: 640px) { .settings-card-padding { padding: 24px; } }
+      `}</style>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>{t('title')}</h1>
         <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 3 }}>{t('subtitle')}</p>
@@ -255,9 +266,9 @@ export default function SettingsPage() {
           <SaveBtn onClick={saveShop} loading={shopLoading} saved={shopSaved} error={shopError} label="Sauvegarder" />
         </div>
 
-        <div style={{ padding: 24 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-            <div className="col-span-2" style={{ gridColumn: '1 / -1' }}>
+        <div className="settings-card-padding">
+          <div className="settings-shop-grid">
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>{t('shopNameLabel')}</label>
               <input value={shop.name} onChange={e => setShop(s => ({ ...s, name: e.target.value }))}
                 placeholder="BikeAlao Marítim" style={inputStyle} />
@@ -304,7 +315,7 @@ export default function SettingsPage() {
           <SaveBtn onClick={saveShop} loading={shopLoading} saved={shopSaved} error={shopError} label="Sauvegarder" />
         </div>
 
-        <div style={{ padding: 24 }}>
+        <div className="settings-card-padding">
           {/* TVA */}
           <div style={{ marginBottom: 24 }}>
             <label style={labelStyle}>{t('taxRateLabel')}</label>
@@ -324,7 +335,7 @@ export default function SettingsPage() {
           <div>
             <label style={labelStyle}>{t('depositLabel')}</label>
             <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 14 }}>{t('depositHint')}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+            <div className="settings-deposit-grid">
               {BIKE_TYPES.map(bt => {
                 const BtIcon = bt.Icon
                 const val = shop.depositConfig[bt.key] ?? ''
@@ -369,7 +380,7 @@ export default function SettingsPage() {
 
         {pricingError && <div style={{ padding: '8px 24px', background: '#fef2f2', fontSize: 12, color: '#dc2626' }}>{pricingError}</div>}
 
-        <div style={{ padding: 24, overflowX: 'auto' }}>
+        <div className="settings-card-padding" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', minWidth: 900 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
@@ -449,9 +460,9 @@ export default function SettingsPage() {
         </div>
 
         {/* Accessories */}
-        <div style={{ padding: '0 24px 24px' }}>
+        <div className="settings-card-padding" style={{ paddingTop: 0 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{t('accessories')}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div className="settings-acc-grid">
             {ACCESSORIES.map(acc => {
               const AccIcon = acc.Icon
               return (
@@ -503,7 +514,7 @@ export default function SettingsPage() {
         </div>
 
         {showForm && (
-          <form onSubmit={handleCreate} style={{ padding: 24, borderBottom: '1px solid #f1f5f9', background: '#fafbff' }}>
+          <form onSubmit={handleCreate} className="settings-card-padding" style={{ borderBottom: '1px solid #f1f5f9', background: '#fafbff' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 16 }}>{t('newStaff')}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
               <div>
