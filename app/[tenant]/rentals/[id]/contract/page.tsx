@@ -23,48 +23,46 @@ export default async function ContractPage({
 
   const tRentals = await getServerT('rentals')
 
-  const PAYMENT_LABEL: Record<string, string> = {
-    CASH: 'Efectivo / Espèces', CARD: 'Tarjeta / Carte',
-    BIZUM: 'Bizum', TRANSFER: 'Transferencia / Virement',
-    ONLINE: 'Online', HOTEL: 'Hotel',
+  const PAY: Record<string, string> = {
+    CASH: 'Efectivo', CARD: 'Tarjeta / Carte', BIZUM: 'Bizum',
+    TRANSFER: 'Transferencia', ONLINE: 'Online', HOTEL: 'Hotel',
   }
-  const DOC_LABEL: Record<string, string> = {
-    PASSPORT: 'Pasaporte / Passeport', DNI: 'DNI', NIE: 'NIE',
-    ID_CARD: "Documento / Carte d'identité",
-    DRIVING_LICENSE: 'Permiso conducir / Permis conduire',
-    OTHER: 'Otro / Autre',
+  const DOC: Record<string, string> = {
+    PASSPORT: 'Pasaporte', DNI: 'DNI', NIE: 'NIE',
+    ID_CARD: 'Documento identidad', DRIVING_LICENSE: 'Permiso conducir', OTHER: 'Otro',
+  }
+  const BIKE_TYPE: Record<string, string> = {
+    CITY: 'City', MTB: 'MTB', ROAD: 'Route', ELECTRIC: 'Électrique',
+    CARGO: 'Cargo', KIDS: 'Enfant', OTHER: 'Autre',
   }
 
-  const contractNumber = `${new Date(rental.startAt).getFullYear()}-${rental.id.slice(0, 8).toUpperCase()}`
-  const generatedAt = new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const num = `${new Date(rental.startAt).getFullYear()}-${rental.id.slice(0, 8).toUpperCase()}`
+  const generatedAt = new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   const isCompleted = rental.status === 'COMPLETED'
+  const depositMethod = (rental.rateSnapshot as { depositPaymentMethod?: string })?.depositPaymentMethod
 
-  const fmtDate = (d: Date | string) =>
-    new Date(d).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const fmtTime = (d: Date | string) =>
-    new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  const fmtFull = (d: Date | string) =>
+    new Date(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const fmtShort = (d: Date | string) =>
-    new Date(d).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+  const fmtTime = (d: Date | string) =>
+    new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <>
-      {/* ── Toolbar ── */}
+      {/* Toolbar */}
       <div className="no-print flex gap-3 mb-8 px-4 pt-4">
         <PrintButton />
         <a
           href={`/api/rentals/${id}/contract-pdf`}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0F172A', color: 'white', padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-        >
-          ⬇ PDF
-        </a>
+          style={{ display:'flex',alignItems:'center',gap:6,background:'#0F172A',color:'white',padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,textDecoration:'none' }}
+        >⬇ PDF</a>
         <Link
           href={`/${tenant}/rentals`}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'white', border: '1px solid #e2e8f0', color: '#475569', padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 500, textDecoration: 'none' }}
-        >
-          ← {tRentals('backToList')}
-        </Link>
+          style={{ display:'flex',alignItems:'center',gap:6,background:'white',border:'1px solid #E2E8F0',color:'#64748B',padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:500,textDecoration:'none' }}
+        >← {tRentals('backToList')}</Link>
       </div>
 
       <style>{`
@@ -73,231 +71,147 @@ export default async function ContractPage({
           aside, header, nav { display: none !important; }
           main { margin: 0 !important; padding: 0 !important; }
           body { margin: 0; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .contract-wrap { max-width: 100% !important; box-shadow: none !important; margin: 0 !important; }
+          .doc { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; }
         }
-        @page { margin: 1cm 1.4cm; size: A4; }
+        @page { margin: 1cm 1.5cm; size: A4; }
 
-        .contract-wrap {
+        .doc {
           font-family: 'Inter', -apple-system, system-ui, sans-serif;
-          color: #0F172A;
-          max-width: 720px;
+          max-width: 700px;
           margin: 0 auto 48px;
           background: white;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(15,23,42,0.08);
-          border-radius: 2px;
+          border: 1px solid #E2E8F0;
+          border-radius: 4px;
           overflow: hidden;
+          box-shadow: 0 2px 8px rgba(15,23,42,0.07), 0 16px 48px rgba(15,23,42,0.06);
         }
 
-        /* Section label */
-        .s-label {
+        .lbl {
           font-size: 9px;
           font-weight: 700;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: #94a3b8;
-          margin-bottom: 5px;
+          color: #94A3B8;
+          margin-bottom: 4px;
         }
-        .s-value {
+        .val {
           font-size: 14px;
           font-weight: 600;
           color: #0F172A;
-          line-height: 1.4;
         }
-        .s-mono {
-          font-family: 'Courier New', monospace;
-          letter-spacing: 0.04em;
-        }
+        .mono { font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
 
-        /* Info grid cell */
-        .info-cell { display: flex; flex-direction: column; }
+        .row { display: flex; gap: 24px; }
+        .cell { display: flex; flex-direction: column; flex: 1; }
 
-        /* Divider */
-        .doc-divider {
-          height: 1px;
-          background: #F1F5F9;
-          margin: 0 32px;
-        }
+        .sep { height: 1px; background: #F1F5F9; }
 
-        /* Section */
-        .doc-section {
-          padding: 24px 32px;
-        }
-
-        /* Section title */
-        .sec-title {
-          font-size: 8px;
-          font-weight: 800;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: #CBD5E1;
-          padding-bottom: 14px;
-          border-bottom: 1px solid #F1F5F9;
-          margin-bottom: 18px;
-        }
-
-        /* Clause */
-        .clause-row {
+        .clause {
           display: flex;
-          gap: 12px;
-          padding: 9px 0;
+          gap: 10px;
+          padding: 7px 0;
           border-bottom: 1px solid #F8FAFC;
           align-items: flex-start;
+          font-size: 11px;
+          color: #374151;
+          line-height: 1.6;
         }
-        .clause-row:last-child { border-bottom: none; }
-        .clause-num {
-          min-width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: #F1F5F9;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 9px;
-          font-weight: 800;
-          color: #64748B;
-          flex-shrink: 0;
-          margin-top: 1px;
+        .clause:last-child { border-bottom: none; }
+        .cnum {
+          min-width: 18px; height: 18px; border-radius: 50%;
+          background: #F1F5F9; color: #64748B;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 8px; font-weight: 800; flex-shrink: 0; margin-top: 2px;
         }
-        .clause-num.alert { background: #FEE2E2; color: #DC2626; }
-        .clause-text {
-          font-size: 10.5px;
-          line-height: 1.65;
-          color: #475569;
-        }
-        .clause-text em { font-style: italic; color: #94A3B8; }
+        .cnum.red { background: #FEE2E2; color: #DC2626; }
+        .clause-tr { color: #CBD5E1; font-size: 10px; font-style: italic; }
       `}</style>
 
-      <div className="contract-wrap">
+      <div className="doc">
 
-        {/* ══════════════════════════════════
-            HEADER
-        ══════════════════════════════════ */}
-        <div style={{ background: '#0F172A', padding: '32px 32px 28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24 }}>
+        {/* ── HEADER ─────────────────────────────────────── */}
+        <div style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)', padding: '20px 28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
-            {/* Left — Shop */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
-                    <path d="M8 17.5h7M15 6l2 4h-8l1-4h5z"/>
-                    <path d="M12 6V3"/><path d="M17 10l2 7.5"/>
-                  </svg>
-                </div>
-                <div>
-                  <p style={{ color: 'white', fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
-                    {rental.tenant.name}
-                  </p>
-                  {rental.tenant.address && (
-                    <p style={{ color: '#475569', fontSize: 11, marginTop: 3 }}>{rental.tenant.address}</p>
-                  )}
-                </div>
+            {/* Boutique */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.15)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/>
+                  <path d="M8 17.5h7M15 6l2.5 4h-8l1-4z"/><path d="M12 6V3.5"/><path d="M17.5 10.5L19 17.5"/>
+                </svg>
               </div>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                {rental.tenant.phone && (
-                  <span style={{ fontSize: 11, color: '#64748B' }}>{rental.tenant.phone}</span>
-                )}
-                {rental.tenant.email && (
-                  <span style={{ fontSize: 11, color: '#64748B' }}>{rental.tenant.email}</span>
-                )}
-              </div>
-            </div>
-
-            {/* Right — Contract ref */}
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.16em', color: '#334155', textTransform: 'uppercase', marginBottom: 6 }}>
-                Contrato · Contrat · Contract
-              </p>
-              <p style={{ fontSize: 26, fontWeight: 800, color: 'white', fontFamily: 'Courier New, monospace', letterSpacing: '0.06em', lineHeight: 1 }}>
-                {contractNumber}
-              </p>
-              <p style={{ fontSize: 10, color: '#475569', marginTop: 6 }}>
-                {generatedAt}
-              </p>
-              {/* Status badge */}
-              <div style={{
-                display: 'inline-block', marginTop: 10,
-                background: 'rgba(255,255,255,0.07)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 6, padding: '3px 10px',
-                fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: isCompleted ? '#94A3B8' : 'white',
-              }}>
-                {isCompleted ? '✓ Clôturé' : '● Actif'}
-              </div>
-            </div>
-          </div>
-
-          {/* Date strip */}
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 36, flexWrap: 'wrap' }}>
-            <div>
-              <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>Salida / Départ</p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'white', textTransform: 'capitalize' }}>{fmtDate(rental.startAt)}</p>
-              <p style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>{fmtTime(rental.startAt)}</p>
-            </div>
-            {rental.expectedReturnAt && (
               <div>
-                <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>Devolución prevista / Retour prévu</p>
-                <p style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>
-                  {new Date(rental.expectedReturnAt).toLocaleString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })}
-                </p>
-                <p style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>
-                  {fmtTime(rental.expectedReturnAt)}
-                </p>
+                <p style={{ color: 'white', fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1 }}>{rental.tenant.name}</p>
+                {rental.tenant.phone && <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, marginTop: 3 }}>{rental.tenant.phone}</p>}
               </div>
-            )}
-            {rental.endAt && (
-              <div>
-                <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>Devolución real / Retour effectif</p>
-                <p style={{ fontSize: 13, fontWeight: 700, color: '#4ADE80' }}>{fmtShort(rental.endAt)}</p>
-                <p style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>{fmtTime(rental.endAt)}</p>
+            </div>
+
+            {/* Contrat ref */}
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>Contrat de location</p>
+              <p className="mono" style={{ color: 'white', fontSize: 20, fontWeight: 800, letterSpacing: '0.06em' }}>{num}</p>
+              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 6, alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{generatedAt}</span>
+                <span style={{
+                  padding: '2px 8px', borderRadius: 20,
+                  background: isCompleted ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', color: 'white',
+                }}>
+                  {isCompleted ? '✓ CLÔTURÉ' : '● ACTIF'}
+                </span>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* ══════════════════════════════════
-            SECTION 1 — CLIENT + MONTANTS
-        ══════════════════════════════════ */}
-        <div className="doc-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+        {/* ── DATE STRIP ──────────────────────────────────── */}
+        <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '10px 28px', display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+          <div>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>Départ</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize' }}>{fmtFull(rental.startAt)}</span>
+            <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>{fmtTime(rental.startAt)}</span>
+          </div>
+          {rental.expectedReturnAt && (
+            <div>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>Retour prévu</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize' }}>{fmtFull(rental.expectedReturnAt)}</span>
+              <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>{fmtTime(rental.expectedReturnAt)}</span>
+            </div>
+          )}
+          {rental.endAt && (
+            <div>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#16A34A', textTransform: 'uppercase', marginRight: 8 }}>Retour effectif</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', textTransform: 'capitalize' }}>{fmtFull(rental.endAt)}</span>
+              <span style={{ fontSize: 12, color: '#4ADE80', marginLeft: 6 }}>{fmtTime(rental.endAt)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── CLIENT + PAIEMENT ───────────────────────────── */}
+        <div style={{ padding: '22px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
 
           {/* Client */}
           <div>
-            <p className="sec-title">Arrendatario · Locataire · Renter</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="info-cell">
-                <p className="s-label">Nombre / Nom</p>
-                <p className="s-value" style={{ fontSize: 18, fontWeight: 800 }}>
-                  {rental.customer.firstName} {rental.customer.lastName}
-                </p>
-              </div>
+            <p className="lbl" style={{ marginBottom: 14 }}>Client / Locataire</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 10, lineHeight: 1.2 }}>
+              {rental.customer.firstName} {rental.customer.lastName}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {rental.customer.nationality && (
-                <div className="info-cell">
-                  <p className="s-label">Nacionalidad / Nationalité</p>
-                  <p className="s-value">{rental.customer.nationality}</p>
-                </div>
+                <div><span className="lbl">Nationalité · </span><span className="val" style={{ fontSize: 13 }}>{rental.customer.nationality}</span></div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                {rental.customer.phone && (
-                  <div className="info-cell">
-                    <p className="s-label">Teléfono / Tél.</p>
-                    <p className="s-value s-mono" style={{ fontSize: 13 }}>{rental.customer.phone}</p>
-                  </div>
-                )}
-                {rental.customer.email && (
-                  <div className="info-cell">
-                    <p className="s-label">Email</p>
-                    <p className="s-value" style={{ fontSize: 12 }}>{rental.customer.email}</p>
-                  </div>
-                )}
-              </div>
+              {rental.customer.phone && (
+                <div><span className="lbl">Tél. · </span><span className="val mono" style={{ fontSize: 13 }}>{rental.customer.phone}</span></div>
+              )}
+              {rental.customer.email && (
+                <div><span className="lbl">Email · </span><span className="val" style={{ fontSize: 12 }}>{rental.customer.email}</span></div>
+              )}
               {rental.customer.documentNumber && (
-                <div style={{ background: '#0F172A', borderRadius: 10, padding: '12px 16px', marginTop: 2 }}>
-                  <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#475569', textTransform: 'uppercase', marginBottom: 6 }}>
-                    {DOC_LABEL[rental.customer.documentType ?? ''] ?? 'Documento'}
-                  </p>
-                  <p className="s-mono" style={{ fontSize: 20, fontWeight: 800, color: 'white', letterSpacing: '0.08em' }}>
+                <div style={{ marginTop: 4, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
+                  <p className="lbl" style={{ marginBottom: 4 }}>{DOC[rental.customer.documentType ?? ''] ?? 'Document'}</p>
+                  <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#0F172A', letterSpacing: '0.06em' }}>
                     {rental.customer.documentNumber}
                   </p>
                 </div>
@@ -305,238 +219,157 @@ export default async function ContractPage({
             </div>
           </div>
 
-          {/* Financier */}
+          {/* Paiement */}
           <div>
-            <p className="sec-title">Condiciones económicas · Financier</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="info-cell">
-                <p className="s-label">Importe pagado / Montant réglé</p>
-                <p className="s-value" style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
-                  {Number(rental.amountPaid ?? 0).toFixed(2)} <span style={{ fontSize: 16 }}>€</span>
+            <p className="lbl" style={{ marginBottom: 14 }}>Paiement</p>
+
+            {/* Montant */}
+            <div style={{ background: '#F0F4FF', borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
+              <p className="lbl" style={{ marginBottom: 4 }}>Montant réglé</p>
+              <p className="mono" style={{ fontSize: 30, fontWeight: 800, color: '#4F46E5', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                {Number(rental.amountPaid ?? 0).toFixed(2)}<span style={{ fontSize: 18 }}> €</span>
+              </p>
+              <p style={{ fontSize: 11, color: '#6366F1', marginTop: 4, fontWeight: 600 }}>{PAY[rental.paymentMethod] ?? rental.paymentMethod}</p>
+            </div>
+
+            {/* Caution */}
+            {Number(rental.depositAmount) > 0 && (
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
+                <p className="lbl" style={{ marginBottom: 4 }}>Caution / Fianza</p>
+                <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                  {Number(rental.depositAmount).toFixed(2)} €
+                </p>
+                <p style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
+                  {depositMethod === 'CARD' ? 'Carte bancaire' : 'Espèces'} · Remboursable
                 </p>
               </div>
-              <div className="info-cell">
-                <p className="s-label">Forma de pago / Mode</p>
-                <p className="s-value">{PAYMENT_LABEL[rental.paymentMethod] ?? rental.paymentMethod}</p>
+            )}
+
+            {rental.lockNumber && (
+              <div style={{ marginTop: 10 }}>
+                <p className="lbl">Cadenas N°</p>
+                <p className="val mono">{rental.lockNumber}</p>
               </div>
-              {Number(rental.depositAmount) > 0 && (
-                <div style={{ background: '#0F172A', borderRadius: 10, padding: '12px 14px' }}>
-                  <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#475569', textTransform: 'uppercase', marginBottom: 5 }}>
-                    Fianza / Caution / Deposit
-                  </p>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: 'white', fontFamily: 'Courier New, monospace' }}>
-                    {Number(rental.depositAmount).toFixed(2)} €
-                  </p>
-                  <p style={{ fontSize: 10, color: '#64748B', marginTop: 3 }}>
-                    {(rental.rateSnapshot as { depositPaymentMethod?: string })?.depositPaymentMethod === 'CARD'
-                      ? 'Tarjeta / Carte bancaire'
-                      : 'Efectivo / Espèces'}
-                    {' · '}Reembolsable / Remboursable
-                  </p>
-                </div>
-              )}
-              {rental.lockNumber && (
-                <div className="info-cell">
-                  <p className="s-label">Candado N° / Cadenas</p>
-                  <p className="s-value s-mono">{rental.lockNumber}</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Photo pièce d'identité */}
+        {/* Photo ID */}
         {rental.customer.documentPhotoUrl && (
           <>
-            <div className="doc-divider" />
-            <div className="doc-section">
-              <p className="sec-title">Documento de identidad · Pièce d&apos;identité · ID Document</p>
+            <div className="sep" />
+            <div style={{ padding: '16px 28px' }}>
+              <p className="lbl" style={{ marginBottom: 10 }}>Pièce d&apos;identité</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={rental.customer.documentPhotoUrl}
-                alt="Documento"
-                style={{ maxHeight: 160, borderRadius: 8, border: '1px solid #E2E8F0', objectFit: 'contain', display: 'block' }}
-              />
+              <img src={rental.customer.documentPhotoUrl} alt="ID" style={{ maxHeight: 140, borderRadius: 6, border: '1px solid #E2E8F0', objectFit: 'contain' }} />
             </div>
           </>
         )}
 
-        {/* ══════════════════════════════════
-            SECTION 2 — VÉHICULE
-        ══════════════════════════════════ */}
-        <div className="doc-divider" />
-        <div className="doc-section">
-          <p className="sec-title">Material alquilado · Matériel loué · Rented Equipment</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-            <div className="info-cell" style={{ gridColumn: 'span 2' }}>
-              <p className="s-label">Vehículo / Véhicule</p>
-              <p className="s-value" style={{ fontSize: 20, fontWeight: 800 }}>{rental.bike.name}</p>
+        {/* ── VÉHICULE ────────────────────────────────────── */}
+        <div className="sep" />
+        <div style={{ padding: '18px 28px' }}>
+          <p className="lbl" style={{ marginBottom: 12 }}>Véhicule loué / Vehículo alquilado</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <p style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>{rental.bike.name}</p>
               {rental.bike.type && (
-                <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{rental.bike.type}</p>
+                <span style={{ display: 'inline-block', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 4, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: '#64748B', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  {BIKE_TYPE[rental.bike.type] ?? rental.bike.type}
+                </span>
               )}
             </div>
-            <div className="info-cell">
-              <p className="s-label">Código / Code</p>
-              <p className="s-value s-mono" style={{ color: '#6366F1', fontSize: 18 }}>{rental.bike.code}</p>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+              <div>
+                <p className="lbl">Code</p>
+                <p className="val mono" style={{ fontSize: 16, color: '#6366F1' }}>{rental.bike.code}</p>
+              </div>
+              {rental.bike.serialNumber && (
+                <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 10 }}>
+                  <p className="lbl" style={{ color: '#DC2626' }}>N° Série · CRITIQUE</p>
+                  <p className="val mono" style={{ fontSize: 16 }}>{rental.bike.serialNumber}</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Serial number — critical */}
-          {rental.bike.serialNumber && (
-            <div style={{ marginTop: 14, borderLeft: '3px solid #DC2626', paddingLeft: 14, paddingTop: 2, paddingBottom: 2 }}>
-              <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>
-                N° Serie / N° Série · CRÍTICO DENUNCIA / POLICE REPORT
-              </p>
-              <p className="s-mono" style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
-                {rental.bike.serialNumber}
-              </p>
-            </div>
-          )}
-
           {/* Accessories */}
           {Array.isArray(rental.accessories) && (rental.accessories as unknown[]).length > 0 && (
-            <div style={{ marginTop: 14 }}>
-              <p className="s-label" style={{ marginBottom: 8 }}>Accesorios entregados / Accessoires remis / Accessories</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {(rental.accessories as { label: string; qty?: number; codes?: string[] }[]).map((acc, i) => {
-                  const validCodes = (acc.codes ?? []).filter(Boolean)
-                  return (
-                    <span key={i} style={{ fontSize: 12, fontWeight: 600, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 6, padding: '4px 10px', color: '#334155' }}>
-                      {acc.qty && acc.qty > 1 ? `${acc.qty}× ` : ''}{acc.label}
-                      {validCodes.length > 0 && (
-                        <span className="s-mono" style={{ color: '#6366F1', marginLeft: 4, fontSize: 11 }}>
-                          ({validCodes.map(c => `#${c}`).join(', ')})
-                        </span>
-                      )}
-                    </span>
-                  )
-                })}
-              </div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span className="lbl" style={{ marginBottom: 0, marginRight: 4 }}>Accessoires ·</span>
+              {(rental.accessories as { label: string; qty?: number; codes?: string[] }[]).map((a, i) => (
+                <span key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 5, padding: '3px 9px', fontSize: 12, fontWeight: 600, color: '#334155' }}>
+                  {a.qty && a.qty > 1 ? `${a.qty}× ` : ''}{a.label}
+                  {(a.codes ?? []).filter(Boolean).map(c => (
+                    <span key={c} className="mono" style={{ color: '#6366F1', marginLeft: 4, fontSize: 11 }}>#{c}</span>
+                  ))}
+                </span>
+              ))}
             </div>
           )}
         </div>
 
-        {/* ══════════════════════════════════
-            CONDITIONS GÉNÉRALES
-        ══════════════════════════════════ */}
-        <div className="doc-divider" />
-        <div className="doc-section" style={{ paddingBottom: 20 }}>
-          <p className="sec-title">Condiciones generales · General Conditions · Conditions générales</p>
+        {/* ── CONDITIONS ──────────────────────────────────── */}
+        <div className="sep" />
+        <div style={{ padding: '18px 28px' }}>
+          <p className="lbl" style={{ marginBottom: 12 }}>Conditions générales</p>
           <div>
             {[
-              { n: '1', alert: false, es: 'El arrendatario declara haber recibido el material en perfectas condiciones.', en: 'The renter declares having received the equipment in perfect condition.', fr: 'Le locataire déclare avoir reçu le matériel en parfait état.' },
-              { n: '2', alert: false, es: 'El arrendatario es el único responsable de la custodia del material durante el alquiler.', en: 'The renter is solely responsible for the safekeeping of the equipment.', fr: 'Le locataire est seul responsable de la garde du matériel.' },
-              { n: '3', alert: false, es: 'En caso de robo, pérdida o daño, el arrendatario abonará el coste íntegro de reparación o reposición.', en: 'In case of theft, loss or damage, the renter shall pay the full cost.', fr: 'En cas de vol, perte ou dommage, le locataire paiera le coût total.' },
-              { n: '4', alert: true,  es: 'En caso de robo, el arrendatario deberá presentar denuncia policial en 24h y entregar copia al arrendador.', en: 'In case of theft, the renter must file a police report within 24h.', fr: 'En cas de vol, dépôt de plainte obligatoire dans les 24h.' },
-              { n: '5', alert: false, es: 'La fianza quedará retenida hasta la devolución del material en el mismo estado.', en: 'The deposit will be held until equipment is returned in the same condition.', fr: "La caution sera conservée jusqu'à la restitution dans le même état." },
-              { n: '6', alert: false, es: 'El retraso generará cargos adicionales por cada hora o día de retraso.', en: 'Late returns will incur additional charges per hour or day.', fr: 'Tout retard entraînera des frais supplémentaires.' },
-              { n: '7', alert: false, es: 'Este contrato tiene plena validez probatoria ante cualquier instancia judicial o administrativa.', en: 'This contract has full evidentiary value before any authority.', fr: 'Ce contrat a pleine valeur probatoire devant toute instance.' },
-              { n: '8', alert: false, es: 'Datos personales tratados conforme al RGPD (UE 2016/679).', en: 'Personal data processed under GDPR (EU 2016/679).', fr: 'Données personnelles traitées conformément au RGPD.' },
-            ].map(clause => (
-              <div key={clause.n} className="clause-row">
-                <div className={`clause-num${clause.alert ? ' alert' : ''}`}>{clause.n}</div>
-                <p className="clause-text">
-                  <strong style={{ color: '#1E293B', fontWeight: clause.alert ? 700 : 500 }}>{clause.es}</strong>
-                  {' '}<em>/ {clause.en}</em>
-                  {' '}<em style={{ color: '#CBD5E1' }}>/ {clause.fr}</em>
-                </p>
+              { n:'1', red:false, fr:'Le locataire déclare avoir reçu le matériel en parfait état.', es:'El arrendatario declara haber recibido el material en perfectas condiciones.' },
+              { n:'2', red:false, fr:'Le locataire est seul responsable de la garde du matériel pendant toute la durée de la location.', es:'El arrendatario es el único responsable de la custodia durante el alquiler.' },
+              { n:'3', red:false, fr:'En cas de vol, perte ou dommage, le locataire paiera le coût total de réparation ou remplacement.', es:'En caso de robo, pérdida o daño, el arrendatario abonará el coste íntegro.' },
+              { n:'4', red:true,  fr:'En cas de vol, dépôt de plainte obligatoire sous 24h — copie à remettre impérativement au loueur.', es:'En caso de robo, denuncia policial obligatoria en 24h y entrega de copia al arrendador.' },
+              { n:'5', red:false, fr:'La caution est retenue jusqu\'à la restitution du matériel dans le même état.', es:'La fianza queda retenida hasta la devolución del material en el mismo estado.' },
+              { n:'6', red:false, fr:'Tout retard entraîne des frais supplémentaires par heure ou jour.', es:'El retraso generará cargos adicionales por hora o día.' },
+              { n:'7', red:false, fr:'Ce contrat a pleine valeur probatoire devant toute instance judiciaire ou administrative.', es:'Este contrato tiene plena validez probatoria ante cualquier instancia.' },
+              { n:'8', red:false, fr:'Données personnelles traitées conformément au RGPD (UE 2016/679).', es:'Datos personales tratados conforme al RGPD (UE 2016/679).' },
+            ].map(c => (
+              <div key={c.n} className="clause">
+                <div className={`cnum${c.red ? ' red' : ''}`}>{c.n}</div>
+                <div>
+                  <span style={{ fontWeight: c.red ? 700 : 400, color: c.red ? '#DC2626' : '#1E293B' }}>{c.fr}</span>
+                  <span className="clause-tr"> / {c.es}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ══════════════════════════════════
-            SIGNATURES
-        ══════════════════════════════════ */}
-        <div style={{ background: '#FAFBFF', borderTop: '1px solid #F1F5F9', padding: '28px 32px 32px' }}>
-          <p className="sec-title" style={{ marginBottom: 20 }}>Firmas y conformidad · Signatures · Acknowledgment</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+        {/* ── SIGNATURES ──────────────────────────────────── */}
+        <div style={{ background: '#FAFBFF', borderTop: '1px solid #E2E8F0', padding: '20px 28px' }}>
+          <p className="lbl" style={{ marginBottom: 16 }}>Signatures</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
 
-            {/* Client opening */}
-            <div>
-              <p className="s-label" style={{ marginBottom: 8, textAlign: 'center' }}>
-                Firma cliente — salida<br/>
-                <span style={{ fontSize: 8, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#CBD5E1' }}>Signature client départ</span>
-              </p>
-              <div style={{
-                height: 88, borderRadius: 8, overflow: 'hidden',
-                border: rental.openingSignature ? '1px solid #E2E8F0' : '1.5px dashed #E2E8F0',
-                background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {rental.openingSignature
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={rental.openingSignature} alt="Firma" style={{ maxHeight: '100%', width: '100%', objectFit: 'contain', padding: 6 }} />
-                  : <span style={{ fontSize: 10, color: '#E2E8F0' }}>—</span>
-                }
+            {[
+              { label: 'Client — Départ', sub: fmtShort(rental.startAt), img: rental.openingSignature, accent: '#6366F1' },
+              { label: 'Client — Retour', sub: rental.endAt ? fmtShort(rental.endAt) : '— / — / ——', img: rental.closingSignature, accent: '#64748B' },
+              { label: 'Responsable', sub: rental.tenant.name, img: rental.staffSignature, accent: '#6366F1' },
+            ].map((sig, i) => (
+              <div key={i}>
+                <p className="lbl" style={{ marginBottom: 6, textAlign: 'center' }}>{sig.label}</p>
+                <div style={{
+                  height: 80, borderRadius: 8, overflow: 'hidden',
+                  border: sig.img ? `1.5px solid ${sig.accent}22` : '1.5px dashed #E2E8F0',
+                  background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {sig.img
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={sig.img} alt="" style={{ maxHeight: '100%', width: '100%', objectFit: 'contain', padding: 6 }} />
+                    : <span style={{ fontSize: 10, color: '#E2E8F0' }}>—</span>
+                  }
+                </div>
+                <div style={{ marginTop: 7, paddingTop: 6, borderTop: `2px solid ${sig.img ? sig.accent : '#E2E8F0'}`, opacity: sig.img ? 1 : 0.4 }}>
+                  <p style={{ fontSize: 9, textAlign: 'center', color: sig.img ? sig.accent : '#94A3B8', fontWeight: 700 }}>{sig.sub}</p>
+                </div>
               </div>
-              <div style={{ marginTop: 8, paddingTop: 7, borderTop: '1.5px solid #CBD5E1' }}>
-                <p style={{ fontSize: 9, color: '#94A3B8', textAlign: 'center' }}>
-                  Fecha / Date : {fmtShort(rental.startAt)}
-                </p>
-              </div>
-            </div>
-
-            {/* Client closing */}
-            <div>
-              <p className="s-label" style={{ marginBottom: 8, textAlign: 'center' }}>
-                Firma cliente — retorno<br/>
-                <span style={{ fontSize: 8, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#CBD5E1' }}>Signature client retour</span>
-              </p>
-              <div style={{
-                height: 88, borderRadius: 8, overflow: 'hidden',
-                border: rental.closingSignature ? '1px solid #E2E8F0' : '1.5px dashed #E2E8F0',
-                background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {rental.closingSignature
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={rental.closingSignature} alt="Firma retorno" style={{ maxHeight: '100%', width: '100%', objectFit: 'contain', padding: 6 }} />
-                  : <span style={{ fontSize: 10, color: '#E2E8F0' }}>À la restitution</span>
-                }
-              </div>
-              <div style={{ marginTop: 8, paddingTop: 7, borderTop: '1.5px solid #CBD5E1' }}>
-                <p style={{ fontSize: 9, color: '#94A3B8', textAlign: 'center' }}>
-                  Fecha / Date : {rental.endAt ? fmtShort(rental.endAt) : '___/___/______'}
-                </p>
-              </div>
-            </div>
-
-            {/* Staff */}
-            <div>
-              <p className="s-label" style={{ marginBottom: 8, textAlign: 'center' }}>
-                Firma responsable<br/>
-                <span style={{ fontSize: 8, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#CBD5E1' }}>Signature responsable</span>
-              </p>
-              <div style={{
-                height: 88, borderRadius: 8, overflow: 'hidden',
-                border: rental.staffSignature ? '1px solid #C7D2FE' : '1.5px dashed #E2E8F0',
-                background: rental.staffSignature ? 'white' : '#FAFBFF',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {rental.staffSignature
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={rental.staffSignature} alt="Firma staff" style={{ maxHeight: '100%', width: '100%', objectFit: 'contain', padding: 6 }} />
-                  : <span style={{ fontSize: 10, color: '#E2E8F0' }}>—</span>
-                }
-              </div>
-              <div style={{ marginTop: 8, paddingTop: 7, borderTop: '1.5px solid #6366F1', opacity: 0.4 }}>
-                <p style={{ fontSize: 9, color: '#6366F1', textAlign: 'center', fontWeight: 700 }}>
-                  {rental.tenant.name}
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* ══════════════════════════════════
-            FOOTER
-        ══════════════════════════════════ */}
-        <div style={{ background: '#0F172A', padding: '12px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 9, color: '#334155' }}>
-            {rental.tenant.name} · Generado por VeloRent
-          </span>
-          <span className="s-mono" style={{ fontSize: 9, color: '#334155' }}>
-            {contractNumber} · {generatedAt}
-          </span>
+        {/* ── FOOTER ──────────────────────────────────────── */}
+        <div style={{ borderTop: '1px solid #E2E8F0', padding: '10px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 10, color: '#CBD5E1' }}>{rental.tenant.name} · Généré par VeloRent</span>
+          <span className="mono" style={{ fontSize: 10, color: '#CBD5E1' }}>{num}</span>
         </div>
 
       </div>
