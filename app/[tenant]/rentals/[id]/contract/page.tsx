@@ -116,13 +116,29 @@ export default async function ContractPage({
         }
         .mono { font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
         .lbl  { font-size: 9px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: #94A3B8; margin-bottom: 3px; }
+
+        @media (max-width: 580px) {
+          .doc { border-radius: 0; border-left: none; border-right: none; margin: 0 0 32px; }
+          .doc-header { flex-wrap: wrap !important; gap: 12px !important; }
+          .doc-header-ref { text-align: left !important; }
+          .doc-header-ref .mono-num { font-size: 16px !important; }
+          .doc-date-strip { flex-direction: column !important; }
+          .doc-date-strip > div {
+            border-right: none !important; padding-left: 0 !important; padding-right: 0 !important;
+            border-bottom: 1px solid #E2E8F0; padding-top: 10px !important; padding-bottom: 10px !important;
+          }
+          .doc-date-strip > div:last-child { border-bottom: none !important; }
+          .doc-client-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .doc-sig-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+          .doc-sig-grid > div:nth-child(2) { grid-column: span 2; }
+        }
       `}</style>
 
       <div className="doc">
 
         {/* ══ HEADER ══════════════════════════════════════ */}
         <div style={{ background: 'linear-gradient(135deg, #4338CA 0%, #6366F1 100%)', padding: `22px ${PX}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="doc-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
 
             {/* Boutique */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -148,7 +164,7 @@ export default async function ContractPage({
             </div>
 
             {/* Référence contrat */}
-            <div style={{ textAlign: 'right' }}>
+            <div className="doc-header-ref" style={{ textAlign: 'right' }}>
               <span style={{
                 display: 'inline-block', marginBottom: 8,
                 padding: '3px 10px', borderRadius: 20,
@@ -166,7 +182,7 @@ export default async function ContractPage({
         </div>
 
         {/* ══ DATE STRIP ══════════════════════════════════ */}
-        <div style={{ borderBottom: '1px solid #E2E8F0', padding: `13px ${PX}`, display: 'flex' }}>
+        <div className="doc-date-strip" style={{ borderBottom: '1px solid #E2E8F0', padding: `13px ${PX}`, display: 'flex' }}>
           <div style={{ flex: 1, paddingRight: 24, borderRight: '1px solid #E2E8F0' }}>
             <p className="lbl" style={{ marginBottom: 4 }}>{t('departure')}</p>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize', lineHeight: 1.3 }}>
@@ -203,7 +219,7 @@ export default async function ContractPage({
             <div style={DIV_LINE} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+          <div className="doc-client-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
 
             {/* Client */}
             <div>
@@ -406,7 +422,7 @@ export default async function ContractPage({
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+          <div className="doc-sig-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             {([
               { label: t('sigClientDeparture'), sub: fmtShort(rental.startAt),                     img: rental.openingSignature,  accent: '#4338CA' },
               { label: t('sigClientReturn'),    sub: rental.endAt ? fmtShort(rental.endAt) : '—', img: rental.closingSignature, accent: '#64748B' },
