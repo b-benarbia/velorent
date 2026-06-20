@@ -257,18 +257,20 @@ export default async function ContractPage({
                     <span style={{ fontSize: 12, color: '#64748B' }}>{rental.customer.email}</span>
                   </div>
                 )}
-                {rental.customer.documentNumber && (
+                {(rental.customer.documentNumber || rental.customer.documentPhotoUrl) && (
                   <div style={{ marginTop: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <p className="lbl" style={{ marginBottom: 5 }}>{DOC[rental.customer.documentType ?? ''] ?? t('document')}</p>
-                      <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
-                        {rental.customer.documentNumber}
-                      </p>
-                    </div>
+                    {rental.customer.documentNumber && (
+                      <div style={{ flex: 1 }}>
+                        <p className="lbl" style={{ marginBottom: 5 }}>{DOC[rental.customer.documentType ?? ''] ?? t('document')}</p>
+                        <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
+                          {rental.customer.documentNumber}
+                        </p>
+                      </div>
+                    )}
                     {rental.customer.documentPhotoUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={rental.customer.documentPhotoUrl} alt="ID"
-                        style={{ height: 56, width: 84, borderRadius: 5, border: '1px solid #E2E8F0', objectFit: 'cover', flexShrink: 0 }} />
+                        style={{ height: 72, width: 108, borderRadius: 5, border: '1px solid #E2E8F0', objectFit: 'cover', flexShrink: 0 }} />
                     )}
                   </div>
                 )}

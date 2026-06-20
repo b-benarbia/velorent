@@ -4,14 +4,23 @@ import {
 } from '@react-pdf/renderer'
 
 // ── Types ──────────────────────────────────────────────────────────────────
+interface BikeData {
+  name:         string
+  code:         string
+  serialNumber?: string | null
+  type?:        string | null
+}
+
 interface ContractData {
   contractNumber: string
   generatedAt:    string
+  isCompleted?:   boolean
   tenant: {
     name:    string
     address?: string | null
     phone?:  string | null
     email?:  string | null
+    logoUrl?: string | null
   }
   customer: {
     firstName:        string
@@ -23,17 +32,15 @@ interface ContractData {
     documentNumber?:  string | null
     documentPhotoUrl?: string | null
   }
-  bike: {
-    name:         string
-    code:         string
-    serialNumber?: string | null
-    type:         string
-  }
+  bikes: BikeData[]
   rental: {
-    startAt:          string  // human-readable
+    startAt:          string
+    startAtFull:      string
     startTime:        string
     expectedReturn?:  string | null
+    expectedReturnFull?: string | null
     endAt?:           string | null
+    endAtFull?:       string | null
     endTime?:         string | null
     paymentMethod:    string
     amountPaid:       string
@@ -43,308 +50,486 @@ interface ContractData {
     accessories:      { label: string; qty: number; codes?: string[] }[]
     openingSignature?: string | null
     staffSignature?:   string | null
+    closingSignature?: string | null
   }
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────
+const INDIGO   = '#6366F1'
+const INDIGO_D = '#4338CA'
+const INDIGO_BG = '#EEF2FF'
+const INDIGO_BORDER = '#C7D2FE'
+const SLATE_900 = '#0F172A'
+const SLATE_700 = '#1E293B'
+const SLATE_500 = '#64748B'
+const SLATE_400 = '#94A3B8'
+const SLATE_200 = '#E2E8F0'
+const SLATE_50  = '#F8FAFC'
+const GREEN     = '#16A34A'
+const RED       = '#DC2626'
+const RED_BG    = '#FFF5F5'
+const RED_BORDER = '#FECACA'
+
 const s = StyleSheet.create({
-  page:        { fontFamily: 'Helvetica', fontSize: 9, color: '#0f172a', backgroundColor: '#ffffff' },
-  header:      { backgroundColor: '#0f172a', padding: '20 24 16' },
-  headerRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  shopName:    { fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#ffffff', letterSpacing: 0.3 },
-  shopMeta:    { fontSize: 8, color: '#64748b', marginTop: 2 },
-  contractNum: { fontSize: 18, fontFamily: 'Courier-Bold', color: '#ffffff', textAlign: 'right', letterSpacing: 1 },
-  contractLbl: { fontSize: 7, color: '#475569', textAlign: 'right', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 },
-  contractDate:{ fontSize: 7, color: '#475569', textAlign: 'right', marginTop: 3 },
-  headerDivider: { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', marginTop: 14, paddingTop: 12, flexDirection: 'row', gap: 28 },
-  dateLabel:   { fontSize: 7, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 },
-  dateValue:   { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#ffffff' },
-  body:        { padding: '16 24 20' },
-  section:     { marginBottom: 12, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 6, overflow: 'hidden' },
-  sectionHead: { backgroundColor: '#f8fafc', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', padding: '6 12', flexDirection: 'row', alignItems: 'center', gap: 7 },
-  sectionNum:  { width: 16, height: 16, borderRadius: 8, backgroundColor: '#0f172a', color: '#ffffff', fontSize: 7, fontFamily: 'Helvetica-Bold', textAlign: 'center', paddingTop: 4 },
-  sectionLbl:  { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.9 },
-  sectionBody: { padding: '10 12' },
-  grid2:       { flexDirection: 'row', gap: 16, marginBottom: 6 },
-  field:       { flex: 1 },
-  fieldLabel:  { fontSize: 6.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 },
-  fieldValue:  { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
-  bigName:     { fontSize: 17, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 8 },
-  docBox:      { backgroundColor: '#0f172a', borderRadius: 5, padding: '8 12', marginTop: 6 },
-  docLabel:    { fontSize: 6, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 3 },
-  docNum:      { fontSize: 18, fontFamily: 'Courier-Bold', color: '#ffffff', letterSpacing: 2 },
-  serialBox:   { backgroundColor: '#fefce8', borderWidth: 1, borderColor: '#fde68a', borderRadius: 5, padding: '6 10', marginTop: 6 },
-  serialLabel: { fontSize: 6, color: '#92400e', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 },
-  serialNum:   { fontSize: 14, fontFamily: 'Courier-Bold', color: '#92400e', letterSpacing: 1.5 },
-  accChip:     { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 4, padding: '3 7', marginRight: 5, marginBottom: 4 },
-  accChips:    { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 },
-  finGrid:     { flexDirection: 'row', gap: 12 },
-  finItem:     { flex: 1 },
-  finAmount:   { fontSize: 18, fontFamily: 'Helvetica-Bold', color: '#16a34a' },
-  finDeposit:  { backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa', borderRadius: 5, padding: '7 10', flex: 1 },
-  finDepLabel: { fontSize: 6, color: '#9a3412', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 },
-  finDepAmt:   { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#c2410c' },
-  clause:      { flexDirection: 'row', gap: 8, marginBottom: 5, padding: '6 8', borderRadius: 4, borderWidth: 1 },
-  clauseNum:   { width: 14, height: 14, borderRadius: 7, fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: '#ffffff', textAlign: 'center', paddingTop: 3, flexShrink: 0 },
-  clauseText:  { fontSize: 7.5, lineHeight: 1.55, flex: 1 },
-  termsHead:   { backgroundColor: '#0f172a', padding: '7 12', borderRadius: 5, marginBottom: 6 },
-  termsLbl:    { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.9 },
-  sigRow:      { flexDirection: 'row', gap: 12 },
-  sigBox:      { flex: 1 },
-  sigLabel:    { fontSize: 6.5, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.7, textAlign: 'center', marginBottom: 5, lineHeight: 1.4 },
-  sigCanvas:   { height: 70, borderWidth: 1, borderStyle: 'dashed', borderColor: '#cbd5e1', borderRadius: 5, backgroundColor: '#ffffff', marginBottom: 4 },
-  sigCanvasFilled: { height: 70, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 5, backgroundColor: '#ffffff', marginBottom: 4 },
-  sigLine:     { borderTopWidth: 1.5, borderTopColor: '#94a3b8', paddingTop: 3 },
-  sigDate:     { fontSize: 6.5, color: '#64748b', textAlign: 'center' },
-  footer:      { backgroundColor: '#f8fafc', borderTopWidth: 1, borderTopColor: '#e2e8f0', padding: '8 24', flexDirection: 'row', justifyContent: 'space-between' },
-  footerText:  { fontSize: 7, color: '#94a3b8' },
+  page:   { fontFamily: 'Helvetica', fontSize: 9, color: SLATE_900, backgroundColor: '#ffffff' },
+
+  // Header
+  header: { backgroundColor: INDIGO, padding: '18 24 16' },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  shopName: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: '#ffffff', letterSpacing: 0.2 },
+  shopMeta: { fontSize: 8, color: 'rgba(255,255,255,0.55)', marginTop: 3 },
+  badge:    { borderRadius: 20, paddingLeft: 8, paddingRight: 8, paddingTop: 3, paddingBottom: 3, marginBottom: 6, alignSelf: 'flex-end' },
+  contractLbl: { fontSize: 7, color: 'rgba(255,255,255,0.55)', textAlign: 'right', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 },
+  contractNum: { fontSize: 19, fontFamily: 'Courier-Bold', color: '#ffffff', textAlign: 'right', letterSpacing: 1 },
+  contractDate:{ fontSize: 7.5, color: 'rgba(255,255,255,0.4)', textAlign: 'right', marginTop: 4 },
+
+  // Date strip
+  dateStrip: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: SLATE_200 },
+  dateCell:  { flex: 1, padding: '11 20' },
+  dateLbl:   { fontSize: 7, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase', color: SLATE_400, marginBottom: 3 },
+  dateVal:   { fontSize: 11.5, fontFamily: 'Helvetica-Bold', color: SLATE_900, textTransform: 'capitalize' },
+  dateTime:  { fontSize: 10, fontFamily: 'Helvetica', color: SLATE_500, marginLeft: 4 },
+
+  // Section divider
+  divRow:  { flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 14 },
+  divLine: { flex: 1, height: 1, backgroundColor: SLATE_200 },
+  divLbl:  { fontSize: 7.5, fontFamily: 'Helvetica-Bold', letterSpacing: 2, textTransform: 'uppercase', color: SLATE_400, marginLeft: 10, marginRight: 10 },
+
+  // Body padding
+  body: { paddingLeft: 24, paddingRight: 24, paddingBottom: 20 },
+
+  // Client / Payment two-column
+  twoCol:    { flexDirection: 'row', gap: 24, marginBottom: 16 },
+  colClient: { flex: 1.3 },
+  colPay:    { flex: 1 },
+
+  bigName: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: SLATE_900, marginBottom: 10, letterSpacing: -0.3 },
+
+  rowField: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 6, gap: 8 },
+  lbl:      { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.8, textTransform: 'uppercase', color: SLATE_400, minWidth: 60 },
+  val:      { fontSize: 11.5, fontFamily: 'Helvetica-Bold', color: SLATE_700 },
+  valMono:  { fontSize: 11.5, fontFamily: 'Courier-Bold', color: SLATE_700 },
+  valEmail: { fontSize: 10, color: SLATE_500 },
+
+  docBox:   { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginTop: 8, backgroundColor: SLATE_50, borderWidth: 1, borderColor: SLATE_200, borderRadius: 6, padding: '9 12' },
+  docLbl:   { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: SLATE_400, marginBottom: 3 },
+  docNum:   { fontSize: 16, fontFamily: 'Courier-Bold', color: SLATE_900, letterSpacing: 1 },
+  docPhoto: { height: 64, width: 96, borderRadius: 4, borderWidth: 1, borderColor: SLATE_200, objectFit: 'cover' },
+
+  // Payment
+  amtBox: { backgroundColor: INDIGO_BG, borderWidth: 1, borderColor: INDIGO_BORDER, borderRadius: 10, padding: '14 16', marginBottom: 10 },
+  amtLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: '#818CF8', marginBottom: 5 },
+  amtVal: { fontSize: 28, fontFamily: 'Helvetica-Bold', color: INDIGO_D, letterSpacing: -0.5 },
+  amtCur: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: INDIGO_D },
+  amtPay: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1, textTransform: 'uppercase', color: INDIGO, marginTop: 5 },
+
+  depBox: { borderWidth: 1, borderColor: SLATE_200, borderRadius: 7, padding: '9 12', marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  depLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: SLATE_400, marginBottom: 4 },
+  depAmt: { fontSize: 17, fontFamily: 'Helvetica-Bold', color: SLATE_900 },
+  depNote: { fontSize: 8, color: SLATE_400, fontFamily: 'Helvetica-Oblique' },
+
+  lockRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
+  lockLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: SLATE_400 },
+  lockVal: { fontSize: 14, fontFamily: 'Courier-Bold', color: INDIGO_D },
+
+  // Vehicle
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: 20, flexWrap: 'wrap' },
+  vName: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: SLATE_900, letterSpacing: -0.2, marginBottom: 4 },
+  typeBadge: { backgroundColor: INDIGO_BG, borderWidth: 1, borderColor: INDIGO_BORDER, borderRadius: 3, paddingLeft: 7, paddingRight: 7, paddingTop: 2, paddingBottom: 2, alignSelf: 'flex-start' },
+  typeBadgeTxt: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: INDIGO_D, textTransform: 'uppercase', letterSpacing: 1 },
+  codeBox: {},
+  codeLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: SLATE_400, marginBottom: 2 },
+  codeVal: { fontSize: 16, fontFamily: 'Courier-Bold', color: INDIGO_D, letterSpacing: 0.5 },
+  serialBox: { borderLeftWidth: 3, borderLeftColor: RED, paddingLeft: 11 },
+  serialLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: RED, marginBottom: 2 },
+  serialVal: { fontSize: 16, fontFamily: 'Courier-Bold', color: SLATE_900, letterSpacing: 0.5 },
+
+  // Multi-bike table
+  tbl:    { borderWidth: 1, borderColor: SLATE_200, borderRadius: 6, overflow: 'hidden' },
+  tblHdr: { backgroundColor: SLATE_50, borderBottomWidth: 1, borderBottomColor: SLATE_200, flexDirection: 'row', alignItems: 'center', padding: '6 12', gap: 8 },
+  tblHdrTxt: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: SLATE_400 },
+  tblRow: { flexDirection: 'row', alignItems: 'center', padding: '8 12', gap: 8 },
+  tblRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  numBadge: { width: 18, height: 18, backgroundColor: INDIGO_BG, borderWidth: 1.5, borderColor: INDIGO_BORDER, borderRadius: 3, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  numBadgeTxt: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: INDIGO_D },
+
+  // Accessories
+  accHdr: { backgroundColor: SLATE_50, borderBottomWidth: 1, borderBottomColor: SLATE_200, flexDirection: 'row', alignItems: 'center', padding: '6 12', gap: 10 },
+  accRow: { flexDirection: 'row', alignItems: 'center', padding: '7 12', gap: 10 },
+  checkBox: { width: 16, height: 16, backgroundColor: INDIGO_BG, borderWidth: 1.5, borderColor: INDIGO_BORDER, borderRadius: 3, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  checkTxt: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: INDIGO_D },
+  accNote: { fontSize: 9, color: SLATE_400, fontFamily: 'Helvetica-Oblique', marginTop: 6 },
+
+  // Clauses
+  clauseRow: { flexDirection: 'row', gap: 12, paddingTop: 6, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
+  clauseNum: { fontSize: 9, fontFamily: 'Helvetica-Bold', minWidth: 16, paddingTop: 2, flexShrink: 0 },
+  clauseTxt: { fontSize: 10, lineHeight: 1.7, flex: 1 },
+
+  // Signatures
+  sigSection: { borderTopWidth: 1, borderTopColor: '#EEF2FF', backgroundColor: '#FAFBFF', paddingLeft: 24, paddingRight: 24, paddingBottom: 22 },
+  sigRow: { flexDirection: 'row', gap: 14 },
+  sigBox: { flex: 1 },
+  sigLbl: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 7 },
+  sigCanvas: { height: 80, borderWidth: 1.5, borderStyle: 'dashed', borderColor: SLATE_200, borderRadius: 7, backgroundColor: '#ffffff', marginBottom: 5 },
+  sigCanvasFilled: { height: 80, borderRadius: 7, backgroundColor: '#ffffff', marginBottom: 5, overflow: 'hidden' },
+  sigLine: { borderTopWidth: 2, paddingTop: 5, alignItems: 'center' },
+  sigDate: { fontSize: 8, textAlign: 'center', fontFamily: 'Helvetica-Bold' },
+
+  // Footer
+  footer: { backgroundColor: SLATE_50, borderTopWidth: 1, borderTopColor: '#F1F5F9', padding: '8 24', flexDirection: 'row', justifyContent: 'space-between' },
+  footerTxt: { fontSize: 7.5, color: '#C4CBD6' },
 })
 
+// ── Lookup maps ───────────────────────────────────────────────────────────
 const DOC_LABEL: Record<string, string> = {
-  PASSPORT: 'Pasaporte / Passeport', DNI: 'DNI', NIE: 'NIE',
-  ID_CARD: "D. Identidad / C.N.I.", DRIVING_LICENSE: 'Permis de conduire',
-  OTHER: 'Otro / Autre',
+  PASSPORT: 'Passeport', DNI: 'DNI', NIE: 'NIE / Résidence',
+  ID_CARD: "Carte d'identité", DRIVING_LICENSE: 'Permis de conduire', OTHER: 'Pièce d\'identité',
 }
 const PAYMENT_LABEL: Record<string, string> = {
-  CASH: 'Efectivo / Espèces', CARD: 'Tarjeta / Carte', BIZUM: 'Bizum',
+  CASH: 'Espèces', CARD: 'Carte bancaire', BIZUM: 'Bizum',
   TRANSFER: 'Virement', ONLINE: 'Online', HOTEL: 'Hotel',
+}
+const BIKE_TYPE: Record<string, string> = {
+  CITY: 'Vélo ville', MTB: 'VTT', ROAD: 'Vélo de route', ELECTRIC: 'Vélo électrique',
+  CARGO: 'Vélo cargo', KIDS: 'Vélo enfant', SCOOTER: 'Trottinette électrique', OTHER: 'Véhicule',
 }
 
 const CLAUSES = [
-  { n: '1', es: 'El arrendatario declara haber recibido el material en perfectas condiciones.', en: 'Renter declares receipt of equipment in perfect condition.', fr: 'Le locataire déclare avoir reçu le matériel en parfait état.', highlight: false },
-  { n: '2', es: 'El arrendatario es el único responsable de la custodia del material.', en: 'Renter is solely responsible for safekeeping of equipment.', fr: 'Le locataire est seul responsable de la garde du matériel.', highlight: false },
-  { n: '3', es: 'En caso de robo, pérdida o daño, el arrendatario abonará el coste íntegro.', en: 'In case of theft, loss or damage, renter shall pay full cost.', fr: 'En cas de vol, perte ou dommage, le locataire paiera le coût total.', highlight: false },
-  { n: '4', es: 'En caso de robo, denuncia policial obligatoria en 24h.', en: 'In case of theft, police report mandatory within 24 hours.', fr: 'En cas de vol, dépôt de plainte obligatoire dans les 24h.', highlight: true },
-  { n: '5', es: 'La fianza quedará retenida hasta la devolución en el mismo estado.', en: 'Deposit held until equipment returned in same condition.', fr: 'La caution est retenue jusqu\'à restitution dans le même état.', highlight: false },
-  { n: '6', es: 'El retraso generará cargos adicionales por cada hora/día de retraso.', en: 'Late returns will incur additional charges.', fr: 'Tout retard entraînera des frais supplémentaires.', highlight: false },
-  { n: '7', es: 'Este contrato tiene plena validez probatoria judicial.', en: 'This contract has full legal evidentiary value.', fr: 'Ce contrat a pleine valeur probatoire judiciaire.', highlight: false },
-  { n: '8', es: 'Datos personales tratados conforme al RGPD (UE 2016/679).', en: 'Personal data processed per GDPR (EU 2016/679).', fr: 'Données personnelles traitées conformément au RGPD.', highlight: false },
+  { es: 'El arrendatario declara haber recibido el material en perfectas condiciones.', en: 'Renter declares receipt of equipment in perfect condition.', fr: 'Le locataire déclare avoir reçu le matériel en parfait état.', red: false },
+  { es: 'El arrendatario es el único responsable de la custodia del material.', en: 'Renter is solely responsible for safekeeping of equipment.', fr: 'Le locataire est seul responsable de la garde du matériel.', red: false },
+  { es: 'En caso de robo, pérdida o daño, el arrendatario abonará el coste íntegro.', en: 'In case of theft, loss or damage, renter shall pay full cost.', fr: 'En cas de vol, perte ou dommage, le locataire paiera le coût total.', red: false },
+  { es: 'En caso de robo, denuncia policial obligatoria en 24h.', en: 'In case of theft, police report mandatory within 24 hours.', fr: 'En cas de vol, dépôt de plainte obligatoire dans les 24h.', red: true },
+  { es: 'La fianza quedará retenida hasta la devolución en el mismo estado.', en: 'Deposit held until equipment returned in same condition.', fr: "La caution est retenue jusqu'à restitution dans le même état.", red: false },
+  { es: 'El retraso generará cargos adicionales por cada hora/día de retraso.', en: 'Late returns will incur additional charges.', fr: 'Tout retard entraînera des frais supplémentaires.', red: false },
+  { es: 'Este contrato tiene plena validez probatoria judicial.', en: 'This contract has full legal evidentiary value.', fr: 'Ce contrat a pleine valeur probatoire judiciaire.', red: false },
+  { es: 'Datos personales tratados conforme al RGPD (UE 2016/679).', en: 'Personal data processed per GDPR (EU 2016/679).', fr: 'Données personnelles traitées conformément au RGPD.', red: false },
 ]
 
 // ── Component ─────────────────────────────────────────────────────────────
 export function ContractPDF({ data }: { data: ContractData }) {
-  const { tenant, customer, bike, rental, contractNumber, generatedAt } = data
-  const hasDocPhoto = !!customer.documentPhotoUrl
-  const sectionOffset = hasDocPhoto ? 1 : 0
+  const { tenant, customer, bikes, rental, contractNumber, generatedAt, isCompleted } = data
+  const firstBike = bikes[0]
+
+  const hasDoc   = !!(customer.documentNumber || customer.documentPhotoUrl)
+  const hasPhoto = !!customer.documentPhotoUrl
 
   return (
     <Document title={`Contrat ${contractNumber}`} author={tenant.name}>
       <Page size="A4" style={s.page}>
 
-        {/* ── HEADER ── */}
+        {/* ══ HEADER ══════════════════════════════════════════════════════ */}
         <View style={s.header}>
           <View style={s.headerRow}>
-            <View>
-              <Text style={s.shopName}>{tenant.name}</Text>
-              {tenant.address && <Text style={s.shopMeta}>{tenant.address}</Text>}
-              <Text style={s.shopMeta}>{[tenant.phone, tenant.email].filter(Boolean).join('  ·  ')}</Text>
+            {/* Left: shop */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {tenant.logoUrl
+                ? <Image src={tenant.logoUrl} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover' }} />
+                : (
+                  <View style={{ width: 38, height: 38, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 16, color: '#ffffff' }}>⊛</Text>
+                  </View>
+                )
+              }
+              <View>
+                <Text style={s.shopName}>{tenant.name}</Text>
+                {(tenant.phone || tenant.email) && (
+                  <Text style={s.shopMeta}>{[tenant.phone, tenant.email].filter(Boolean).join('  ·  ')}</Text>
+                )}
+                {tenant.address && <Text style={s.shopMeta}>{tenant.address}</Text>}
+              </View>
             </View>
-            <View>
+
+            {/* Right: reference */}
+            <View style={{ alignItems: 'flex-end' }}>
+              <View style={{ ...s.badge, backgroundColor: isCompleted ? 'rgba(255,255,255,0.15)' : 'rgba(110,231,183,0.25)', borderWidth: 1, borderColor: isCompleted ? 'rgba(255,255,255,0.2)' : 'rgba(110,231,183,0.5)' }}>
+                <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: '#ffffff', letterSpacing: 1.2 }}>
+                  {isCompleted ? '✓ CLÔTURÉ' : '● ACTIF'}
+                </Text>
+              </View>
               <Text style={s.contractLbl}>Contrato · Contract · Contrat</Text>
               <Text style={s.contractNum}>N° {contractNumber}</Text>
-              <Text style={s.contractDate}>Generado · {generatedAt}</Text>
+              <Text style={s.contractDate}>{generatedAt}</Text>
             </View>
           </View>
-          <View style={s.headerDivider}>
-            <View>
-              <Text style={s.dateLabel}>Fecha / Date</Text>
-              <Text style={s.dateValue}>{rental.startAt}</Text>
-            </View>
-            <View>
-              <Text style={s.dateLabel}>Hora salida / Départ</Text>
-              <Text style={s.dateValue}>{rental.startTime}</Text>
-            </View>
-            {rental.expectedReturn && (
-              <View>
-                <Text style={s.dateLabel}>Devolución prevista / Retour prévu</Text>
-                <Text style={s.dateValue}>{rental.expectedReturn}</Text>
-              </View>
-            )}
+        </View>
+
+        {/* ══ DATE STRIP ══════════════════════════════════════════════════ */}
+        <View style={s.dateStrip}>
+          <View style={{ ...s.dateCell, borderRightWidth: 1, borderRightColor: SLATE_200 }}>
+            <Text style={s.dateLbl}>Départ / Salida</Text>
+            <Text style={s.dateVal}>
+              {rental.startAtFull}{' '}
+              <Text style={s.dateTime}>{rental.startTime}</Text>
+            </Text>
           </View>
+          {rental.expectedReturnFull && (
+            <View style={{ ...s.dateCell, borderRightWidth: rental.endAtFull ? 1 : 0, borderRightColor: SLATE_200 }}>
+              <Text style={s.dateLbl}>Retour prévu / Devolución</Text>
+              <Text style={s.dateVal}>{rental.expectedReturnFull}</Text>
+            </View>
+          )}
+          {rental.endAtFull && (
+            <View style={s.dateCell}>
+              <Text style={{ ...s.dateLbl, color: GREEN }}>Retour réel / Retorno</Text>
+              <Text style={{ ...s.dateVal, color: GREEN }}>{rental.endAtFull}</Text>
+            </View>
+          )}
         </View>
 
         <View style={s.body}>
 
-          {/* ── SECTION 1 — LOCATAIRE ── */}
-          <View style={s.section}>
-            <View style={s.sectionHead}>
-              <Text style={s.sectionNum}>1</Text>
-              <Text style={s.sectionLbl}>Datos del arrendatario · Renter · Locataire</Text>
-            </View>
-            <View style={s.sectionBody}>
+          {/* ══ CLIENT + PAIEMENT ════════════════════════════════════════ */}
+          {/* Divider */}
+          <View style={s.divRow}>
+            <View style={s.divLine} /><Text style={s.divLbl}>Client / Cliente</Text><View style={s.divLine} />
+          </View>
+
+          <View style={s.twoCol}>
+            {/* Left — client */}
+            <View style={s.colClient}>
               <Text style={s.bigName}>{customer.firstName} {customer.lastName}</Text>
-              <View style={s.grid2}>
-                <View style={s.field}>
-                  <Text style={s.fieldLabel}>Nacionalidad / Nationalité</Text>
-                  <Text style={s.fieldValue}>{customer.nationality ?? '—'}</Text>
+
+              {customer.nationality && (
+                <View style={s.rowField}>
+                  <Text style={s.lbl}>Nationalité</Text>
+                  <Text style={s.val}>{customer.nationality}</Text>
                 </View>
-                {customer.phone && (
-                  <View style={s.field}>
-                    <Text style={s.fieldLabel}>Teléfono / Téléphone</Text>
-                    <Text style={s.fieldValue}>{customer.phone}</Text>
-                  </View>
-                )}
-                {customer.email && (
-                  <View style={s.field}>
-                    <Text style={s.fieldLabel}>Email</Text>
-                    <Text style={s.fieldValue}>{customer.email}</Text>
-                  </View>
-                )}
-              </View>
-              {customer.documentNumber && (
+              )}
+              {customer.phone && (
+                <View style={s.rowField}>
+                  <Text style={s.lbl}>Téléphone</Text>
+                  <Text style={s.valMono}>{customer.phone}</Text>
+                </View>
+              )}
+              {customer.email && (
+                <View style={s.rowField}>
+                  <Text style={s.lbl}>Email</Text>
+                  <Text style={s.valEmail}>{customer.email}</Text>
+                </View>
+              )}
+
+              {hasDoc && (
                 <View style={s.docBox}>
-                  <Text style={s.docLabel}>{DOC_LABEL[customer.documentType ?? ''] ?? 'Documento de identidad'}</Text>
-                  <Text style={s.docNum}>{customer.documentNumber}</Text>
+                  {customer.documentNumber && (
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.docLbl}>{DOC_LABEL[customer.documentType ?? ''] ?? "Pièce d'identité"}</Text>
+                      <Text style={s.docNum}>{customer.documentNumber}</Text>
+                    </View>
+                  )}
+                  {hasPhoto && (
+                    <Image src={customer.documentPhotoUrl!} style={s.docPhoto} />
+                  )}
+                </View>
+              )}
+            </View>
+
+            {/* Right — payment */}
+            <View style={s.colPay}>
+              <View style={s.amtBox}>
+                <Text style={s.amtLbl}>Montant réglé / Importe</Text>
+                <Text style={s.amtVal}>
+                  {rental.amountPaid}<Text style={s.amtCur}> €</Text>
+                </Text>
+                <Text style={s.amtPay}>{PAYMENT_LABEL[rental.paymentMethod] ?? rental.paymentMethod}</Text>
+              </View>
+
+              {Number(rental.depositAmount) > 0 && (
+                <View style={s.depBox}>
+                  <View>
+                    <Text style={s.depLbl}>Caution / Fianza</Text>
+                    <Text style={s.depAmt}>{rental.depositAmount} €</Text>
+                  </View>
+                  <Text style={s.depNote}>{PAYMENT_LABEL[rental.depositMethod ?? 'CASH'] ?? 'Espèces'}{'\n'}Remboursable</Text>
+                </View>
+              )}
+
+              {rental.lockNumber && (
+                <View style={s.lockRow}>
+                  <Text style={s.lockLbl}>Cadenas N°</Text>
+                  <Text style={s.lockVal}>{rental.lockNumber}</Text>
                 </View>
               )}
             </View>
           </View>
 
-          {/* ── SECTION 2 — PHOTO ID (conditionnel) ── */}
-          {hasDocPhoto && (
-            <View style={s.section}>
-              <View style={s.sectionHead}>
-                <Text style={s.sectionNum}>2</Text>
-                <Text style={s.sectionLbl}>Documento de identidad / Pièce d&apos;identité</Text>
+          {/* ══ VÉHICULE(S) ═════════════════════════════════════════════ */}
+          <View style={{ borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
+            <View style={s.divRow}>
+              <View style={s.divLine} />
+              <Text style={s.divLbl}>{bikes.length > 1 ? `${bikes.length} Véhicules` : 'Véhicule'}</Text>
+              <View style={s.divLine} />
+            </View>
+          </View>
+
+          {bikes.length === 1 ? (
+            /* ── Single bike ── */
+            <View style={s.vehicleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.vName}>{firstBike.name}</Text>
+                {firstBike.type && (
+                  <View style={s.typeBadge}>
+                    <Text style={s.typeBadgeTxt}>{BIKE_TYPE[firstBike.type] ?? firstBike.type}</Text>
+                  </View>
+                )}
               </View>
-              <View style={s.sectionBody}>
-                <Image src={customer.documentPhotoUrl!} style={{ maxHeight: 140, objectFit: 'contain' }} />
+              <View style={{ flexDirection: 'row', gap: 22 }}>
+                <View style={s.codeBox}>
+                  <Text style={s.codeLbl}>Code</Text>
+                  <Text style={s.codeVal}>{firstBike.code}</Text>
+                </View>
+                {firstBike.serialNumber && (
+                  <View style={s.serialBox}>
+                    <Text style={s.serialLbl}>N° Série · CRITIQUE</Text>
+                    <Text style={s.serialVal}>{firstBike.serialNumber}</Text>
+                  </View>
+                )}
               </View>
+            </View>
+          ) : (
+            /* ── Multi-bike table ── */
+            <View style={s.tbl}>
+              <View style={s.tblHdr}>
+                <View style={{ width: 18 }} />
+                <Text style={{ ...s.tblHdrTxt, flex: 1 }}>Véhicule</Text>
+                <Text style={{ ...s.tblHdrTxt, width: 64, textAlign: 'center' }}>Code</Text>
+                <Text style={{ ...s.tblHdrTxt, width: 80, textAlign: 'right' }}>N° Série</Text>
+              </View>
+              {bikes.map((bike, i) => (
+                <View key={i} style={{ ...s.tblRow, ...(i < bikes.length - 1 ? s.tblRowBorder : {}) }}>
+                  <View style={s.numBadge}>
+                    <Text style={s.numBadgeTxt}>{i + 1}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: SLATE_700 }}>{bike.name}</Text>
+                    {bike.type && (
+                      <Text style={{ fontSize: 7.5, color: INDIGO_D, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 1 }}>
+                        {BIKE_TYPE[bike.type] ?? bike.type}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 11, fontFamily: 'Courier-Bold', color: INDIGO_D, width: 64, textAlign: 'center' }}>{bike.code}</Text>
+                  <Text style={{ fontSize: 9, fontFamily: 'Courier-Bold', color: bike.serialNumber ? RED : '#CBD5E1', width: 80, textAlign: 'right' }}>
+                    {bike.serialNumber ?? '—'}
+                  </Text>
+                </View>
+              ))}
             </View>
           )}
 
-          {/* ── SECTION 3 — MATÉRIEL ── */}
-          <View style={s.section}>
-            <View style={s.sectionHead}>
-              <Text style={s.sectionNum}>{2 + sectionOffset}</Text>
-              <Text style={s.sectionLbl}>Material alquilado · Equipment · Matériel loué</Text>
-            </View>
-            <View style={s.sectionBody}>
-              <View style={s.grid2}>
-                <View style={s.field}>
-                  <Text style={s.fieldLabel}>Vehículo / Véhicule</Text>
-                  <Text style={{ fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>{bike.name}</Text>
-                </View>
-                <View style={s.field}>
-                  <Text style={s.fieldLabel}>Código / Code</Text>
-                  <Text style={{ fontSize: 13, fontFamily: 'Courier-Bold', color: '#6366F1' }}>{bike.code}</Text>
-                </View>
+          {/* ── Accessories ── */}
+          {rental.accessories.length > 0 && (
+            <View style={{ marginTop: 14, borderWidth: 1, borderColor: SLATE_200, borderRadius: 6, overflow: 'hidden' }}>
+              <View style={s.accHdr}>
+                <View style={{ width: 16 }} />
+                <Text style={{ ...s.tblHdrTxt, flex: 1 }}>Accessoires</Text>
+                <Text style={{ ...s.tblHdrTxt, width: 24, textAlign: 'center' }}>Qté</Text>
+                <Text style={{ ...s.tblHdrTxt, width: 64, textAlign: 'right' }}>Réf.</Text>
               </View>
-              {bike.serialNumber && (
-                <View style={s.serialBox}>
-                  <Text style={s.serialLabel}>N° série — CRÍTICO DENUNCIA / CRITICAL POLICE REPORT</Text>
-                  <Text style={s.serialNum}>{bike.serialNumber}</Text>
-                </View>
-              )}
-              {rental.lockNumber && (
-                <View style={{ marginTop: 6 }}>
-                  <Text style={s.fieldLabel}>Candado / Cadenas N°</Text>
-                  <Text style={{ fontSize: 11, fontFamily: 'Courier-Bold', color: '#0f172a' }}>{rental.lockNumber}</Text>
-                </View>
-              )}
-              {rental.accessories.length > 0 && (
-                <>
-                  <Text style={{ ...s.fieldLabel, marginTop: 8, marginBottom: 0 }}>Accesorios / Accessoires</Text>
-                  <View style={s.accChips}>
-                    {rental.accessories.map((acc, i) => {
-                      const codes = (acc.codes ?? []).filter(Boolean)
-                      return (
-                        <View key={i} style={s.accChip}>
-                          <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>
-                            {acc.qty > 1 ? `${acc.qty}× ` : ''}{acc.label}
-                            {codes.length > 0 ? ` (#${codes.join(', #')})` : ''}
-                          </Text>
-                        </View>
-                      )
-                    })}
+              {rental.accessories.map((acc, i, arr) => (
+                <View key={i} style={{ ...s.accRow, ...(i < arr.length - 1 ? { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' } : {}) }}>
+                  <View style={s.checkBox}>
+                    <Text style={s.checkTxt}>✓</Text>
                   </View>
-                </>
-              )}
+                  <Text style={{ flex: 1, fontSize: 11, fontFamily: 'Helvetica-Bold', color: SLATE_700 }}>{acc.label}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: SLATE_900, width: 24, textAlign: 'center' }}>{acc.qty ?? 1}</Text>
+                  <View style={{ width: 64, alignItems: 'flex-end' }}>
+                    {(acc.codes ?? []).filter(Boolean).length > 0
+                      ? (acc.codes ?? []).filter(Boolean).map((c, ci) => (
+                          <Text key={ci} style={{ fontSize: 9, fontFamily: 'Courier-Bold', color: INDIGO_D }}>#{c}</Text>
+                        ))
+                      : <Text style={{ fontSize: 9, color: '#CBD5E1' }}>—</Text>
+                    }
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* ══ CONDITIONS ══════════════════════════════════════════════ */}
+          <View style={{ borderTopWidth: 1, borderTopColor: '#F1F5F9', marginTop: 6 }}>
+            <View style={s.divRow}>
+              <View style={s.divLine} /><Text style={s.divLbl}>Conditions générales</Text><View style={s.divLine} />
             </View>
           </View>
 
-          {/* ── SECTION 4 — FINANCES ── */}
-          <View style={s.section}>
-            <View style={s.sectionHead}>
-              <Text style={s.sectionNum}>{3 + sectionOffset}</Text>
-              <Text style={s.sectionLbl}>Condiciones económicas · Payment · Finances</Text>
+          {CLAUSES.map((c, i) => (
+            <View key={i} style={{ ...s.clauseRow, borderBottomColor: c.red ? RED_BORDER : '#F8FAFC', backgroundColor: c.red ? RED_BG : 'transparent' }}>
+              <Text style={{ ...s.clauseNum, color: c.red ? RED : '#D1D5DB' }}>{i + 1}.</Text>
+              <Text style={{ ...s.clauseTxt, color: c.red ? '#991B1B' : '#4B5563', fontFamily: c.red ? 'Helvetica-Bold' : 'Helvetica' }}>
+                {c.red ? '⚠ ' : ''}{c.fr}
+                {'  '}<Text style={{ fontFamily: 'Helvetica-Oblique', color: c.red ? '#991b1b' : '#9CA3AF' }}>{c.es}</Text>
+              </Text>
             </View>
-            <View style={s.sectionBody}>
-              <View style={s.finGrid}>
-                <View style={s.finItem}>
-                  <Text style={s.fieldLabel}>Importe / Montant</Text>
-                  <Text style={s.finAmount}>{rental.amountPaid} €</Text>
-                  <Text style={{ fontSize: 8, color: '#64748b', marginTop: 2 }}>{PAYMENT_LABEL[rental.paymentMethod] ?? rental.paymentMethod}</Text>
-                </View>
-                {Number(rental.depositAmount) > 0 && (
-                  <View style={s.finDeposit}>
-                    <Text style={s.finDepLabel}>Fianza / Caution / Deposit</Text>
-                    <Text style={s.finDepAmt}>{rental.depositAmount} €</Text>
-                    <Text style={{ fontSize: 7, color: '#9a3412', marginTop: 2 }}>{PAYMENT_LABEL[rental.depositMethod ?? 'CASH'] ?? 'Espèces'} · Reembolsable</Text>
-                  </View>
-                )}
-              </View>
-            </View>
+          ))}
+
+        </View>
+
+        {/* ══ SIGNATURES ══════════════════════════════════════════════════ */}
+        <View style={s.sigSection}>
+          <View style={s.divRow}>
+            <View style={s.divLine} /><Text style={s.divLbl}>Signatures / Firmas</Text><View style={s.divLine} />
           </View>
 
-          {/* ── CONDITIONS GÉNÉRALES ── */}
-          <View style={{ marginBottom: 12 }}>
-            <View style={s.termsHead}>
-              <Text style={s.termsLbl}>Condiciones generales · General Terms · Conditions générales</Text>
+          <View style={s.sigRow}>
+            {/* Signature départ client */}
+            <View style={s.sigBox}>
+              <Text style={{ ...s.sigLbl, color: rental.openingSignature ? INDIGO_D : '#CBD5E1' }}>
+                Client — Départ{'\n'}Firma salida
+              </Text>
+              {rental.openingSignature ? (
+                <View style={{ ...s.sigCanvasFilled, borderWidth: 1.5, borderColor: `${INDIGO_D}28` }}>
+                  <Image src={rental.openingSignature} style={{ maxHeight: 80, objectFit: 'contain', padding: 6 }} />
+                </View>
+              ) : (
+                <View style={s.sigCanvas} />
+              )}
+              <View style={{ ...s.sigLine, borderTopColor: rental.openingSignature ? INDIGO_D : SLATE_200 }}>
+                <Text style={{ ...s.sigDate, color: rental.openingSignature ? INDIGO_D : SLATE_400 }}>{rental.startAt}</Text>
+              </View>
             </View>
-            {CLAUSES.map(c => (
-              <View key={c.n} style={{ ...s.clause, borderColor: c.highlight ? '#fca5a5' : '#f1f5f9', backgroundColor: c.highlight ? '#fff5f5' : '#fafafa' }}>
-                <Text style={{ ...s.clauseNum, backgroundColor: c.highlight ? '#dc2626' : '#0f172a' }}>{c.n}</Text>
-                <Text style={{ ...s.clauseText, color: c.highlight ? '#7f1d1d' : '#374151', fontFamily: c.highlight ? 'Helvetica-Bold' : 'Helvetica' }}>
-                  {c.es}{' '}<Text style={{ fontFamily: 'Helvetica-Oblique', color: c.highlight ? '#991b1b' : '#6b7280' }}>/ {c.en}</Text>
-                  {' '}<Text style={{ color: c.highlight ? '#b91c1c' : '#9ca3af' }}>/ {c.fr}</Text>
+
+            {/* Signature retour client */}
+            <View style={s.sigBox}>
+              <Text style={{ ...s.sigLbl, color: rental.closingSignature ? SLATE_700 : '#CBD5E1' }}>
+                Client — Retour{'\n'}Firma retorno
+              </Text>
+              {rental.closingSignature ? (
+                <View style={{ ...s.sigCanvasFilled, borderWidth: 1, borderColor: SLATE_200 }}>
+                  <Image src={rental.closingSignature} style={{ maxHeight: 80, objectFit: 'contain', padding: 6 }} />
+                </View>
+              ) : (
+                <View style={s.sigCanvas} />
+              )}
+              <View style={{ ...s.sigLine, borderTopColor: rental.closingSignature ? SLATE_700 : SLATE_200 }}>
+                <Text style={{ ...s.sigDate, color: rental.closingSignature ? SLATE_700 : SLATE_400 }}>
+                  {rental.endAt ?? '—'}
                 </Text>
               </View>
-            ))}
-          </View>
-
-          {/* ── SIGNATURES ── */}
-          <View style={s.section}>
-            <View style={s.sectionHead}>
-              <Text style={s.sectionLbl}>Firmas · Signatures · Signatures</Text>
             </View>
-            <View style={{ ...s.sectionBody }}>
-              <View style={s.sigRow}>
-                {/* Client opening */}
-                <View style={s.sigBox}>
-                  <Text style={s.sigLabel}>Firma cliente (salida){'\n'}Signature départ</Text>
-                  {rental.openingSignature
-                    ? <Image src={rental.openingSignature} style={s.sigCanvasFilled} />
-                    : <View style={s.sigCanvas} />
-                  }
-                  <View style={s.sigLine}><Text style={s.sigDate}>{rental.startAt}</Text></View>
-                </View>
 
-                {/* Client closing */}
-                <View style={s.sigBox}>
-                  <Text style={s.sigLabel}>Firma cliente (retorno){'\n'}Signature retour</Text>
-                  <View style={s.sigCanvas} />
-                  <View style={s.sigLine}><Text style={s.sigDate}>{rental.endAt ? rental.endTime : '___/___/______'}</Text></View>
+            {/* Signature staff */}
+            <View style={s.sigBox}>
+              <Text style={{ ...s.sigLbl, color: rental.staffSignature ? INDIGO_D : '#CBD5E1' }}>
+                Responsable{'\n'}Firma staff
+              </Text>
+              {rental.staffSignature ? (
+                <View style={{ ...s.sigCanvasFilled, borderWidth: 1.5, borderColor: `${INDIGO_D}28` }}>
+                  <Image src={rental.staffSignature} style={{ maxHeight: 80, objectFit: 'contain', padding: 6 }} />
                 </View>
-
-                {/* Staff */}
-                <View style={s.sigBox}>
-                  <Text style={s.sigLabel}>Firma responsable{'\n'}Signature staff</Text>
-                  {rental.staffSignature
-                    ? <Image src={rental.staffSignature} style={{ ...s.sigCanvasFilled, borderColor: '#6366F1' }} />
-                    : <View style={{ ...s.sigCanvas, borderColor: '#c7d2fe', backgroundColor: '#fafbff' }} />
-                  }
-                  <View style={s.sigLine}><Text style={s.sigDate}>{rental.startAt}</Text></View>
-                </View>
+              ) : (
+                <View style={{ ...s.sigCanvas, borderColor: '#C7D2FE', backgroundColor: '#FAFBFF' }} />
+              )}
+              <View style={{ ...s.sigLine, borderTopColor: rental.staffSignature ? INDIGO_D : SLATE_200 }}>
+                <Text style={{ ...s.sigDate, color: rental.staffSignature ? INDIGO_D : SLATE_400 }}>{tenant.name}</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* ── FOOTER ── */}
+        {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
         <View style={s.footer} fixed>
-          <Text style={s.footerText}>{tenant.name}{tenant.address ? ` · ${tenant.address}` : ''} · Generado por VeloRent</Text>
-          <Text style={s.footerText}>Contrato N° {contractNumber} · {generatedAt}</Text>
+          <Text style={s.footerTxt}>{tenant.name}{tenant.address ? ` · ${tenant.address}` : ''} · VeloRent</Text>
+          <Text style={s.footerTxt}>Contrat N° {contractNumber} · {generatedAt}</Text>
         </View>
 
       </Page>
