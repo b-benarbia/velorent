@@ -111,10 +111,10 @@ const s = StyleSheet.create({
   valMono:  { fontSize: 11.5, fontFamily: 'Courier-Bold', color: SLATE_700 },
   valEmail: { fontSize: 10, color: SLATE_500 },
 
-  docBox:   { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginTop: 8, backgroundColor: SLATE_50, borderWidth: 1, borderColor: SLATE_200, borderRadius: 6, padding: '9 12' },
+  docBox:   { flexDirection: 'row', gap: 10, alignItems: 'flex-start', alignSelf: 'flex-start', marginTop: 7, backgroundColor: SLATE_50, borderWidth: 1, borderColor: SLATE_200, borderRadius: 6, padding: '7 10' },
   docLbl:   { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: SLATE_400, marginBottom: 3 },
-  docNum:   { fontSize: 16, fontFamily: 'Courier-Bold', color: SLATE_900, letterSpacing: 1 },
-  docPhoto: { height: 64, width: 96, borderRadius: 4, borderWidth: 1, borderColor: SLATE_200, objectFit: 'cover' },
+  docNum:   { fontSize: 15, fontFamily: 'Courier-Bold', color: SLATE_900, letterSpacing: 1 },
+  docPhoto: { height: 52, width: 78, borderRadius: 4, borderWidth: 1, borderColor: SLATE_200, objectFit: 'cover' },
 
   // Payment
   amtBox: { backgroundColor: INDIGO_BG, borderWidth: 1, borderColor: INDIGO_BORDER, borderRadius: 10, padding: '10 14', marginBottom: 8 },
@@ -248,12 +248,14 @@ export function ContractPDF({ data }: { data: ContractData }) {
 
             {/* Right: reference */}
             <View style={{ alignItems: 'flex-end' }}>
-              <View style={{ ...s.badge, backgroundColor: isCompleted ? 'rgba(255,255,255,0.15)' : 'rgba(110,231,183,0.25)', borderWidth: 1, borderColor: isCompleted ? 'rgba(255,255,255,0.2)' : 'rgba(110,231,183,0.5)' }}>
+              {/* Badge with SVG dot (● ne rend pas en Helvetica PDF) */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingLeft: 8, paddingRight: 8, paddingTop: 3, paddingBottom: 3, marginBottom: 6, backgroundColor: isCompleted ? 'rgba(255,255,255,0.15)' : 'rgba(110,231,183,0.25)', borderWidth: 1, borderColor: isCompleted ? 'rgba(255,255,255,0.2)' : 'rgba(110,231,183,0.5)' }}>
+                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: isCompleted ? 'rgba(255,255,255,0.5)' : '#6EE7B7' }} />
                 <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: '#ffffff', letterSpacing: 1.2 }}>
-                  {isCompleted ? '✓ CLÔTURÉ' : '● ACTIF'}
+                  {isCompleted ? 'CLOTURE' : 'ACTIF'}
                 </Text>
               </View>
-              <Text style={s.contractLbl}>Contrato · Contract · Contrat</Text>
+              <Text style={s.contractLbl}>CONTRAT DE LOCATION</Text>
               <Text style={s.contractNum}>N° {contractNumber}</Text>
               <Text style={s.contractDate}>{generatedAt}</Text>
             </View>
@@ -463,8 +465,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
             <View key={i} style={{ ...s.clauseRow, borderBottomColor: c.red ? RED_BORDER : '#F8FAFC', backgroundColor: c.red ? RED_BG : 'transparent' }}>
               <Text style={{ ...s.clauseNum, color: c.red ? RED : '#D1D5DB' }}>{i + 1}.</Text>
               <Text style={{ ...s.clauseTxt, color: c.red ? '#991B1B' : '#4B5563', fontFamily: c.red ? 'Helvetica-Bold' : 'Helvetica' }}>
-                {c.red ? '⚠ ' : ''}{c.fr}
-                {'  '}<Text style={{ fontFamily: 'Helvetica-Oblique', color: c.red ? '#991b1b' : '#9CA3AF' }}>{c.es}</Text>
+                {c.red ? '! ' : ''}{c.fr}
               </Text>
             </View>
           ))}
