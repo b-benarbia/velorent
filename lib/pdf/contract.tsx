@@ -472,7 +472,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
 
         </View>
 
-        {/* ══ SIGNATURES ══════════════════════════════════════════════════ */}
+        {/* ══ SIGNATURES + FOOTER ════════════════════════════════════════ */}
         <View style={s.sigSection}>
           <View style={s.divRow}>
             <View style={s.divLine} /><Text style={s.divLbl}>Signatures / Firmas</Text><View style={s.divLine} />
@@ -532,12 +532,12 @@ export function ContractPDF({ data }: { data: ContractData }) {
               </View>
             </View>
           </View>
-        </View>
 
-        {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
-        <View style={s.footer}>
-          <Text style={s.footerTxt}>{tenant.name}{tenant.address ? ` · ${tenant.address}` : ''} · VeloRent</Text>
-          <Text style={s.footerTxt}>Contrat N° {contractNumber} · {generatedAt}</Text>
+          {/* Footer inline — évite un View séparé en fin de Page (bug react-pdf page fantôme) */}
+          <View style={{ ...s.footer, marginTop: 8 }}>
+            <Text style={s.footerTxt}>{tenant.name}{tenant.address ? ` · ${tenant.address}` : ''} · VeloRent</Text>
+            <Text style={s.footerTxt}>Contrat N° {contractNumber} · {generatedAt}</Text>
+          </View>
         </View>
 
       </Page>
