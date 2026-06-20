@@ -218,11 +218,11 @@ export default async function ContractPage({
               {/* Status badge */}
               <div style={{
                 display: 'inline-block', marginTop: 10,
-                background: isCompleted ? 'rgba(34,197,94,0.12)' : 'rgba(99,102,241,0.15)',
-                border: `1px solid ${isCompleted ? 'rgba(34,197,94,0.3)' : 'rgba(99,102,241,0.3)'}`,
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.12)',
                 borderRadius: 6, padding: '3px 10px',
                 fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: isCompleted ? '#4ADE80' : '#818CF8',
+                color: isCompleted ? '#94A3B8' : 'white',
               }}>
                 {isCompleted ? '✓ Clôturé' : '● Actif'}
               </div>
@@ -311,7 +311,7 @@ export default async function ContractPage({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="info-cell">
                 <p className="s-label">Importe pagado / Montant réglé</p>
-                <p className="s-value" style={{ fontSize: 28, fontWeight: 800, color: '#16A34A', letterSpacing: '-0.02em' }}>
+                <p className="s-value" style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
                   {Number(rental.amountPaid ?? 0).toFixed(2)} <span style={{ fontSize: 16 }}>€</span>
                 </p>
               </div>
@@ -320,14 +320,14 @@ export default async function ContractPage({
                 <p className="s-value">{PAYMENT_LABEL[rental.paymentMethod] ?? rental.paymentMethod}</p>
               </div>
               {Number(rental.depositAmount) > 0 && (
-                <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '12px 14px' }}>
-                  <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#9A3412', textTransform: 'uppercase', marginBottom: 5 }}>
+                <div style={{ background: '#0F172A', borderRadius: 10, padding: '12px 14px' }}>
+                  <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', color: '#475569', textTransform: 'uppercase', marginBottom: 5 }}>
                     Fianza / Caution / Deposit
                   </p>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: '#C2410C', fontFamily: 'Courier New, monospace' }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'white', fontFamily: 'Courier New, monospace' }}>
                     {Number(rental.depositAmount).toFixed(2)} €
                   </p>
-                  <p style={{ fontSize: 10, color: '#9A3412', marginTop: 3 }}>
+                  <p style={{ fontSize: 10, color: '#64748B', marginTop: 3 }}>
                     {(rental.rateSnapshot as { depositPaymentMethod?: string })?.depositPaymentMethod === 'CARD'
                       ? 'Tarjeta / Carte bancaire'
                       : 'Efectivo / Espèces'}
@@ -381,22 +381,15 @@ export default async function ContractPage({
             </div>
           </div>
 
-          {/* Serial number — highlighted */}
+          {/* Serial number — critical */}
           {rental.bike.serialNumber && (
-            <div style={{ marginTop: 14, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ flexShrink: 0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: '#92400E', textTransform: 'uppercase', marginBottom: 3 }}>
-                  N° Serie / N° Série · CRÍTICO DENUNCIA / POLICE REPORT
-                </p>
-                <p className="s-mono" style={{ fontSize: 16, fontWeight: 800, color: '#92400E', letterSpacing: '0.08em' }}>
-                  {rental.bike.serialNumber}
-                </p>
-              </div>
+            <div style={{ marginTop: 14, borderLeft: '3px solid #DC2626', paddingLeft: 14, paddingTop: 2, paddingBottom: 2 }}>
+              <p style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>
+                N° Serie / N° Série · CRÍTICO DENUNCIA / POLICE REPORT
+              </p>
+              <p className="s-mono" style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
+                {rental.bike.serialNumber}
+              </p>
             </div>
           )}
 
@@ -443,7 +436,7 @@ export default async function ContractPage({
               <div key={clause.n} className="clause-row">
                 <div className={`clause-num${clause.alert ? ' alert' : ''}`}>{clause.n}</div>
                 <p className="clause-text">
-                  <strong style={{ color: clause.alert ? '#DC2626' : '#1E293B', fontWeight: clause.alert ? 700 : 500 }}>{clause.es}</strong>
+                  <strong style={{ color: '#1E293B', fontWeight: clause.alert ? 700 : 500 }}>{clause.es}</strong>
                   {' '}<em>/ {clause.en}</em>
                   {' '}<em style={{ color: '#CBD5E1' }}>/ {clause.fr}</em>
                 </p>
