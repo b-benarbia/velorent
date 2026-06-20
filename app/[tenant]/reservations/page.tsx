@@ -779,7 +779,7 @@ export default function ReservationsPage() {
                     padding: '7px 0', fontSize: 11, fontWeight: 700,
                     cursor: 'pointer', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', gap: 5 }}>
-                  ✓ Libérer
+                  Libérer
                 </button>
 
                 {/* Capture — deliberately harder to click */}
@@ -790,7 +790,7 @@ export default function ReservationsPage() {
                     padding: '7px 0', fontSize: 11, fontWeight: 700,
                     cursor: 'pointer', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', gap: 5 }}>
-                  ⚠ Encaisser
+                  Encaisser
                 </button>
               </>
             )}
@@ -834,7 +834,16 @@ export default function ReservationsPage() {
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 20 }}>{isCapture ? (m.step === 2 ? '🚨' : '⚠️') : '✅'}</span>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                      background: isCapture ? (m.step === 2 ? '#fee2e2' : '#fff7ed') : '#dcfce7',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <div style={{
+                        width: 10, height: 10, borderRadius: '50%',
+                        background: isCapture ? (m.step === 2 ? '#dc2626' : '#f97316') : '#16a34a',
+                      }} />
+                    </div>
                     <h2 style={{ fontSize: 15, fontWeight: 800, margin: 0,
                       color: isCapture ? (m.step === 2 ? '#991b1b' : '#c2410c') : '#166534' }}>
                       {isCapture
@@ -896,7 +905,7 @@ export default function ReservationsPage() {
                     <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12,
                       padding: '12px 14px' }}>
                       <p style={{ fontSize: 12, color: '#9a3412', margin: 0, lineHeight: 1.6 }}>
-                        ⚠️ Cette action encaisse <strong>{amount} €</strong> sur la carte du client. Elle est <strong>irréversible</strong>. Un motif est obligatoire.
+                        Cette action encaisse <strong>{amount} €</strong> sur la carte du client. Elle est <strong>irréversible</strong>. Un motif est obligatoire.
                       </p>
                     </div>
                     <div>
@@ -947,7 +956,7 @@ export default function ReservationsPage() {
                     <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12,
                       padding: '14px 16px' }}>
                       <p style={{ fontSize: 13, color: '#991b1b', margin: 0, lineHeight: 1.7 }}>
-                        🚨 Vous êtes sur le point d&apos;encaisser <strong>{amount} €</strong> sur la carte de <strong>{m.reservation.customerName}</strong>.<br/>
+                        Vous êtes sur le point d&apos;encaisser <strong>{amount} €</strong> sur la carte de <strong>{m.reservation.customerName}</strong>.<br/>
                         Cette opération est <strong>définitive et irréversible</strong>.
                       </p>
                     </div>
