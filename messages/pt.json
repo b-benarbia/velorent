@@ -442,7 +442,17 @@
     "notifPhoneHint": "Formato internacional. O seu briefing matinal é enviado aqui todos os dias às 8h.",
     "notifLocaleLabel": "Idioma do briefing matinal",
     "notifLocaleHint": "As mensagens aos clientes adaptam-se automaticamente ao seu idioma.",
-    "notifAutoDetect": "O idioma de cada cliente é detetado automaticamente pelo prefixo telefónico (+33 → francês, +351 → português…)"
+    "notifAutoDetect": "O idioma de cada cliente é detetado automaticamente pelo prefixo telefónico (+33 → francês, +351 → português…)",
+    "stripeTitle": "Pagamentos Stripe",
+    "stripeSubtitle": "Pagamento online + depósito pré-autorizado",
+    "stripeBannerTitle": "Como funciona",
+    "stripeBannerText": "O cliente paga online via Stripe ao reservar. O depósito é bloqueado no seu cartão (nunca cobrado) e libertado na devolução da bicicleta. Em caso de dano, capture o valor num clique.",
+    "stripePublicKeyLabel": "Chave pública Stripe",
+    "stripeSecretKeyLabel": "Chave secreta Stripe",
+    "stripeSecretConfigured": "Chave secreta configurada",
+    "stripeSecretPlaceholder": "Chave já configurada — escrever para atualizar",
+    "stripeNoAccount": "Ainda sem conta Stripe? É gratuito, sem subscrição mensal.",
+    "stripeCreateAccount": "Criar conta →"
   },
   "contract": {
     "title": "Contrato de aluguer",

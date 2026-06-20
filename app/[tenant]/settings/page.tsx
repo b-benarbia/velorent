@@ -550,8 +550,8 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <SectionIcon gradient="linear-gradient(135deg,#635BFF,#7C3AED)" icon={<Lock size={16} color="white" />} />
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Paiements Stripe</p>
-              <p style={{ fontSize: 11, color: '#94a3b8' }}>Encaissement en ligne + caution pré-autorisée</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('stripeTitle')}</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('stripeSubtitle')}</p>
             </div>
           </div>
           <SaveBtn onClick={saveStripe} loading={stripeLoading} saved={stripeSaved} error={stripeError} label={t('save')} />
@@ -562,17 +562,15 @@ export default function SettingsPage() {
           <div style={{ marginBottom: 20, padding: '12px 16px', background: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', border: '1px solid #c4b5fd', borderRadius: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
             <Lock size={15} color="#7C3AED" style={{ flexShrink: 0, marginTop: 1 }} />
             <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 3 }}>Comment ça marche</p>
-              <p style={{ fontSize: 12, color: '#6d28d9', lineHeight: 1.6 }}>
-                Le client paie en ligne via Stripe au moment de la réservation. La caution est <strong>bloquée</strong> sur sa carte (jamais encaissée) et libérée automatiquement au retour du vélo. En cas de dommage, vous capturez la somme en un clic.
-              </p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 3 }}>{t('stripeBannerTitle')}</p>
+              <p style={{ fontSize: 12, color: '#6d28d9', lineHeight: 1.6 }}>{t('stripeBannerText')}</p>
             </div>
           </div>
 
           <div className="settings-shop-grid">
             {/* Clé publique */}
             <div>
-              <label style={labelStyle}>Clé publique Stripe <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(pk_live_... ou pk_test_...)</span></label>
+              <label style={labelStyle}>{t('stripePublicKeyLabel')} <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(pk_live_... ou pk_test_...)</span></label>
               <input
                 value={stripe.stripePublishableKey}
                 onChange={e => setStripe(s => ({ ...s, stripePublishableKey: e.target.value }))}
@@ -583,14 +581,14 @@ export default function SettingsPage() {
 
             {/* Clé secrète */}
             <div>
-              <label style={labelStyle}>Clé secrète Stripe <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(sk_live_... ou sk_test_...)</span></label>
+              <label style={labelStyle}>{t('stripeSecretKeyLabel')} <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(sk_live_... ou sk_test_...)</span></label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showStripeSecret ? 'text' : 'password'}
                   value={stripe.stripeSecretKey || (stripe.hasStripeSecret && !showStripeSecret ? stripe.stripeSecretKeyMasked : '')}
                   onChange={e => setStripe(s => ({ ...s, stripeSecretKey: e.target.value }))}
                   onFocus={() => { if (stripe.hasStripeSecret) setStripe(s => ({ ...s, stripeSecretKey: '' })) }}
-                  placeholder={stripe.hasStripeSecret ? 'Clé déjà configurée — saisir pour modifier' : 'sk_live_...'}
+                  placeholder={stripe.hasStripeSecret ? t('stripeSecretPlaceholder') : 'sk_live_...'}
                   style={{ ...inputStyle, paddingRight: 40 }}
                 />
                 <button
@@ -603,7 +601,7 @@ export default function SettingsPage() {
               </div>
               {stripe.hasStripeSecret && (
                 <p style={{ fontSize: 11, color: '#16a34a', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CheckCircle2 size={12} /> Clé secrète configurée
+                  <CheckCircle2 size={12} /> {t('stripeSecretConfigured')}
                 </p>
               )}
             </div>
@@ -611,10 +609,10 @@ export default function SettingsPage() {
 
           {/* Lien dashboard Stripe */}
           <div style={{ marginTop: 14, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 12, color: '#6366F1' }}>Pas encore de compte Stripe ? C&apos;est gratuit, sans abonnement mensuel.</p>
+            <p style={{ fontSize: 12, color: '#6366F1' }}>{t('stripeNoAccount')}</p>
             <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener noreferrer"
               style={{ fontSize: 12, fontWeight: 600, color: '#635BFF', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              Créer un compte →
+              {t('stripeCreateAccount')}
             </a>
           </div>
         </div>

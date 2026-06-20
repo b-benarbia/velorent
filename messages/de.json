@@ -442,7 +442,17 @@
     "notifPhoneHint": "Internationales Format. Ihr Morgenbriefing wird täglich um 8 Uhr hierher gesendet.",
     "notifLocaleLabel": "Sprache des Morgenbriefings",
     "notifLocaleHint": "Kundennachrichten passen sich automatisch an die Sprache des Kunden an.",
-    "notifAutoDetect": "Die Sprache jedes Kunden wird automatisch anhand der Vorwahl erkannt (+33 → Französisch, +49 → Deutsch…)"
+    "notifAutoDetect": "Die Sprache jedes Kunden wird automatisch anhand der Vorwahl erkannt (+33 → Französisch, +49 → Deutsch…)",
+    "stripeTitle": "Stripe-Zahlungen",
+    "stripeSubtitle": "Online-Zahlung + vorautorisierte Kaution",
+    "stripeBannerTitle": "So funktioniert es",
+    "stripeBannerText": "Der Kunde zahlt beim Buchen online über Stripe. Die Kaution wird auf seiner Karte blockiert (nicht abgebucht) und bei der Rückgabe des Fahrrads freigegeben. Bei Schäden erfassen Sie den Betrag mit einem Klick.",
+    "stripePublicKeyLabel": "Öffentlicher Stripe-Schlüssel",
+    "stripeSecretKeyLabel": "Geheimer Stripe-Schlüssel",
+    "stripeSecretConfigured": "Geheimer Schlüssel konfiguriert",
+    "stripeSecretPlaceholder": "Schlüssel bereits gesetzt — zum Ändern eingeben",
+    "stripeNoAccount": "Noch kein Stripe-Konto? Kostenlos, ohne monatliches Abonnement.",
+    "stripeCreateAccount": "Konto erstellen →"
   },
   "contract": {
     "title": "Mietvertrag",

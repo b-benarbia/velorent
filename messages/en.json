@@ -442,7 +442,17 @@
     "notifPhoneHint": "International format. Your morning briefing is sent here every day at 8am.",
     "notifLocaleLabel": "Morning briefing language",
     "notifLocaleHint": "Customer messages adapt automatically to their language.",
-    "notifAutoDetect": "Each customer's language is detected automatically from their phone prefix (+33 → French, +34 → Spanish…)"
+    "notifAutoDetect": "Each customer's language is detected automatically from their phone prefix (+33 → French, +34 → Spanish…)",
+    "stripeTitle": "Stripe Payments",
+    "stripeSubtitle": "Online payment + pre-authorised deposit",
+    "stripeBannerTitle": "How it works",
+    "stripeBannerText": "The customer pays online via Stripe when booking. The deposit is blocked on their card (never charged) and released when the bike is returned. In case of damage, you capture the amount in one click.",
+    "stripePublicKeyLabel": "Stripe public key",
+    "stripeSecretKeyLabel": "Stripe secret key",
+    "stripeSecretConfigured": "Secret key configured",
+    "stripeSecretPlaceholder": "Key already set — type to update",
+    "stripeNoAccount": "No Stripe account yet? It's free, no monthly subscription.",
+    "stripeCreateAccount": "Create an account →"
   },
   "contract": {
     "title": "Rental contract",

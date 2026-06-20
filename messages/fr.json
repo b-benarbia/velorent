@@ -442,7 +442,17 @@
     "notifPhoneHint": "Format international. Votre briefing du matin est envoyé ici chaque jour à 8h.",
     "notifLocaleLabel": "Langue du briefing matinal",
     "notifLocaleHint": "Les messages à vos clients s'adaptent automatiquement à leur langue.",
-    "notifAutoDetect": "La langue de chaque client est détectée automatiquement depuis son indicatif téléphonique (+33 → français, +34 → espagnol…)"
+    "notifAutoDetect": "La langue de chaque client est détectée automatiquement depuis son indicatif téléphonique (+33 → français, +34 → espagnol…)",
+    "stripeTitle": "Paiements Stripe",
+    "stripeSubtitle": "Encaissement en ligne + caution pré-autorisée",
+    "stripeBannerTitle": "Comment ça marche",
+    "stripeBannerText": "Le client paie en ligne via Stripe au moment de la réservation. La caution est bloquée sur sa carte (jamais encaissée) et libérée au retour du vélo. En cas de dommage, vous capturez la somme en un clic.",
+    "stripePublicKeyLabel": "Clé publique Stripe",
+    "stripeSecretKeyLabel": "Clé secrète Stripe",
+    "stripeSecretConfigured": "Clé secrète configurée",
+    "stripeSecretPlaceholder": "Clé déjà configurée — saisir pour modifier",
+    "stripeNoAccount": "Pas encore de compte Stripe ? C'est gratuit, sans abonnement mensuel.",
+    "stripeCreateAccount": "Créer un compte →"
   },
   "contract": {
     "title": "Contrat de location",

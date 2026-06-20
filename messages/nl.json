@@ -442,7 +442,17 @@
     "notifPhoneHint": "Internationaal formaat. Uw ochtendupdate wordt hier elke dag om 8u naartoe gestuurd.",
     "notifLocaleLabel": "Taal van de ochtendupdate",
     "notifLocaleHint": "Berichten aan klanten passen zich automatisch aan in de taal van de klant.",
-    "notifAutoDetect": "De taal van elke klant wordt automatisch gedetecteerd via het telefoonnummerprefix (+33 → Frans, +31 → Nederlands…)"
+    "notifAutoDetect": "De taal van elke klant wordt automatisch gedetecteerd via het telefoonnummerprefix (+33 → Frans, +31 → Nederlands…)",
+    "stripeTitle": "Stripe-betalingen",
+    "stripeSubtitle": "Online betaling + pre-geautoriseerde borg",
+    "stripeBannerTitle": "Hoe het werkt",
+    "stripeBannerText": "De klant betaalt online via Stripe bij het boeken. De borg wordt geblokkeerd op zijn kaart (nooit afgeschreven) en vrijgegeven bij teruggave van de fiets. Bij schade int u het bedrag met één klik.",
+    "stripePublicKeyLabel": "Openbare Stripe-sleutel",
+    "stripeSecretKeyLabel": "Geheime Stripe-sleutel",
+    "stripeSecretConfigured": "Geheime sleutel geconfigureerd",
+    "stripeSecretPlaceholder": "Sleutel al ingesteld — typ om bij te werken",
+    "stripeNoAccount": "Nog geen Stripe-account? Gratis, zonder maandelijks abonnement.",
+    "stripeCreateAccount": "Account aanmaken →"
   },
   "contract": {
     "title": "Huurovereenkomst",
