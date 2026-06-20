@@ -40,12 +40,12 @@ export default async function ContractPage({
     TRANSFER: 'Virement / Transfer', ONLINE: 'Online', HOTEL: 'Hotel',
   }
   const DOC: Record<string, string> = {
-    PASSPORT: 'Passport', DNI: 'DNI', NIE: 'NIE',
-    ID_CARD: 'ID Card', DRIVING_LICENSE: 'License', OTHER: 'Document',
+    PASSPORT: 'Passeport', DNI: 'DNI', NIE: 'NIE / Résidence',
+    ID_CARD: "Carte d'identité", DRIVING_LICENSE: 'Permis de conduire', OTHER: 'Pièce d\'identité',
   }
   const BIKE_TYPE: Record<string, string> = {
-    CITY: 'City', MTB: 'MTB', ROAD: 'Road', ELECTRIC: 'Electric',
-    CARGO: 'Cargo', KIDS: 'Kids', OTHER: 'Other',
+    CITY: 'Vélo ville', MTB: 'VTT', ROAD: 'Vélo de route', ELECTRIC: 'Vélo électrique',
+    CARGO: 'Vélo cargo', KIDS: 'Vélo enfant', SCOOTER: 'Trottinette électrique', OTHER: 'Véhicule',
   }
 
   const num = `${new Date(rental.startAt).getFullYear()}-${rental.id.slice(0, 8).toUpperCase()}`
@@ -230,11 +230,18 @@ export default async function ContractPage({
                   </div>
                 )}
                 {rental.customer.documentNumber && (
-                  <div style={{ marginTop: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px' }}>
-                    <p className="lbl" style={{ marginBottom: 5 }}>{DOC[rental.customer.documentType ?? ''] ?? t('document')}</p>
-                    <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
-                      {rental.customer.documentNumber}
-                    </p>
+                  <div style={{ marginTop: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <p className="lbl" style={{ marginBottom: 5 }}>{DOC[rental.customer.documentType ?? ''] ?? t('document')}</p>
+                      <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '0.08em' }}>
+                        {rental.customer.documentNumber}
+                      </p>
+                    </div>
+                    {rental.customer.documentPhotoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={rental.customer.documentPhotoUrl} alt="ID"
+                        style={{ height: 56, width: 84, borderRadius: 5, border: '1px solid #E2E8F0', objectFit: 'cover', flexShrink: 0 }} />
+                    )}
                   </div>
                 )}
               </div>
@@ -276,15 +283,6 @@ export default async function ContractPage({
             </div>
           </div>
         </div>
-
-        {/* Photo ID */}
-        {rental.customer.documentPhotoUrl && (
-          <div style={{ padding: `0 ${PX} 20px` }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={rental.customer.documentPhotoUrl} alt="ID"
-              style={{ maxHeight: 120, borderRadius: 8, border: '1px solid #E2E8F0', objectFit: 'contain' }} />
-          </div>
-        )}
 
         {/* ══ VÉHICULE ════════════════════════════════════ */}
         <div style={{ borderTop: '1px solid #F1F5F9', padding: `0 ${PX} 22px` }}>
