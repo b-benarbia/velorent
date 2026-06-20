@@ -473,7 +473,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
         </View>
 
         {/* ══ SIGNATURES ══════════════════════════════════════════════════ */}
-        <View style={s.sigSection} wrap={false}>
+        <View style={s.sigSection}>
           <View style={s.divRow}>
             <View style={s.divLine} /><Text style={s.divLbl}>Signatures / Firmas</Text><View style={s.divLine} />
           </View>
