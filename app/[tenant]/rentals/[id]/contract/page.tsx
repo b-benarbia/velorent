@@ -316,16 +316,46 @@ export default async function ContractPage({
           </div>
 
           {Array.isArray(rental.accessories) && (rental.accessories as unknown[]).length > 0 && (
-            <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span className="lbl" style={{ marginBottom: 0, marginRight: 4 }}>{t('accessories')} ·</span>
-              {(rental.accessories as { label: string; qty?: number; codes?: string[] }[]).map((a, i) => (
-                <span key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 4, padding: '3px 9px', fontSize: 12, fontWeight: 600, color: '#334155' }}>
-                  {a.qty && a.qty > 1 ? `${a.qty}× ` : ''}{a.label}
-                  {(a.codes ?? []).filter(Boolean).map(c => (
-                    <span key={c} className="mono" style={{ color: '#6366F1', marginLeft: 4, fontSize: 11 }}>#{c}</span>
-                  ))}
-                </span>
-              ))}
+            <div style={{ marginTop: 20 }}>
+              {/* Table header */}
+              <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 18, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: '#94A3B8', textTransform: 'uppercase' }}>{t('accessories')}</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: '#94A3B8', textTransform: 'uppercase', width: 28, textAlign: 'center' }}>Qté</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: '#94A3B8', textTransform: 'uppercase', width: 72, textAlign: 'right' }}>Réf.</span>
+                </div>
+                {(rental.accessories as { label: string; qty?: number; codes?: string[] }[]).map((a, i, arr) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '9px 14px',
+                    borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none',
+                    background: 'white',
+                  }}>
+                    {/* Checkbox ✓ */}
+                    <div style={{ width: 18, height: 18, background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, color: '#4338CA', fontWeight: 900, lineHeight: 1 }}>✓</span>
+                    </div>
+                    {/* Label */}
+                    <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: '#1E293B' }}>{a.label}</span>
+                    {/* Qty */}
+                    <span style={{ width: 28, textAlign: 'center', fontSize: 13, fontWeight: 800, color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>{a.qty ?? 1}</span>
+                    {/* Codes */}
+                    <div style={{ width: 72, textAlign: 'right' }}>
+                      {(a.codes ?? []).filter(Boolean).length > 0
+                        ? (a.codes ?? []).filter(Boolean).map(c => (
+                          <span key={c} className="mono" style={{ fontSize: 10, fontWeight: 700, color: '#4338CA' }}>#{c}</span>
+                        ))
+                        : <span style={{ fontSize: 10, color: '#CBD5E1' }}>—</span>
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Legal acknowledgment */}
+              <p style={{ fontSize: 10, color: '#94A3B8', marginTop: 7, fontStyle: 'italic', lineHeight: 1.6 }}>
+                Le locataire reconnaît avoir reçu les accessoires listés ci-dessus en bon état de fonctionnement.
+              </p>
             </div>
           )}
         </div>
