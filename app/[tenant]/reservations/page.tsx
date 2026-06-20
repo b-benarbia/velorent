@@ -36,7 +36,22 @@ interface Reservation {
   notes: string | null
   status: string
   createdAt: string
+  source?: string | null
+  stripePaymentIntentId?: string | null
+  depositAmount?: number | string | null
+  depositCaptured?: boolean
   bike?: { name: string; code: string } | null
+}
+
+type DepositAction = 'capture' | 'release'
+interface DepositModal {
+  reservation: Reservation
+  action: DepositAction
+  step: 1 | 2
+  reason: string
+  details: string
+  loading: boolean
+  error: string
 }
 
 // Outside component — stable, never recreated
@@ -89,8 +104,49 @@ export default function ReservationsPage() {
   const [now, setNow]         = useState(() => new Date())
 
   // ── Reminder sending state ────────────────────────────────────────────────
-  // Map<reservationId, 'idle' | 'sending' | 'sent'>
   const [reminderState, setReminderState] = useState<Map<string, 'idle' | 'sending' | 'sent'>>(new Map())
+
+  // ── Deposit modal state ───────────────────────────────────────────────────
+  const [depositModal, setDepositModal] = useState<DepositModal | null>(null)
+
+  function openDepositModal(reservation: Reservation, action: DepositAction) {
+    setDepositModal({ reservation, action, step: 1, reason: '', details: '', loading: false, error: '' })
+  }
+
+  async function submitDeposit() {
+    if (!depositModal) return
+    if (depositModal.action === 'capture' && depositModal.step === 1) {
+      // Move to confirmation step
+      setDepositModal(m => m ? { ...m, step: 2 } : m)
+      return
+    }
+    setDepositModal(m => m ? { ...m, loading: true, error: '' } : m)
+    try {
+      const res = await fetch(`/api/reservations/${depositModal.reservation.id}/deposit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: depositModal.action,
+          reason: depositModal.reason,
+          details: depositModal.details,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDepositModal(m => m ? { ...m, loading: false, error: data.error ?? 'Erreur' } : m)
+        return
+      }
+      // Success — refresh reservations
+      setDepositModal(null)
+      setReservations(prev => prev.map(r =>
+        r.id === depositModal.reservation.id
+          ? { ...r, depositCaptured: depositModal.action === 'capture' }
+          : r
+      ))
+    } catch {
+      setDepositModal(m => m ? { ...m, loading: false, error: 'Erreur réseau' } : m)
+    }
+  }
 
   async function sendReminder(id: string) {
     setReminderState(prev => new Map(prev).set(id, 'sending'))
@@ -686,6 +742,60 @@ export default function ReservationsPage() {
             <X size={16} />
           </button>
         </div>
+
+        {/* ── Deposit bar (Stripe only) ──────────────────────────────────── */}
+        {r.stripePaymentIntentId && Number(r.depositAmount ?? 0) > 0 && (
+          <div style={{
+            marginTop: 10,
+            borderTop: '1.5px dashed #e2e8f0',
+            paddingTop: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}>
+            {/* Status badge */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: r.depositCaptured ? '#fef2f2' : '#f0fdf4',
+              border: `1.5px solid ${r.depositCaptured ? '#fecaca' : '#bbf7d0'}`,
+              borderRadius: 8, padding: '5px 10px', flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 10, display: 'block', width: 7, height: 7, borderRadius: '50%',
+                background: r.depositCaptured ? '#dc2626' : '#16a34a' }} />
+              <span style={{ fontSize: 11, fontWeight: 700,
+                color: r.depositCaptured ? '#991b1b' : '#166534' }}>
+                Caution {Number(r.depositAmount).toFixed(0)} €
+                {r.depositCaptured ? ' · encaissée' : ' · bloquée'}
+              </span>
+            </div>
+
+            {!r.depositCaptured && (
+              <>
+                {/* Release */}
+                <button
+                  onClick={() => openDepositModal(r, 'release')}
+                  style={{ flex: 1, background: '#f0fdf4', color: '#166534',
+                    border: '1.5px solid #bbf7d0', borderRadius: 8,
+                    padding: '7px 0', fontSize: 11, fontWeight: 700,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 5 }}>
+                  ✓ Libérer
+                </button>
+
+                {/* Capture — deliberately harder to click */}
+                <button
+                  onClick={() => openDepositModal(r, 'capture')}
+                  style={{ flex: 1, background: 'white', color: '#c2410c',
+                    border: '1.5px solid #fed7aa', borderRadius: 8,
+                    padding: '7px 0', fontSize: 11, fontWeight: 700,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 5 }}>
+                  ⚠ Encaisser
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     )
   }
@@ -695,6 +805,216 @@ export default function ReservationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+
+      {/* ── Deposit Modal ────────────────────────────────────────────────── */}
+      {depositModal && (() => {
+        const m = depositModal
+        const isCapture = m.action === 'capture'
+        const amount = Number(m.reservation.depositAmount ?? 0).toFixed(2)
+        const REASONS = [
+          { value: 'damage',    label: 'Dommages matériels' },
+          { value: 'theft',     label: 'Non-retour / vol' },
+          { value: 'delay',     label: 'Retard excessif' },
+          { value: 'other',     label: 'Autre motif' },
+        ]
+        const canProceed = !isCapture || (m.step === 1 ? m.reason !== '' : true)
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', padding: 16, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(6px)' }}>
+            <div style={{ background: 'white', borderRadius: 20, boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+              width: '100%', maxWidth: 440, overflow: 'hidden' }}>
+
+              {/* Header */}
+              <div style={{
+                padding: '20px 24px 16px',
+                background: isCapture ? (m.step === 2 ? '#fef2f2' : '#fff7ed') : '#f0fdf4',
+                borderBottom: `1px solid ${isCapture ? (m.step === 2 ? '#fecaca' : '#fed7aa') : '#bbf7d0'}`,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 20 }}>{isCapture ? (m.step === 2 ? '🚨' : '⚠️') : '✅'}</span>
+                    <h2 style={{ fontSize: 15, fontWeight: 800, margin: 0,
+                      color: isCapture ? (m.step === 2 ? '#991b1b' : '#c2410c') : '#166534' }}>
+                      {isCapture
+                        ? (m.step === 1 ? 'Encaisser la caution' : 'Confirmation finale')
+                        : 'Libérer la caution'}
+                    </h2>
+                  </div>
+                  <p style={{ fontSize: 12, margin: 0,
+                    color: isCapture ? (m.step === 2 ? '#7f1d1d' : '#9a3412') : '#14532d' }}>
+                    {m.reservation.customerName} — <strong>{amount} €</strong>
+                  </p>
+                </div>
+                <button onClick={() => setDepositModal(null)}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer',
+                    color: '#94a3b8', padding: 4, display: 'flex', alignItems: 'center' }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ padding: '20px 24px' }}>
+
+                {/* Step indicator (capture only) */}
+                {isCapture && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                    {[1, 2].map(s => (
+                      <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{
+                          width: 24, height: 24, borderRadius: '50%', display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                          fontSize: 11, fontWeight: 700,
+                          background: m.step >= s ? (s === 2 ? '#dc2626' : '#f97316') : '#f1f5f9',
+                          color: m.step >= s ? 'white' : '#94a3b8',
+                        }}>{s}</div>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: m.step >= s ? '#0f172a' : '#94a3b8' }}>
+                          {s === 1 ? 'Motif' : 'Confirmation'}
+                        </span>
+                        {s === 1 && <div style={{ width: 24, height: 2, background: m.step >= 2 ? '#dc2626' : '#e2e8f0', borderRadius: 2 }} />}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* RELEASE content */}
+                {!isCapture && (
+                  <div>
+                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12,
+                      padding: '14px 16px', marginBottom: 16 }}>
+                      <p style={{ fontSize: 13, color: '#166534', margin: 0, lineHeight: 1.6 }}>
+                        La caution de <strong>{amount} €</strong> sera libérée immédiatement.<br/>
+                        Le client n&apos;aura rien à faire — le blocage disparaît de sa carte sous 3-5 jours ouvrés.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* CAPTURE — Step 1: Motif */}
+                {isCapture && m.step === 1 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12,
+                      padding: '12px 14px' }}>
+                      <p style={{ fontSize: 12, color: '#9a3412', margin: 0, lineHeight: 1.6 }}>
+                        ⚠️ Cette action encaisse <strong>{amount} €</strong> sur la carte du client. Elle est <strong>irréversible</strong>. Un motif est obligatoire.
+                      </p>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                        Motif de l&apos;encaissement *
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {REASONS.map(opt => (
+                          <label key={opt.value} style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                            border: `1.5px solid ${m.reason === opt.value ? '#f97316' : '#e2e8f0'}`,
+                            background: m.reason === opt.value ? '#fff7ed' : 'white',
+                            transition: 'all .15s',
+                          }}>
+                            <input type="radio" name="reason" value={opt.value}
+                              checked={m.reason === opt.value}
+                              onChange={e => setDepositModal(prev => prev ? { ...prev, reason: e.target.value } : prev)}
+                              style={{ accentColor: '#f97316' }} />
+                            <span style={{ fontSize: 13, fontWeight: m.reason === opt.value ? 700 : 400,
+                              color: m.reason === opt.value ? '#c2410c' : '#374151' }}>
+                              {opt.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                        Détails <span style={{ color: '#94a3b8', textTransform: 'none', fontWeight: 400 }}>(optionnel)</span>
+                      </label>
+                      <textarea
+                        value={m.details}
+                        onChange={e => setDepositModal(prev => prev ? { ...prev, details: e.target.value } : prev)}
+                        placeholder="Ex : rayure profonde sur le cadre, pédale cassée..."
+                        rows={2}
+                        style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e2e8f0',
+                          borderRadius: 10, padding: '10px 12px', fontSize: 13, resize: 'none',
+                          outline: 'none', color: '#0f172a', fontFamily: 'inherit' }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* CAPTURE — Step 2: Confirmation finale */}
+                {isCapture && m.step === 2 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12,
+                      padding: '14px 16px' }}>
+                      <p style={{ fontSize: 13, color: '#991b1b', margin: 0, lineHeight: 1.7 }}>
+                        🚨 Vous êtes sur le point d&apos;encaisser <strong>{amount} €</strong> sur la carte de <strong>{m.reservation.customerName}</strong>.<br/>
+                        Cette opération est <strong>définitive et irréversible</strong>.
+                      </p>
+                    </div>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px' }}>
+                      <p style={{ fontSize: 11, color: '#64748b', margin: 0, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em' }}>Motif enregistré</p>
+                      <p style={{ fontSize: 13, color: '#0f172a', margin: 0, fontWeight: 600 }}>
+                        {REASONS.find(r => r.value === m.reason)?.label}
+                        {m.details && <span style={{ color: '#64748b', fontWeight: 400 }}> — {m.details}</span>}
+                      </p>
+                    </div>
+                    {m.error && (
+                      <p style={{ color: '#dc2626', fontSize: 13, background: '#fef2f2',
+                        border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', margin: 0 }}>
+                        {m.error}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* RELEASE — error */}
+                {!isCapture && m.error && (
+                  <p style={{ color: '#dc2626', fontSize: 13, background: '#fef2f2',
+                    border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', margin: '0 0 12px' }}>
+                    {m.error}
+                  </p>
+                )}
+              </div>
+
+              {/* Footer buttons */}
+              <div style={{ padding: '0 24px 24px', display: 'flex', gap: 10 }}>
+                {/* Back / Cancel */}
+                <button
+                  onClick={() => isCapture && m.step === 2
+                    ? setDepositModal(prev => prev ? { ...prev, step: 1 } : prev)
+                    : setDepositModal(null)}
+                  style={{ padding: '11px 18px', borderRadius: 12, background: 'transparent',
+                    border: '1.5px solid #e2e8f0', color: '#64748b', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  {isCapture && m.step === 2 ? '← Retour' : 'Annuler'}
+                </button>
+
+                {/* Main action */}
+                <button
+                  onClick={submitDeposit}
+                  disabled={!canProceed || m.loading}
+                  style={{
+                    flex: 1, border: 'none', borderRadius: 12,
+                    padding: '11px 0', fontSize: 13, fontWeight: 800,
+                    cursor: canProceed && !m.loading ? 'pointer' : 'not-allowed',
+                    opacity: canProceed && !m.loading ? 1 : 0.45,
+                    transition: 'all .2s',
+                    background: isCapture
+                      ? (m.step === 2 ? '#dc2626' : '#f97316')
+                      : '#16a34a',
+                    color: 'white',
+                    boxShadow: isCapture
+                      ? (m.step === 2 ? '0 4px 14px rgba(220,38,38,0.35)' : '0 4px 14px rgba(249,115,22,0.3)')
+                      : '0 4px 14px rgba(22,163,74,0.3)',
+                  }}>
+                  {m.loading ? '...' : isCapture
+                    ? (m.step === 1 ? 'Continuer →' : `Encaisser ${amount} € définitivement`)
+                    : `Libérer ${amount} €`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Cancel Modal ─────────────────────────────────────────────────── */}
       {cancelModal && (
