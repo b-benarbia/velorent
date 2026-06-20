@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import Sidebar from './_components/Sidebar'
 import PageTransition from './_components/PageTransition'
+import AIAssistant from './_components/AIAssistant'
 
 // Routes autorisées pour le rôle STAFF
 const STAFF_ALLOWED = ['/staff', '/rentals/new', '/rentals/', '/reservations']
@@ -23,6 +24,14 @@ export default async function TenantLayout({
   params: Promise<{ tenant: string }>
 }) {
   const { tenant } = await params
+  const h = await headers()
+
+  // Routes publiques (ex: /[tenant]/book) — le proxy retourne NextResponse.next()
+  // sans injecter x-tenant-id, donc on rend les children directement sans sidebar
+  if (!h.get('x-tenant-id')) {
+    return <>{children}</>
+  }
+
   const session = await requireSession()
 
   // Restriction STAFF — redirect si route non autorisée
@@ -59,6 +68,7 @@ export default async function TenantLayout({
       <main className="flex-1 md:ml-56 mt-14 md:mt-0 mb-24 md:mb-0 p-4 md:p-6">
         <PageTransition>{children}</PageTransition>
       </main>
+      <AIAssistant />
       {/* Mobile FAB — New Rental */}
       <Link
         href={`/${tenant}/rentals/new`}

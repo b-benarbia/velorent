@@ -40,6 +40,14 @@ model Tenant {
   // Grille tarifaire complète (par type de véhicule × durée)
   pricingGrid Json        @default("{}")
 
+  // Notifications IA — briefing matinal WhatsApp
+  notifLocale    String   @default("es") // Langue du owner pour les notifs (ex: "es", "fr")
+  notifWhatsapp  String?                 // Numéro WhatsApp du owner (ex: "+34612345678")
+
+  // Stripe — clés du shop (chaque shop a son propre compte Stripe)
+  stripePublishableKey String? // pk_live_... ou pk_test_...
+  stripeSecretKey      String? // sk_live_... ou sk_test_... (chiffré côté serveur)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -229,6 +237,11 @@ model Rental {
   partnerId        String?    // Si venu d'un hôtel partenaire
 
   notes            String?
+
+  // Auto-relance retardataires
+  lastChaseAt  DateTime?  // Dernière relance WhatsApp envoyée au client
+  chaseCount   Int        @default(0) // Nombre de relances envoyées
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -308,9 +321,12 @@ model Reservation {
   startAt       DateTime
   endAt         DateTime
 
-  // Acompte Stripe (optionnel)
-  amountPaid              Decimal? @default(0)
-  stripePaymentIntentId   String?
+  // Paiement Stripe
+  amountPaid              Decimal? @default(0)   // Montant encaissé (acompte ou total)
+  stripePaymentIntentId   String?                 // PaymentIntent du paiement principal
+  depositAmount           Decimal? @default(0)   // Caution pré-autorisée (bloquée, pas encaissée)
+  depositIntentId         String?                 // PaymentIntent séparé pour la caution
+  depositCaptured         Boolean  @default(false) // true = caution encaissée (dommage/vol)
 
   partnerId     String?           // Si réservation via hôtel
   notes         String?

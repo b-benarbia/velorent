@@ -2,12 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
-const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/seed', '/api/book', '/book', '/_next', '/favicon']
+const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/seed', '/api/book', '/book', '/_next', '/favicon', '/api/webhooks', '/api/cron', '/api/ai/voice-chase', '/api/public']
+
+// Booking public pages: /[tenant]/book (any tenant)
+const TENANT_PUBLIC_SUFFIXES = ['/book']
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next()
+  }
+
+  // /[tenant]/book et /[tenant]/book/* sont publics
+  if (TENANT_PUBLIC_SUFFIXES.some((s) => pathname.includes(s))) {
     return NextResponse.next()
   }
 

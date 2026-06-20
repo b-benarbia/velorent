@@ -6,7 +6,7 @@ import {
   Bike, Zap, Mountain, Package, Heart, Flag, Gauge,
   Shield, BatteryCharging, ShoppingBasket,
   Info, Users, Eye, EyeOff, CheckCircle2, Waves, Activity,
-  Sparkles, Store, Percent, Lock,
+  Sparkles, Store, Percent, Lock, MessageCircle,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -133,6 +133,19 @@ export default function SettingsPage() {
   const [shopSaved, setShopSaved] = useState(false)
   const [shopError, setShopError] = useState('')
 
+  // ── Stripe ──
+  const [stripe, setStripe] = useState({ stripePublishableKey: '', stripeSecretKey: '', stripeSecretKeyMasked: '', hasStripeSecret: false })
+  const [stripeLoading, setStripeLoading] = useState(false)
+  const [stripeSaved, setStripeSaved] = useState(false)
+  const [stripeError, setStripeError] = useState('')
+  const [showStripeSecret, setShowStripeSecret] = useState(false)
+
+  // ── Notifications ──
+  const [notif, setNotif] = useState({ notifLocale: 'es', notifWhatsapp: '' })
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifSaved, setNotifSaved] = useState(false)
+  const [notifError, setNotifError] = useState('')
+
   const loadStaff = useCallback(async () => {
     const res = await fetch('/api/staff')
     if (res.ok) setStaff(await res.json())
@@ -160,7 +173,47 @@ export default function SettingsPage() {
     }
   }, [])
 
-  useEffect(() => { loadStaff(); loadPricing(); loadShop() }, [loadStaff, loadPricing, loadShop])
+  const loadStripe = useCallback(async () => {
+    const res = await fetch('/api/settings/payments')
+    if (res.ok) {
+      const data = await res.json()
+      setStripe({ stripePublishableKey: data.stripePublishableKey ?? '', stripeSecretKey: '', stripeSecretKeyMasked: data.stripeSecretKeyMasked ?? '', hasStripeSecret: data.hasStripeSecret ?? false })
+    }
+  }, [])
+
+  const loadNotif = useCallback(async () => {
+    const res = await fetch('/api/settings/notifications')
+    if (res.ok) {
+      const data = await res.json()
+      setNotif({ notifLocale: data.notifLocale ?? 'es', notifWhatsapp: data.notifWhatsapp ?? '' })
+    }
+  }, [])
+
+  async function saveNotif() {
+    setNotifLoading(true); setNotifError('')
+    try {
+      const res = await fetch('/api/settings/notifications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(notif) })
+      if (res.ok) { setNotifSaved(true); setTimeout(() => setNotifSaved(false), 3000) }
+      else { const d = await res.json(); setNotifError(d.error ?? 'Erreur') }
+    } catch { setNotifError('Erreur réseau') }
+    setNotifLoading(false)
+  }
+
+  async function saveStripe() {
+    setStripeLoading(true); setStripeError('')
+    try {
+      const res = await fetch('/api/settings/payments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stripePublishableKey: stripe.stripePublishableKey, stripeSecretKey: stripe.stripeSecretKey }),
+      })
+      if (res.ok) { setStripeSaved(true); setStripe(s => ({ ...s, stripeSecretKey: '', hasStripeSecret: true })); setTimeout(() => setStripeSaved(false), 3000); loadStripe() }
+      else { const d = await res.json(); setStripeError(d.error ?? 'Erreur') }
+    } catch { setStripeError('Erreur réseau') }
+    setStripeLoading(false)
+  }
+
+  useEffect(() => { loadStaff(); loadPricing(); loadShop(); loadStripe(); loadNotif() }, [loadStaff, loadPricing, loadShop, loadStripe, loadNotif])
 
   // ── Pricing helpers ──
   function setPrice(bikeType: BikeTypeKey, duration: DurationKey, value: string) {
@@ -489,7 +542,150 @@ export default function SettingsPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════
-          4. STAFF
+          4. NOTIFICATIONS IA — WHATSAPP
+      ═══════════════════════════════════════════════════ */}
+      {/* ── Paiements Stripe ── */}
+      <div style={card}>
+        <div style={cardHead}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <SectionIcon gradient="linear-gradient(135deg,#635BFF,#7C3AED)" icon={<Lock size={16} color="white" />} />
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Paiements Stripe</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>Encaissement en ligne + caution pré-autorisée</p>
+            </div>
+          </div>
+          <SaveBtn onClick={saveStripe} loading={stripeLoading} saved={stripeSaved} error={stripeError} label={t('save')} />
+        </div>
+
+        <div className="settings-card-padding">
+          {/* Banner */}
+          <div style={{ marginBottom: 20, padding: '12px 16px', background: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', border: '1px solid #c4b5fd', borderRadius: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <Lock size={15} color="#7C3AED" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 3 }}>Comment ça marche</p>
+              <p style={{ fontSize: 12, color: '#6d28d9', lineHeight: 1.6 }}>
+                Le client paie en ligne via Stripe au moment de la réservation. La caution est <strong>bloquée</strong> sur sa carte (jamais encaissée) et libérée automatiquement au retour du vélo. En cas de dommage, vous capturez la somme en un clic.
+              </p>
+            </div>
+          </div>
+
+          <div className="settings-shop-grid">
+            {/* Clé publique */}
+            <div>
+              <label style={labelStyle}>Clé publique Stripe <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(pk_live_... ou pk_test_...)</span></label>
+              <input
+                value={stripe.stripePublishableKey}
+                onChange={e => setStripe(s => ({ ...s, stripePublishableKey: e.target.value }))}
+                placeholder="pk_live_..."
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Clé secrète */}
+            <div>
+              <label style={labelStyle}>Clé secrète Stripe <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(sk_live_... ou sk_test_...)</span></label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showStripeSecret ? 'text' : 'password'}
+                  value={stripe.stripeSecretKey || (stripe.hasStripeSecret && !showStripeSecret ? stripe.stripeSecretKeyMasked : '')}
+                  onChange={e => setStripe(s => ({ ...s, stripeSecretKey: e.target.value }))}
+                  onFocus={() => { if (stripe.hasStripeSecret) setStripe(s => ({ ...s, stripeSecretKey: '' })) }}
+                  placeholder={stripe.hasStripeSecret ? 'Clé déjà configurée — saisir pour modifier' : 'sk_live_...'}
+                  style={{ ...inputStyle, paddingRight: 40 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowStripeSecret(v => !v)}
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}
+                >
+                  {showStripeSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {stripe.hasStripeSecret && (
+                <p style={{ fontSize: 11, color: '#16a34a', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <CheckCircle2 size={12} /> Clé secrète configurée
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Lien dashboard Stripe */}
+          <div style={{ marginTop: 14, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 12, color: '#6366F1' }}>Pas encore de compte Stripe ? C&apos;est gratuit, sans abonnement mensuel.</p>
+            <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 12, fontWeight: 600, color: '#635BFF', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              Créer un compte →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Notifications WhatsApp ── */}
+      <div style={card}>
+        <div style={cardHead}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <SectionIcon gradient="linear-gradient(135deg,#25D366,#128C7E)" icon={<MessageCircle size={16} color="white" />} />
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('notifTitle')}</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('notifSubtitle')}</p>
+            </div>
+          </div>
+          <SaveBtn onClick={saveNotif} loading={notifLoading} saved={notifSaved} error={notifError} label={t('save')} />
+        </div>
+
+        <div className="settings-card-padding">
+          {/* Banner info */}
+          <div style={{ marginBottom: 20, padding: '12px 16px', background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1px solid #bbf7d0', borderRadius: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <MessageCircle size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#15803d', marginBottom: 3 }}>{t('notifBannerTitle')}</p>
+              <p style={{ fontSize: 12, color: '#166534', lineHeight: 1.6 }}>{t('notifBannerText')}</p>
+            </div>
+          </div>
+
+          <div className="settings-shop-grid">
+            {/* Numéro WhatsApp */}
+            <div>
+              <label style={labelStyle}>{t('notifPhoneLabel')}</label>
+              <input
+                value={notif.notifWhatsapp}
+                onChange={e => setNotif(n => ({ ...n, notifWhatsapp: e.target.value }))}
+                placeholder={t('notifPhonePlaceholder')}
+                style={inputStyle}
+              />
+              <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>{t('notifPhoneHint')}</p>
+            </div>
+
+            {/* Langue du briefing */}
+            <div>
+              <label style={labelStyle}>{t('notifLocaleLabel')}</label>
+              <select
+                value={notif.notifLocale}
+                onChange={e => setNotif(n => ({ ...n, notifLocale: e.target.value }))}
+                style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
+              >
+                <option value="fr">🇫🇷 Français</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="nl">🇳🇱 Nederlands</option>
+                <option value="pt">🇵🇹 Português</option>
+              </select>
+              <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>{t('notifLocaleHint')}</p>
+            </div>
+          </div>
+
+          {/* Note auto-detect */}
+          <div style={{ marginTop: 16, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <Sparkles size={13} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
+            <p style={{ fontSize: 12, color: '#6366F1', lineHeight: 1.6 }}>{t('notifAutoDetect')}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════
+          5. STAFF
       ═══════════════════════════════════════════════════ */}
       <div style={{ ...card, marginBottom: 0 }}>
         <div style={cardHead}>
