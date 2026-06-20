@@ -245,7 +245,7 @@ export default async function ContractPage({
               {/* Montant — héros visuel */}
               <div style={{ background: 'linear-gradient(135deg, #EEF2FF 0%, #F0F4FF 100%)', borderRadius: 12, padding: '16px 18px', marginBottom: 12, border: '1px solid #E0E7FF' }}>
                 <p className="lbl" style={{ marginBottom: 6, color: '#818CF8' }}>{t('amountPaid')}</p>
-                <p className="mono" style={{ fontSize: 32, fontWeight: 800, color: '#4338CA', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                <p style={{ fontSize: 32, fontWeight: 800, color: '#4338CA', letterSpacing: '-0.02em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   {Number(rental.amountPaid ?? 0).toFixed(2)}<span style={{ fontSize: 20, fontWeight: 600 }}> €</span>
                 </p>
                 <p style={{ fontSize: 11, color: '#6366F1', marginTop: 7, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
@@ -257,7 +257,7 @@ export default async function ContractPage({
                 <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '11px 14px', marginBottom: 10 }}>
                   <p className="lbl" style={{ marginBottom: 5 }}>{t('deposit')}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <p className="mono" style={{ fontSize: 19, fontWeight: 800, color: '#0F172A' }}>
+                    <p style={{ fontSize: 19, fontWeight: 800, color: '#0F172A', fontVariantNumeric: 'tabular-nums' }}>
                       {Number(rental.depositAmount).toFixed(2)} €
                     </p>
                     <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>
