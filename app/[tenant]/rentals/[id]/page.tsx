@@ -11,7 +11,22 @@ interface Rental {
   depositAmount: number; amountPaid: number | null; paymentMethod: string; notes: string | null
   bike: { id: string; name: string; code: string; dailyRate: number } | null  // backward compat
   bikes: { bike: { id: string; name: string; code: string; dailyRate: number } }[]
-  customer: { id: string; firstName: string; lastName: string; phone: string | null }
+  customer: { id: string; firstName: string; lastName: string; phone: string | null; documentPhotoUrl: string | null }
+}
+
+function PhotoModal({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose])
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15,23,42,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
+      <button onClick={onClose} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: 40, height: 40, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="ID" onClick={e => e.stopPropagation()} style={{ maxWidth: '88vw', maxHeight: '88vh', borderRadius: 12, objectFit: 'contain', boxShadow: '0 32px 80px rgba(0,0,0,0.5)' }} />
+    </div>
+  )
 }
 
 function initCanvas(canvas: HTMLCanvasElement, color: string) {
@@ -45,6 +60,7 @@ export default function RentalDetailPage() {
   const [error, setError] = useState('')
   const [hasSigned, setHasSigned] = useState(false)
   const [hasStaffSigned, setHasStaffSigned] = useState(false)
+  const [photoOpen, setPhotoOpen] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const staffCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -240,17 +256,37 @@ export default function RentalDetailPage() {
         )}
       </div>
 
+      {/* Photo modal */}
+      {photoOpen && rental.customer.documentPhotoUrl && (
+        <PhotoModal src={rental.customer.documentPhotoUrl} onClose={() => setPhotoOpen(false)} />
+      )}
+
       {/* Customer + Bike */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">{t('client')}</p>
           <div className="flex items-center gap-2.5 mb-2">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-              style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}
-            >
-              {initials}
-            </div>
+            {rental.customer.documentPhotoUrl ? (
+              <button
+                onClick={() => setPhotoOpen(true)}
+                style={{ padding: 0, background: 'none', border: 'none', cursor: 'zoom-in', flexShrink: 0 }}
+                title="Voir la pièce d'identité"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={rental.customer.documentPhotoUrl}
+                  alt="ID"
+                  style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #C7D2FE' }}
+                />
+              </button>
+            ) : (
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}
+              >
+                {initials}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900 truncate">
                 {rental.customer.firstName} {rental.customer.lastName}
@@ -264,6 +300,16 @@ export default function RentalDetailPage() {
             >
               <Phone size={11} /> {rental.customer.phone}
             </a>
+          )}
+          {rental.customer.documentPhotoUrl && (
+            <button
+              onClick={() => setPhotoOpen(true)}
+              className="flex items-center gap-1 text-xs mt-2 transition-colors"
+              style={{ color: '#818CF8', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+              Voir la pièce d&apos;identité
+            </button>
           )}
         </div>
 

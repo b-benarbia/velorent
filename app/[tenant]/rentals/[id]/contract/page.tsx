@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PrintButton from './PrintButton'
+import PhotoLightbox from './PhotoLightbox'
 import { getServerT } from '@/lib/server-t'
 
 export default async function ContractPage({
@@ -268,9 +269,7 @@ export default async function ContractPage({
                       </div>
                     )}
                     {rental.customer.documentPhotoUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={rental.customer.documentPhotoUrl} alt="ID"
-                        style={{ height: 72, width: 108, borderRadius: 5, border: '1px solid #E2E8F0', objectFit: 'cover', flexShrink: 0 }} />
+                      <PhotoLightbox src={rental.customer.documentPhotoUrl} alt="ID" />
                     )}
                   </div>
                 )}

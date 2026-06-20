@@ -74,7 +74,7 @@ const s = StyleSheet.create({
   page:   { fontFamily: 'Helvetica', fontSize: 9, color: SLATE_900, backgroundColor: '#ffffff' },
 
   // Header
-  header: { backgroundColor: INDIGO, padding: '18 24 16' },
+  header: { backgroundColor: INDIGO, padding: '14 22 12' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   shopName: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: '#ffffff', letterSpacing: 0.2 },
   shopMeta: { fontSize: 8, color: 'rgba(255,255,255,0.55)', marginTop: 3 },
@@ -85,25 +85,25 @@ const s = StyleSheet.create({
 
   // Date strip
   dateStrip: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: SLATE_200 },
-  dateCell:  { flex: 1, padding: '11 20' },
-  dateLbl:   { fontSize: 7, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase', color: SLATE_400, marginBottom: 3 },
-  dateVal:   { fontSize: 11.5, fontFamily: 'Helvetica-Bold', color: SLATE_900, textTransform: 'capitalize' },
-  dateTime:  { fontSize: 10, fontFamily: 'Helvetica', color: SLATE_500, marginLeft: 4 },
+  dateCell:  { flex: 1, padding: '8 18' },
+  dateLbl:   { fontSize: 6.5, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase', color: SLATE_400, marginBottom: 2 },
+  dateVal:   { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: SLATE_900, textTransform: 'capitalize' },
+  dateTime:  { fontSize: 9, fontFamily: 'Helvetica', color: SLATE_500, marginLeft: 4 },
 
   // Section divider
-  divRow:  { flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 14 },
+  divRow:  { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 10 },
   divLine: { flex: 1, height: 1, backgroundColor: SLATE_200 },
-  divLbl:  { fontSize: 7.5, fontFamily: 'Helvetica-Bold', letterSpacing: 2, textTransform: 'uppercase', color: SLATE_400, marginLeft: 10, marginRight: 10 },
+  divLbl:  { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 2, textTransform: 'uppercase', color: SLATE_400, marginLeft: 10, marginRight: 10 },
 
   // Body padding
-  body: { paddingLeft: 24, paddingRight: 24, paddingBottom: 20 },
+  body: { paddingLeft: 22, paddingRight: 22, paddingBottom: 14 },
 
   // Client / Payment two-column
-  twoCol:    { flexDirection: 'row', gap: 24, marginBottom: 16 },
+  twoCol:    { flexDirection: 'row', gap: 20, marginBottom: 10 },
   colClient: { flex: 1.3 },
   colPay:    { flex: 1 },
 
-  bigName: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: SLATE_900, marginBottom: 10, letterSpacing: -0.3 },
+  bigName: { fontSize: 17, fontFamily: 'Helvetica-Bold', color: SLATE_900, marginBottom: 8, letterSpacing: -0.3 },
 
   rowField: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 6, gap: 8 },
   lbl:      { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.8, textTransform: 'uppercase', color: SLATE_400, minWidth: 60 },
@@ -117,10 +117,10 @@ const s = StyleSheet.create({
   docPhoto: { height: 64, width: 96, borderRadius: 4, borderWidth: 1, borderColor: SLATE_200, objectFit: 'cover' },
 
   // Payment
-  amtBox: { backgroundColor: INDIGO_BG, borderWidth: 1, borderColor: INDIGO_BORDER, borderRadius: 10, padding: '14 16', marginBottom: 10 },
+  amtBox: { backgroundColor: INDIGO_BG, borderWidth: 1, borderColor: INDIGO_BORDER, borderRadius: 10, padding: '10 14', marginBottom: 8 },
   amtLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: '#818CF8', marginBottom: 5 },
-  amtVal: { fontSize: 28, fontFamily: 'Helvetica-Bold', color: INDIGO_D, letterSpacing: -0.5 },
-  amtCur: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: INDIGO_D },
+  amtVal: { fontSize: 24, fontFamily: 'Helvetica-Bold', color: INDIGO_D, letterSpacing: -0.5 },
+  amtCur: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: INDIGO_D },
   amtPay: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1, textTransform: 'uppercase', color: INDIGO, marginTop: 5 },
 
   depBox: { borderWidth: 1, borderColor: SLATE_200, borderRadius: 7, padding: '9 12', marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -161,17 +161,17 @@ const s = StyleSheet.create({
   accNote: { fontSize: 9, color: SLATE_400, fontFamily: 'Helvetica-Oblique', marginTop: 6 },
 
   // Clauses
-  clauseRow: { flexDirection: 'row', gap: 12, paddingTop: 6, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
-  clauseNum: { fontSize: 9, fontFamily: 'Helvetica-Bold', minWidth: 16, paddingTop: 2, flexShrink: 0 },
-  clauseTxt: { fontSize: 10, lineHeight: 1.7, flex: 1 },
+  clauseRow: { flexDirection: 'row', gap: 10, paddingTop: 4, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
+  clauseNum: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', minWidth: 14, paddingTop: 2, flexShrink: 0 },
+  clauseTxt: { fontSize: 9, lineHeight: 1.55, flex: 1 },
 
   // Signatures
-  sigSection: { borderTopWidth: 1, borderTopColor: '#EEF2FF', backgroundColor: '#FAFBFF', paddingLeft: 24, paddingRight: 24, paddingBottom: 22 },
-  sigRow: { flexDirection: 'row', gap: 14 },
+  sigSection: { borderTopWidth: 1, borderTopColor: '#EEF2FF', backgroundColor: '#FAFBFF', paddingLeft: 22, paddingRight: 22, paddingBottom: 14 },
+  sigRow: { flexDirection: 'row', gap: 12 },
   sigBox: { flex: 1 },
-  sigLbl: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 7 },
-  sigCanvas: { height: 80, borderWidth: 1.5, borderStyle: 'dashed', borderColor: SLATE_200, borderRadius: 7, backgroundColor: '#ffffff', marginBottom: 5 },
-  sigCanvasFilled: { height: 80, borderRadius: 7, backgroundColor: '#ffffff', marginBottom: 5, overflow: 'hidden' },
+  sigLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 5 },
+  sigCanvas: { height: 66, borderWidth: 1.5, borderStyle: 'dashed', borderColor: SLATE_200, borderRadius: 7, backgroundColor: '#ffffff', marginBottom: 4 },
+  sigCanvasFilled: { height: 66, borderRadius: 7, backgroundColor: '#ffffff', marginBottom: 4, overflow: 'hidden' },
   sigLine: { borderTopWidth: 2, paddingTop: 5, alignItems: 'center' },
   sigDate: { fontSize: 8, textAlign: 'center', fontFamily: 'Helvetica-Bold' },
 
