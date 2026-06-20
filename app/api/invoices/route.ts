@@ -13,7 +13,8 @@ export async function GET() {
       rental: {
         include: {
           customer: { select: { firstName: true, lastName: true } },
-          bike: { select: { name: true, code: true } },
+          bike:  { select: { name: true, code: true } },  // backward compat
+          bikes: { include: { bike: { select: { name: true, code: true } } } },
         },
       },
     },

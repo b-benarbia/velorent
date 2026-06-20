@@ -13,7 +13,11 @@ export async function GET(
 
   const rental = await prisma.rental.findFirst({
     where: { id, tenantId: session.tenantId },
-    include: { bike: true, customer: true },
+    include: {
+      bike:  true,  // backward compat
+      bikes: { include: { bike: true } },
+      customer: true,
+    },
   })
 
   if (!rental) return NextResponse.json({ error: 'Location introuvable' }, { status: 404 })

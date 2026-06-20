@@ -105,7 +105,8 @@ model Bike {
   updatedAt    DateTime    @updatedAt
 
   tenant       Tenant        @relation(fields: [tenantId], references: [id])
-  rentals      Rental[]
+  rentals      Rental[]      // backward compat (nullable bikeId)
+  rentalBikes  RentalBike[]
   reservations Reservation[]
 
   @@unique([tenantId, code])
@@ -174,7 +175,7 @@ model Rental {
   id         String       @id @default(uuid())
   tenantId   String
   customerId String
-  bikeId     String
+  bikeId     String?      // nullable — backward compat uniquement (null pour nouvelles locations)
   createdById String      // Staff qui a ouvert la location
 
   status     RentalStatus @default(ACTIVE)
@@ -233,13 +234,29 @@ model Rental {
 
   tenant      Tenant      @relation(fields: [tenantId], references: [id])
   customer    Customer    @relation(fields: [customerId], references: [id])
-  bike        Bike        @relation(fields: [bikeId], references: [id])
+  bike        Bike?       @relation(fields: [bikeId], references: [id])  // backward compat
+  bikes       RentalBike[]                                                // nouvelle relation multi-vélo
   createdBy   User        @relation("CreatedBy", fields: [createdById], references: [id])
   reservation Reservation? @relation(fields: [reservationId], references: [id])
   partner     Partner?    @relation(fields: [partnerId], references: [id])
   invoice     Invoice?
 
   @@map("rentals")
+}
+
+// ─────────────────────────────────────────────
+// RENTAL_BIKE — Pivot multi-vélo par location
+// ─────────────────────────────────────────────
+model RentalBike {
+  id       String @id @default(uuid())
+  rentalId String
+  bikeId   String
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  bike   Bike   @relation(fields: [bikeId], references: [id])
+
+  @@unique([rentalId, bikeId])
+  @@map("rental_bikes")
 }
 
 enum RentalStatus {

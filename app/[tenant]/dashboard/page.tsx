@@ -30,7 +30,11 @@ export default async function DashboardPage({
     }),
     prisma.rental.findMany({
       where: { tenantId, status: 'ACTIVE' },
-      include: { bike: true, customer: true },
+      include: {
+        bike:  true,  // backward compat
+        bikes: { include: { bike: true } },
+        customer: true,
+      },
       orderBy: { startAt: 'desc' },
     }),
     prisma.invoice.aggregate({
@@ -83,7 +87,7 @@ export default async function DashboardPage({
           <div className="space-y-1">
             {overdueRentals.map(r => (
               <Link key={r.id} href={`/${tenant}/rentals/${r.id}`} className="block text-sm text-red-600 hover:underline">
-                {r.customer.firstName} {r.customer.lastName} — {r.bike.name} — {new Date(r.expectedReturnAt!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {r.customer.firstName} {r.customer.lastName} — {(r.bikes?.[0]?.bike ?? r.bike)?.name} — {new Date(r.expectedReturnAt!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
               </Link>
             ))}
           </div>
@@ -172,7 +176,7 @@ export default async function DashboardPage({
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOverdue ? 'bg-red-400' : 'bg-emerald-400'}`} />
                     <div>
                       <p className="font-medium text-sm text-slate-900">{rental.customer.firstName} {rental.customer.lastName}</p>
-                      <p className="text-xs text-slate-400">{rental.bike.name} · <span className="font-mono">{rental.bike.code}</span></p>
+                      <p className="text-xs text-slate-400">{(rental.bikes?.[0]?.bike ?? rental.bike)?.name} · <span className="font-mono">{(rental.bikes?.[0]?.bike ?? rental.bike)?.code}</span>{(rental.bikes?.length ?? 0) > 1 ? ` +${rental.bikes.length - 1}` : ''}</p>
                     </div>
                   </div>
                   <div className="text-right">

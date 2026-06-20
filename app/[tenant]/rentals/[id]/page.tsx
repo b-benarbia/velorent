@@ -9,7 +9,8 @@ import { useTranslations } from 'next-intl'
 interface Rental {
   id: string; status: string; startAt: string; expectedReturnAt: string | null
   depositAmount: number; amountPaid: number | null; paymentMethod: string; notes: string | null
-  bike: { id: string; name: string; code: string; dailyRate: number }
+  bike: { id: string; name: string; code: string; dailyRate: number } | null  // backward compat
+  bikes: { bike: { id: string; name: string; code: string; dailyRate: number } }[]
   customer: { id: string; firstName: string; lastName: string; phone: string | null }
 }
 
@@ -268,18 +269,20 @@ export default function RentalDetailPage() {
 
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">{t('bike')}</p>
-          <div className="flex items-center gap-2.5 mb-2">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(99,102,241,0.1)' }}
-            >
-              <Bike size={14} style={{ color: '#6366F1' }} />
+          {(rental.bikes?.length > 0 ? rental.bikes.map(rb => rb.bike) : rental.bike ? [rental.bike] : []).map((b, i) => (
+            <div key={b.id ?? i} className="flex items-center gap-2.5 mb-2">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(99,102,241,0.1)' }}
+              >
+                <Bike size={14} style={{ color: '#6366F1' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{b.name}</p>
+                <p className="font-mono text-xs text-slate-400">{b.code}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">{rental.bike.name}</p>
-            </div>
-          </div>
-          <p className="font-mono text-xs text-slate-400">{rental.bike.code}</p>
+          ))}
         </div>
       </div>
 

@@ -29,7 +29,12 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rental = await prisma.rental.findFirst({
     where: { id, tenantId: session.tenantId },
-    include: { bike: true, customer: true, tenant: true },
+    include: {
+      bike:  true,  // backward compat
+      bikes: { include: { bike: true } },
+      customer: true,
+      tenant: true,
+    },
   }) as any
 
   if (!rental) return new NextResponse('Not found', { status: 404 })
@@ -62,10 +67,11 @@ export async function GET(
       documentPhotoUrl: rental.customer.documentPhotoUrl,
     },
     bike: {
-      name:         rental.bike.name,
-      code:         rental.bike.code,
-      serialNumber: rental.bike.serialNumber,
-      type:         rental.bike.type,
+      // premier vélo (pivot ou backward compat)
+      name:         (rental.bikes?.[0]?.bike ?? rental.bike)?.name         ?? '',
+      code:         (rental.bikes?.[0]?.bike ?? rental.bike)?.code         ?? '',
+      serialNumber: (rental.bikes?.[0]?.bike ?? rental.bike)?.serialNumber ?? null,
+      type:         (rental.bikes?.[0]?.bike ?? rental.bike)?.type         ?? null,
     },
     rental: {
       startAt:         fmt(rental.startAt),

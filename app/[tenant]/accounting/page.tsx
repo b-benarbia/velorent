@@ -17,7 +17,8 @@ interface Invoice {
     id: string
     paymentMethod: string
     customer: { firstName: string; lastName: string }
-    bike: { name: string; code: string }
+    bike: { name: string; code: string } | null  // backward compat
+    bikes: { bike: { name: string; code: string } }[]
   }
 }
 
@@ -187,8 +188,8 @@ export default function AccountingPage() {
         inv.number,
         new Date(inv.issuedAt).toLocaleDateString('fr-FR'),
         `${inv.rental.customer.firstName} ${inv.rental.customer.lastName}`,
-        inv.rental.bike.name,
-        inv.rental.bike.code,
+        (inv.rental.bikes?.[0]?.bike ?? inv.rental.bike)?.name ?? '',
+        (inv.rental.bikes?.[0]?.bike ?? inv.rental.bike)?.code ?? '',
         getPaymentLabel(inv.rental.paymentMethod),
         Number(inv.amountHt).toFixed(2),
         (Number(inv.taxRate) * 100).toFixed(0),
@@ -411,8 +412,9 @@ export default function AccountingPage() {
                           {inv.rental.customer.firstName} {inv.rental.customer.lastName}
                         </td>
                         <td className="px-4 py-3 text-xs">
-                          <span className="text-slate-700">{inv.rental.bike.name}</span>
-                          <span className="text-slate-400 font-mono ml-1 text-[10px]">{inv.rental.bike.code}</span>
+                          <span className="text-slate-700">{(inv.rental.bikes?.[0]?.bike ?? inv.rental.bike)?.name ?? '—'}</span>
+                          <span className="text-slate-400 font-mono ml-1 text-[10px]">{(inv.rental.bikes?.[0]?.bike ?? inv.rental.bike)?.code ?? ''}</span>
+                          {(inv.rental.bikes?.length ?? 0) > 1 && <span className="text-slate-400 ml-1 text-[10px]">+{inv.rental.bikes.length - 1}</span>}
                         </td>
                         <td className="px-4 py-3">
                           <span

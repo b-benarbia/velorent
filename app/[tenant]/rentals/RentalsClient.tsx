@@ -17,6 +17,7 @@ type Rental = {
   startAt: string
   expectedReturnAt: string | null
   amountPaid: number | null
+  bikeCount?: number
   bike: { name: string; code: string }
   customer: { firstName: string; lastName: string }
 }
@@ -207,7 +208,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
                           {rental.customer.firstName} {rental.customer.lastName}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5 truncate">
-                          {rental.bike.name} · <span className="font-mono">{rental.bike.code}</span> · {durationLabel} {labels.inProgressLabel}
+                          {rental.bike.name}{(rental.bikeCount ?? 1) > 1 ? ` +${(rental.bikeCount ?? 1) - 1}` : ''} · <span className="font-mono">{rental.bike.code}</span> · {durationLabel} {labels.inProgressLabel}
                         </p>
                         {isOverdue && (
                           <p className="text-xs text-red-500 font-medium mt-0.5 flex items-center gap-1">
@@ -264,7 +265,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
                           <td className="px-5 py-3 text-sm font-medium text-slate-900">
                             {rental.customer.firstName} {rental.customer.lastName}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-500">{rental.bike.name}</td>
+                          <td className="px-4 py-3 text-sm text-slate-500">{rental.bike.name}{(rental.bikeCount ?? 1) > 1 ? ` (+${(rental.bikeCount ?? 1) - 1})` : ''}</td>
                           <td className="px-4 py-3 text-sm text-slate-500">
                             {new Date(rental.startAt).toLocaleDateString('fr-FR')}
                           </td>
@@ -302,7 +303,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
                           {rental.customer.firstName} {rental.customer.lastName}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {rental.bike.name} · {new Date(rental.startAt).toLocaleDateString('fr-FR')}
+                          {rental.bike.name}{(rental.bikeCount ?? 1) > 1 ? ` (+${(rental.bikeCount ?? 1) - 1})` : ''} · {new Date(rental.startAt).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">

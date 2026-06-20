@@ -18,7 +18,11 @@ export async function POST(
     const [rental, tenant] = await Promise.all([
       prisma.rental.findFirst({
         where: { id, tenantId: session.tenantId },
-        include: { customer: true, bike: true },
+        include: {
+          customer: true,
+          bike:  true,  // backward compat
+          bikes: { include: { bike: true } },
+        },
       }),
       prisma.tenant.findUnique({ where: { id: session.tenantId } }),
     ])
@@ -28,35 +32,47 @@ export async function POST(
 
     const returnAt = new Date()
 
+    // Collecte tous les bikeIds à libérer (nouveau pivot + ancien bikeId)
+    const bikeIdsToFree = [
+      ...rental.bikes.map(rb => rb.bikeId),
+      ...(rental.bikeId && !rental.bikes.some(rb => rb.bikeId === rental.bikeId) ? [rental.bikeId] : []),
+    ]
+
     const result = await prisma.$transaction(async (tx) => {
       const closed = await tx.rental.update({
         where: { id },
         data: {
-          status: 'COMPLETED',
-          endAt: returnAt,
-          closingSignature: closingSignature || null,
-          staffSignature: staffSignature || null,
-          contractSigned: true,
-          depositReturned: true,
+          status:           'COMPLETED',
+          endAt:             returnAt,
+          closingSignature:  closingSignature || null,
+          staffSignature:    staffSignature   || null,
+          contractSigned:    true,
+          depositReturned:   true,
         },
-        include: { bike: true, customer: true },
+        include: {
+          bike:  true,
+          bikes: { include: { bike: true } },
+          customer: true,
+        },
       })
 
-      await tx.bike.update({
-        where: { id: closed.bikeId },
-        data: { status: 'AVAILABLE' },
-      })
+      // Libère tous les vélos de la location
+      if (bikeIdsToFree.length > 0) {
+        await tx.bike.updateMany({
+          where: { id: { in: bikeIdsToFree } },
+          data: { status: 'AVAILABLE' },
+        })
+      }
 
-
-      // Create invoice
-      const amount = Number(rental.amountPaid ?? 0)
+      // Crée la facture
+      const amount  = Number(rental.amountPaid ?? 0)
       const taxRate = 0.21
       const amountHt = amount / (1 + taxRate)
       await tx.invoice.create({
         data: {
           tenantId: session.tenantId,
           rentalId: id,
-          number: `INV-${Date.now()}`,
+          number:   `INV-${Date.now()}`,
           issuedAt: new Date(rental.startAt),
           amountHt,
           taxRate,
@@ -71,13 +87,14 @@ export async function POST(
     const customerEmail = result.customer.email
     if (customerEmail) {
       const contractNumber = `${new Date(result.startAt).getFullYear()}-${result.id.slice(0, 8).toUpperCase()}`
+      const firstBike = result.bikes[0]?.bike ?? result.bike
       sendReceiptToCustomer({
         to:              customerEmail,
         customerName:    `${result.customer.firstName} ${result.customer.lastName}`,
         shopName:        tenant?.name ?? '',
         shopPhone:       tenant?.phone,
-        bikeName:        result.bike.name,
-        bikeCode:        result.bike.code,
+        bikeName:        firstBike?.name ?? '',
+        bikeCode:        firstBike?.code ?? '',
         startAt:         result.startAt,
         endAt:           returnAt,
         amountPaid:      Number(result.amountPaid ?? 0),

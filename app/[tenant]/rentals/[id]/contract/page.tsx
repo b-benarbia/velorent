@@ -15,9 +15,21 @@ export default async function ContractPage({
 
   const rental = await prisma.rental.findUnique({
     where: { id },
-    include: { bike: true, customer: true, tenant: true },
+    include: {
+      bike:  true,  // backward compat
+      bikes: { include: { bike: true } },
+      customer: true,
+      tenant: true,
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any
+
+  // Normalise : toujours un tableau de vélos
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rentalBikes: any[] =
+    Array.isArray(rental?.bikes) && rental.bikes.length > 0
+      ? rental.bikes.map((rb: any) => rb.bike)
+      : rental?.bike ? [rental.bike] : []
 
   if (!rental) notFound()
 
@@ -300,36 +312,80 @@ export default async function ContractPage({
           </div>
         </div>
 
-        {/* ══ VÉHICULE ════════════════════════════════════ */}
+        {/* ══ VÉHICULE(S) ═════════════════════════════════ */}
         <div style={{ borderTop: '1px solid #F1F5F9', padding: `0 ${PX} 22px` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 18px' }}>
             <div style={DIV_LINE} />
-            <span style={DIV_LBL}>{t('vehicle')}</span>
+            <span style={DIV_LBL}>
+              {rentalBikes.length > 1 ? `${rentalBikes.length} ${t('vehicle')}s` : t('vehicle')}
+            </span>
             <div style={DIV_LINE} />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.01em', marginBottom: 5 }}>{rental.bike.name}</p>
-              {rental.bike.type && (
-                <span style={{ display: 'inline-block', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 4, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#4338CA', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
-                  {BIKE_TYPE[rental.bike.type] ?? rental.bike.type}
-                </span>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 28 }}>
-              <div>
-                <p className="lbl">{t('vehicleCode')}</p>
-                <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#4338CA', letterSpacing: '0.04em' }}>{rental.bike.code}</p>
+          {rentalBikes.length === 1 ? (
+            /* ── Vue 1 seul vélo (ancienne mise en page) ── */
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.01em', marginBottom: 5 }}>{rentalBikes[0].name}</p>
+                {rentalBikes[0].type && (
+                  <span style={{ display: 'inline-block', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 4, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#4338CA', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                    {BIKE_TYPE[rentalBikes[0].type] ?? rentalBikes[0].type}
+                  </span>
+                )}
               </div>
-              {rental.bike.serialNumber && (
-                <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 12 }}>
-                  <p className="lbl" style={{ color: '#DC2626' }}>{t('serialNumber')} · {t('serialCritical')}</p>
-                  <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#0F172A' }}>{rental.bike.serialNumber}</p>
+              <div style={{ display: 'flex', gap: 28 }}>
+                <div>
+                  <p className="lbl">{t('vehicleCode')}</p>
+                  <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#4338CA', letterSpacing: '0.04em' }}>{rentalBikes[0].code}</p>
                 </div>
-              )}
+                {rentalBikes[0].serialNumber && (
+                  <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 12 }}>
+                    <p className="lbl" style={{ color: '#DC2626' }}>{t('serialNumber')} · {t('serialCritical')}</p>
+                    <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#0F172A' }}>{rentalBikes[0].serialNumber}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            /* ── Table multi-vélos ── */
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 20, flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: '#94A3B8', textTransform: 'uppercase' }}>{t('vehicle')}</span>
+                <span style={{ width: 72, fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: '#94A3B8', textTransform: 'uppercase', textAlign: 'center' }}>{t('vehicleCode')}</span>
+                <span style={{ width: 90, fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: '#94A3B8', textTransform: 'uppercase', textAlign: 'right' }}>{t('serialNumber')}</span>
+              </div>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {rentalBikes.map((bike: any, i: number) => (
+                <div key={bike.id ?? i} style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
+                  borderBottom: i < rentalBikes.length - 1 ? '1px solid #F1F5F9' : 'none',
+                  background: 'white',
+                }}>
+                  {/* Numéro */}
+                  <div style={{ width: 20, height: 20, background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 10, color: '#4338CA', fontWeight: 900, lineHeight: 1 }}>{i + 1}</span>
+                  </div>
+                  {/* Nom + type */}
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1E293B' }}>{bike.name}</span>
+                    {bike.type && (
+                      <span style={{ marginLeft: 8, fontSize: 9, fontWeight: 700, color: '#4338CA', background: '#EEF2FF', borderRadius: 3, padding: '1px 6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                        {BIKE_TYPE[bike.type] ?? bike.type}
+                      </span>
+                    )}
+                  </div>
+                  {/* Code */}
+                  <span className="mono" style={{ width: 72, textAlign: 'center', fontSize: 12, fontWeight: 800, color: '#4338CA' }}>{bike.code}</span>
+                  {/* Série */}
+                  <span className="mono" style={{ width: 90, textAlign: 'right', fontSize: 10, fontWeight: 700, color: bike.serialNumber ? '#DC2626' : '#CBD5E1' }}>
+                    {bike.serialNumber ?? '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {Array.isArray(rental.accessories) && (rental.accessories as unknown[]).length > 0 && (
             <div style={{ marginTop: 20 }}>

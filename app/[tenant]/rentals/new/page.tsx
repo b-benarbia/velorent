@@ -291,45 +291,30 @@ export default function NewRentalPage() {
         codes: a.hasCode ? (accessoryCodes[a.type] ?? []) : undefined,
       }))
 
-    const nbBikes = selectedBikeIds.length
-    const amountPerBike = nbBikes > 1
-      ? (Math.round((parseFloat(form.amountPaid || '0') / nbBikes) * 100) / 100).toFixed(2)
-      : form.amountPaid
-    const depositPerBike = depositType === 'ID' ? '0'
-      : nbBikes > 1
-        ? (Math.round((parseFloat(form.depositAmount || '0') / nbBikes) * 100) / 100).toFixed(2)
-        : form.depositAmount
-
     const notesWithDeposit = depositType === 'ID'
       ? `[Caution : ${depositIdType.replace('_', ' ')}]${form.notes ? ' — ' + form.notes : ''}`
       : form.notes
 
-    const results = await Promise.all(
-      selectedBikeIds.map(bikeId =>
-        fetch('/api/rentals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...form,
-            notes: notesWithDeposit,
-            bikeId,
-            customerId,
-            amountPaid: amountPerBike,
-            depositAmount: depositPerBike,
-            openingSignature: clientPadRef.current?.toDataURL() ?? '',
-            staffSignature:   staffPadRef.current?.toDataURL()  ?? '',
-            accessories: accessoriesPayload,
-          }),
-        }).then(r => r.json().then(d => ({ ok: r.ok, data: d })))
-      )
-    )
-
-    const failed = results.find(r => !r.ok)
-    if (failed) { setError(failed.data.error); setLoading(false); return }
+    // Un seul POST avec tous les vélos — le serveur crée 1 location + N lignes pivot
+    const res = await fetch('/api/rentals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...form,
+        notes:            notesWithDeposit,
+        bikeIds:          selectedBikeIds,  // tableau multi-vélo
+        customerId,
+        openingSignature: clientPadRef.current?.toDataURL() ?? '',
+        staffSignature:   staffPadRef.current?.toDataURL()  ?? '',
+        accessories:      accessoriesPayload,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); setLoading(false); return }
 
     setShowSuccess(true)
     setTimeout(() => {
-      router.push(`/${tenant}/rentals/${results[0].data.id}/contract`)
+      router.push(`/${tenant}/rentals/${data.id}/contract`)
     }, 1400)
   }
 

@@ -15,7 +15,11 @@ export default async function RentalsPage({
 
   const rentals = await prisma.rental.findMany({
     where: { tenantId: session.tenantId },
-    include: { bike: true, customer: true },
+    include: {
+      bike:  true,  // backward compat
+      bikes: { include: { bike: true } },
+      customer: true,
+    },
     orderBy: { startAt: 'desc' },
   })
 
@@ -42,15 +46,19 @@ export default async function RentalsPage({
   return (
     <RentalsClient
       tenant={tenant}
-      rentals={rentals.map(r => ({
-        id: r.id,
-        status: r.status,
-        startAt: r.startAt.toISOString(),
-        expectedReturnAt: r.expectedReturnAt?.toISOString() ?? null,
-        amountPaid: r.amountPaid ? Number(r.amountPaid) : null,
-        bike: { name: r.bike.name, code: r.bike.code },
-        customer: { firstName: r.customer.firstName, lastName: r.customer.lastName },
-      }))}
+      rentals={rentals.map(r => {
+        const firstBike = r.bikes?.[0]?.bike ?? r.bike
+        return {
+          id: r.id,
+          status: r.status,
+          startAt: r.startAt.toISOString(),
+          expectedReturnAt: r.expectedReturnAt?.toISOString() ?? null,
+          amountPaid: r.amountPaid ? Number(r.amountPaid) : null,
+          bikeCount: (r.bikes?.length ?? 0) > 0 ? r.bikes.length : 1,
+          bike: firstBike ? { name: firstBike.name, code: firstBike.code } : { name: '—', code: '—' },
+          customer: { firstName: r.customer.firstName, lastName: r.customer.lastName },
+        }
+      })}
       kpi={{ revenueToday, activeCount, overdueCount }}
       labels={{
         title:             t('title'),

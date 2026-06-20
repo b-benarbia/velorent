@@ -29,7 +29,10 @@ export default async function PlanningPage({
           },
         ],
       },
-      include: { customer: { select: { id: true, firstName: true, lastName: true } } },
+      include: {
+        customer: { select: { id: true, firstName: true, lastName: true } },
+        bikes: { select: { bikeId: true } },  // pour le planning multi-vélo
+      },
       orderBy: { startAt: 'desc' },
     }),
   ])
@@ -47,9 +50,14 @@ export default async function PlanningPage({
       bikes={bikes.map(b => ({ id: b.id, code: b.code, name: b.name, type: b.type }))}
       rentals={rentals.map(r => {
         const groupKey = `${r.customerId}__${r.startAt.toISOString().slice(0, 10)}__${r.expectedReturnAt?.toISOString().slice(0, 10) ?? 'open'}`
+        // bikeIds: pivot (nouveaux) ou bikeId legacy (anciens)
+        const bikeIds = r.bikes.length > 0
+          ? r.bikes.map(rb => rb.bikeId)
+          : r.bikeId ? [r.bikeId] : []
         return {
           id: r.id,
-          bikeId: r.bikeId,
+          bikeId: bikeIds[0] ?? null,    // PlanningClient legacy compat (1er vélo)
+          bikeIds,                         // nouveau: tous les vélos
           customerId: r.customerId,
           customerName: `${r.customer.firstName} ${r.customer.lastName}`,
           status: r.status,

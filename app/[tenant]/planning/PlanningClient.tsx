@@ -8,7 +8,10 @@ import { useLocale } from 'next-intl'
 // ── Types ────────────────────────────────────────────────────────────────
 type BikeRow  = { id: string; code: string; name: string; type: string }
 type RentalEvent = {
-  id: string; bikeId: string; customerId: string; customerName: string
+  id: string
+  bikeId: string | null      // backward compat (1er vélo ou null)
+  bikeIds: string[]          // tous les vélos (nouveau)
+  customerId: string; customerName: string
   status: string; startAt: string; endAt: string
   groupKey: string; groupSize: number
 }
@@ -122,7 +125,9 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
       const start = new Date(r.startAt)
       const end   = new Date(r.endAt)
       if (end < weekStart || start > wEnd) return
-      map.get(r.bikeId)?.push(r)
+      // Utilise bikeIds (multi) ou bikeId (legacy)
+      const ids = r.bikeIds.length > 0 ? r.bikeIds : r.bikeId ? [r.bikeId] : []
+      ids.forEach(bId => map.get(bId)?.push(r))
     })
     return map
   }, [bikes, rentals, weekStart, weekEnd])
