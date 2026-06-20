@@ -21,32 +21,48 @@ export default async function ContractPage({
 
   if (!rental) notFound()
 
-  const tRentals = await getServerT('rentals')
+  const [tRentals, t] = await Promise.all([
+    getServerT('rentals'),
+    getServerT('contract'),
+  ])
+
+  // Locale pour le formatage des dates
+  const LOCALE_MAP: Record<string, string> = {
+    fr: 'fr-FR', es: 'es-ES', en: 'en-GB', de: 'de-DE',
+    it: 'it-IT', nl: 'nl-NL', pt: 'pt-PT',
+  }
+  // Récupère la locale depuis le cookie (déjà lu par getServerT via getLocale)
+  // On relit ici pour le formatage des dates
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  const rawLocale = cookieStore.get('locale')?.value ?? 'fr'
+  const dateLocale = LOCALE_MAP[rawLocale] ?? 'fr-FR'
 
   const PAY: Record<string, string> = {
-    CASH: 'Efectivo', CARD: 'Tarjeta / Carte', BIZUM: 'Bizum',
-    TRANSFER: 'Transferencia', ONLINE: 'Online', HOTEL: 'Hotel',
+    CASH: t('depositCash'), CARD: t('depositCard'), BIZUM: 'Bizum',
+    TRANSFER: 'Virement / Transfer', ONLINE: 'Online', HOTEL: 'Hotel',
   }
   const DOC: Record<string, string> = {
-    PASSPORT: 'Pasaporte', DNI: 'DNI', NIE: 'NIE',
-    ID_CARD: 'Documento identidad', DRIVING_LICENSE: 'Permiso conducir', OTHER: 'Otro',
+    PASSPORT: 'Passport / Passeport', DNI: 'DNI', NIE: 'NIE',
+    ID_CARD: "Carte d'identité / ID Card", DRIVING_LICENSE: 'Permis / License',
+    OTHER: 'Autre / Other',
   }
   const BIKE_TYPE: Record<string, string> = {
-    CITY: 'City', MTB: 'MTB', ROAD: 'Route', ELECTRIC: 'Électrique',
-    CARGO: 'Cargo', KIDS: 'Enfant', OTHER: 'Autre',
+    CITY: 'City', MTB: 'MTB', ROAD: 'Road', ELECTRIC: 'Electric',
+    CARGO: 'Cargo', KIDS: 'Kids', OTHER: 'Other',
   }
 
   const num = `${new Date(rental.startAt).getFullYear()}-${rental.id.slice(0, 8).toUpperCase()}`
-  const generatedAt = new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const generatedAt = new Date().toLocaleString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   const isCompleted = rental.status === 'COMPLETED'
   const depositMethod = (rental.rateSnapshot as { depositPaymentMethod?: string })?.depositPaymentMethod
 
   const fmtFull = (d: Date | string) =>
-    new Date(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    new Date(d).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const fmtShort = (d: Date | string) =>
-    new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+    new Date(d).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short', year: 'numeric' })
   const fmtTime = (d: Date | string) =>
-    new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    new Date(d).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })
 
   return (
     <>
@@ -149,7 +165,7 @@ export default async function ContractPage({
 
             {/* Contrat ref */}
             <div style={{ textAlign: 'right' }}>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>Contrat de location</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>{t('title')}</p>
               <p className="mono" style={{ color: 'white', fontSize: 20, fontWeight: 800, letterSpacing: '0.06em' }}>{num}</p>
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 6, alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{generatedAt}</span>
@@ -159,7 +175,7 @@ export default async function ContractPage({
                   border: '1px solid rgba(255,255,255,0.25)',
                   fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', color: 'white',
                 }}>
-                  {isCompleted ? '✓ CLÔTURÉ' : '● ACTIF'}
+                  {isCompleted ? `✓ ${t('closed')}` : `● ${t('active')}`}
                 </span>
               </div>
             </div>
@@ -169,20 +185,20 @@ export default async function ContractPage({
         {/* ── DATE STRIP ──────────────────────────────────── */}
         <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '10px 28px', display: 'flex', gap: 32, flexWrap: 'wrap' }}>
           <div>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>Départ</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>{t('departure')}</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize' }}>{fmtFull(rental.startAt)}</span>
             <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>{fmtTime(rental.startAt)}</span>
           </div>
           {rental.expectedReturnAt && (
             <div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>Retour prévu</span>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase', marginRight: 8 }}>{t('expectedReturn')}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize' }}>{fmtFull(rental.expectedReturnAt)}</span>
               <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>{fmtTime(rental.expectedReturnAt)}</span>
             </div>
           )}
           {rental.endAt && (
             <div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#16A34A', textTransform: 'uppercase', marginRight: 8 }}>Retour effectif</span>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#16A34A', textTransform: 'uppercase', marginRight: 8 }}>{t('actualReturn')}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', textTransform: 'capitalize' }}>{fmtFull(rental.endAt)}</span>
               <span style={{ fontSize: 12, color: '#4ADE80', marginLeft: 6 }}>{fmtTime(rental.endAt)}</span>
             </div>
@@ -194,16 +210,16 @@ export default async function ContractPage({
 
           {/* Client */}
           <div>
-            <p className="lbl" style={{ marginBottom: 14 }}>Client / Locataire</p>
+            <p className="lbl" style={{ marginBottom: 14 }}>{t('client')}</p>
             <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 10, lineHeight: 1.2 }}>
               {rental.customer.firstName} {rental.customer.lastName}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {rental.customer.nationality && (
-                <div><span className="lbl">Nationalité · </span><span className="val" style={{ fontSize: 13 }}>{rental.customer.nationality}</span></div>
+                <div><span className="lbl">{t('nationality')} · </span><span className="val" style={{ fontSize: 13 }}>{rental.customer.nationality}</span></div>
               )}
               {rental.customer.phone && (
-                <div><span className="lbl">Tél. · </span><span className="val mono" style={{ fontSize: 13 }}>{rental.customer.phone}</span></div>
+                <div><span className="lbl">{t('phone')} · </span><span className="val mono" style={{ fontSize: 13 }}>{rental.customer.phone}</span></div>
               )}
               {rental.customer.email && (
                 <div><span className="lbl">Email · </span><span className="val" style={{ fontSize: 12 }}>{rental.customer.email}</span></div>
@@ -221,11 +237,11 @@ export default async function ContractPage({
 
           {/* Paiement */}
           <div>
-            <p className="lbl" style={{ marginBottom: 14 }}>Paiement</p>
+            <p className="lbl" style={{ marginBottom: 14 }}>{t('payment')}</p>
 
             {/* Montant */}
             <div style={{ background: '#F0F4FF', borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
-              <p className="lbl" style={{ marginBottom: 4 }}>Montant réglé</p>
+              <p className="lbl" style={{ marginBottom: 4 }}>{t('amountPaid')}</p>
               <p className="mono" style={{ fontSize: 30, fontWeight: 800, color: '#4F46E5', letterSpacing: '-0.02em', lineHeight: 1 }}>
                 {Number(rental.amountPaid ?? 0).toFixed(2)}<span style={{ fontSize: 18 }}> €</span>
               </p>
@@ -235,19 +251,19 @@ export default async function ContractPage({
             {/* Caution */}
             {Number(rental.depositAmount) > 0 && (
               <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
-                <p className="lbl" style={{ marginBottom: 4 }}>Caution / Fianza</p>
+                <p className="lbl" style={{ marginBottom: 4 }}>{t('deposit')}</p>
                 <p className="mono" style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
                   {Number(rental.depositAmount).toFixed(2)} €
                 </p>
                 <p style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
-                  {depositMethod === 'CARD' ? 'Carte bancaire' : 'Espèces'} · Remboursable
+                  {depositMethod === 'CARD' ? t('depositCard') : t('depositCash')} · {t('depositRefundable')}
                 </p>
               </div>
             )}
 
             {rental.lockNumber && (
               <div style={{ marginTop: 10 }}>
-                <p className="lbl">Cadenas N°</p>
+                <p className="lbl">{t('lockNumber')}</p>
                 <p className="val mono">{rental.lockNumber}</p>
               </div>
             )}
@@ -259,7 +275,7 @@ export default async function ContractPage({
           <>
             <div className="sep" />
             <div style={{ padding: '16px 28px' }}>
-              <p className="lbl" style={{ marginBottom: 10 }}>Pièce d&apos;identité</p>
+              <p className="lbl" style={{ marginBottom: 10 }}>{t('document')}</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={rental.customer.documentPhotoUrl} alt="ID" style={{ maxHeight: 140, borderRadius: 6, border: '1px solid #E2E8F0', objectFit: 'contain' }} />
             </div>
@@ -269,7 +285,7 @@ export default async function ContractPage({
         {/* ── VÉHICULE ────────────────────────────────────── */}
         <div className="sep" />
         <div style={{ padding: '18px 28px' }}>
-          <p className="lbl" style={{ marginBottom: 12 }}>Véhicule loué / Vehículo alquilado</p>
+          <p className="lbl" style={{ marginBottom: 12 }}>{t('vehicle')}</p>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 160 }}>
               <p style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>{rental.bike.name}</p>
@@ -281,12 +297,12 @@ export default async function ContractPage({
             </div>
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               <div>
-                <p className="lbl">Code</p>
+                <p className="lbl">{t('vehicleCode')}</p>
                 <p className="val mono" style={{ fontSize: 16, color: '#6366F1' }}>{rental.bike.code}</p>
               </div>
               {rental.bike.serialNumber && (
                 <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 10 }}>
-                  <p className="lbl" style={{ color: '#DC2626' }}>N° Série · CRITIQUE</p>
+                  <p className="lbl" style={{ color: '#DC2626' }}>{t('serialNumber')} · {t('serialCritical')}</p>
                   <p className="val mono" style={{ fontSize: 16 }}>{rental.bike.serialNumber}</p>
                 </div>
               )}
@@ -296,7 +312,7 @@ export default async function ContractPage({
           {/* Accessories */}
           {Array.isArray(rental.accessories) && (rental.accessories as unknown[]).length > 0 && (
             <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span className="lbl" style={{ marginBottom: 0, marginRight: 4 }}>Accessoires ·</span>
+              <span className="lbl" style={{ marginBottom: 0, marginRight: 4 }}>{t('accessories')} ·</span>
               {(rental.accessories as { label: string; qty?: number; codes?: string[] }[]).map((a, i) => (
                 <span key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 5, padding: '3px 9px', fontSize: 12, fontWeight: 600, color: '#334155' }}>
                   {a.qty && a.qty > 1 ? `${a.qty}× ` : ''}{a.label}
@@ -312,23 +328,22 @@ export default async function ContractPage({
         {/* ── CONDITIONS ──────────────────────────────────── */}
         <div className="sep" />
         <div style={{ padding: '18px 28px' }}>
-          <p className="lbl" style={{ marginBottom: 12 }}>Conditions générales</p>
+          <p className="lbl" style={{ marginBottom: 12 }}>{t('conditions')}</p>
           <div>
-            {[
-              { n:'1', red:false, fr:'Le locataire déclare avoir reçu le matériel en parfait état.', es:'El arrendatario declara haber recibido el material en perfectas condiciones.' },
-              { n:'2', red:false, fr:'Le locataire est seul responsable de la garde du matériel pendant toute la durée de la location.', es:'El arrendatario es el único responsable de la custodia durante el alquiler.' },
-              { n:'3', red:false, fr:'En cas de vol, perte ou dommage, le locataire paiera le coût total de réparation ou remplacement.', es:'En caso de robo, pérdida o daño, el arrendatario abonará el coste íntegro.' },
-              { n:'4', red:true,  fr:'En cas de vol, dépôt de plainte obligatoire sous 24h — copie à remettre impérativement au loueur.', es:'En caso de robo, denuncia policial obligatoria en 24h y entrega de copia al arrendador.' },
-              { n:'5', red:false, fr:'La caution est retenue jusqu\'à la restitution du matériel dans le même état.', es:'La fianza queda retenida hasta la devolución del material en el mismo estado.' },
-              { n:'6', red:false, fr:'Tout retard entraîne des frais supplémentaires par heure ou jour.', es:'El retraso generará cargos adicionales por hora o día.' },
-              { n:'7', red:false, fr:'Ce contrat a pleine valeur probatoire devant toute instance judiciaire ou administrative.', es:'Este contrato tiene plena validez probatoria ante cualquier instancia.' },
-              { n:'8', red:false, fr:'Données personnelles traitées conformément au RGPD (UE 2016/679).', es:'Datos personales tratados conforme al RGPD (UE 2016/679).' },
-            ].map(c => (
+            {([
+              { n:'1', red:false, key:'clause1' },
+              { n:'2', red:false, key:'clause2' },
+              { n:'3', red:false, key:'clause3' },
+              { n:'4', red:true,  key:'clause4' },
+              { n:'5', red:false, key:'clause5' },
+              { n:'6', red:false, key:'clause6' },
+              { n:'7', red:false, key:'clause7' },
+              { n:'8', red:false, key:'clause8' },
+            ] as { n: string; red: boolean; key: string }[]).map(c => (
               <div key={c.n} className="clause">
                 <div className={`cnum${c.red ? ' red' : ''}`}>{c.n}</div>
                 <div>
-                  <span style={{ fontWeight: c.red ? 700 : 400, color: c.red ? '#DC2626' : '#1E293B' }}>{c.fr}</span>
-                  <span className="clause-tr"> / {c.es}</span>
+                  <span style={{ fontWeight: c.red ? 700 : 400, color: c.red ? '#DC2626' : '#1E293B' }}>{t(c.key)}</span>
                 </div>
               </div>
             ))}
@@ -337,13 +352,13 @@ export default async function ContractPage({
 
         {/* ── SIGNATURES ──────────────────────────────────── */}
         <div style={{ background: '#FAFBFF', borderTop: '1px solid #E2E8F0', padding: '20px 28px' }}>
-          <p className="lbl" style={{ marginBottom: 16 }}>Signatures</p>
+          <p className="lbl" style={{ marginBottom: 16 }}>{t('signatures')}</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
 
             {[
-              { label: 'Client — Départ', sub: fmtShort(rental.startAt), img: rental.openingSignature, accent: '#6366F1' },
-              { label: 'Client — Retour', sub: rental.endAt ? fmtShort(rental.endAt) : '— / — / ——', img: rental.closingSignature, accent: '#64748B' },
-              { label: 'Responsable', sub: rental.tenant.name, img: rental.staffSignature, accent: '#6366F1' },
+              { label: t('sigClientDeparture'), sub: fmtShort(rental.startAt), img: rental.openingSignature, accent: '#6366F1' },
+              { label: t('sigClientReturn'), sub: rental.endAt ? fmtShort(rental.endAt) : '— / — / ——', img: rental.closingSignature, accent: '#64748B' },
+              { label: t('sigResponsible'), sub: rental.tenant.name, img: rental.staffSignature, accent: '#6366F1' },
             ].map((sig, i) => (
               <div key={i}>
                 <p className="lbl" style={{ marginBottom: 6, textAlign: 'center' }}>{sig.label}</p>
@@ -368,7 +383,7 @@ export default async function ContractPage({
 
         {/* ── FOOTER ──────────────────────────────────────── */}
         <div style={{ borderTop: '1px solid #E2E8F0', padding: '10px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 10, color: '#CBD5E1' }}>{rental.tenant.name} · Généré par VeloRent</span>
+          <span style={{ fontSize: 10, color: '#CBD5E1' }}>{rental.tenant.name} · {t('generatedBy')}</span>
           <span className="mono" style={{ fontSize: 10, color: '#CBD5E1' }}>{num}</span>
         </div>
 
