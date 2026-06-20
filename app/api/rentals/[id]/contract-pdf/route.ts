@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
-import { ContractPDF, type ContractData } from '@/lib/pdf/contract'
+import type { ContractData } from '@/lib/pdf/contract'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -87,6 +86,11 @@ export async function GET(
     },
   }
 
+  // Dynamic imports: avoid Turbopack static analysis of @react-pdf/renderer at startup
+  const [{ renderToBuffer }, { ContractPDF }] = await Promise.all([
+    import('@react-pdf/renderer'),
+    import('@/lib/pdf/contract'),
+  ])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfBuffer = await renderToBuffer(React.createElement(ContractPDF, { data }) as any)
 

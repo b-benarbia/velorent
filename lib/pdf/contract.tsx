@@ -1,3 +1,4 @@
+// server-only — never import this file from client components
 import {
   Document, Page, Text, View, Image, StyleSheet,
 } from '@react-pdf/renderer'

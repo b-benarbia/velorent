@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
-import { ContractPDF, type ContractData } from '@/lib/pdf/contract'
+import type { ContractData } from '@/lib/pdf/contract'
 import { sendContractToCustomer } from '@/lib/email'
 
 export async function GET() {
@@ -120,6 +119,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Fire-and-forget — don't block the response
+    // Dynamic imports: avoid Turbopack static analysis of @react-pdf/renderer at startup
+    Promise.all([
+      import('@react-pdf/renderer').then(m => m.renderToBuffer),
+      import('@/lib/pdf/contract').then(m => m.ContractPDF),
+    ]).then(([renderToBuffer, ContractPDF]) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderToBuffer(React.createElement(ContractPDF, { data: pdfData }) as any)
       .then(pdfBuffer =>
@@ -130,7 +134,7 @@ export async function POST(req: NextRequest) {
           contractNumber,
           pdfBuffer,
         })
-      )
+      ))
       .catch(err => console.error('Contract email error:', err))
   }
 
