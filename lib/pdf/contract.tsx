@@ -1,6 +1,6 @@
 // server-only — never import this file from client components
 import {
-  Document, Page, Text, View, Image, StyleSheet,
+  Document, Page, Text, View, Image, StyleSheet, Svg, Path, Circle as SvgCircle,
 } from '@react-pdf/renderer'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -226,7 +226,14 @@ export function ContractPDF({ data }: { data: ContractData }) {
                 ? <Image src={tenant.logoUrl} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover' }} />
                 : (
                   <View style={{ width: 38, height: 38, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 16, color: '#ffffff' }}>⊛</Text>
+                    <Svg width="22" height="22" viewBox="0 0 24 24">
+                      <SvgCircle cx="5.5" cy="17.5" r="2.5" stroke="white" strokeWidth="1.8" fill="none" />
+                      <SvgCircle cx="18.5" cy="17.5" r="2.5" stroke="white" strokeWidth="1.8" fill="none" />
+                      <Path d="M8 17.5h7" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+                      <Path d="M15 6l2.5 4.5h-8l1-4.5z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+                      <Path d="M12 6V4" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+                      <Path d="M17.5 11L19 17.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+                    </Svg>
                   </View>
                 )
               }
@@ -465,7 +472,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
         </View>
 
         {/* ══ SIGNATURES ══════════════════════════════════════════════════ */}
-        <View style={s.sigSection}>
+        <View style={s.sigSection} wrap={false}>
           <View style={s.divRow}>
             <View style={s.divLine} /><Text style={s.divLbl}>Signatures / Firmas</Text><View style={s.divLine} />
           </View>
@@ -527,7 +534,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
         </View>
 
         {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
-        <View style={s.footer} fixed>
+        <View style={s.footer}>
           <Text style={s.footerTxt}>{tenant.name}{tenant.address ? ` · ${tenant.address}` : ''} · VeloRent</Text>
           <Text style={s.footerTxt}>Contrat N° {contractNumber} · {generatedAt}</Text>
         </View>
