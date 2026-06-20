@@ -69,6 +69,8 @@ export async function POST(
     }
 
     // Créer la Checkout Session Stripe
+    // - Loyer uniquement débité maintenant
+    // - Carte sauvegardée (off_session) pour pré-autoriser la caution ensuite via le webhook
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       currency,
@@ -77,7 +79,7 @@ export async function POST(
         {
           price_data: {
             currency,
-            unit_amount: Math.round(Number(totalPrice) * 100), // centimes
+            unit_amount: Math.round(Number(totalPrice) * 100),
             product_data: {
               name: `Location — ${bikeName ?? bikeType}`,
               description: `Du ${new Date(startAt).toLocaleDateString('fr-FR')} au ${new Date(endAt).toLocaleDateString('fr-FR')} · ${tenant.name}`,
@@ -85,22 +87,12 @@ export async function POST(
           },
           quantity: 1,
         },
-        // Caution comme ligne séparée si > 0 (sera remboursée automatiquement)
-        ...(depositAmt > 0 ? [{
-          price_data: {
-            currency,
-            unit_amount: Math.round(depositAmt * 100),
-            product_data: {
-              name: `Caution de garantie — ${bikeName ?? bikeType}`,
-              description: 'Remboursée intégralement au retour du vélo en bon état',
-            },
-          },
-          quantity: 1,
-        }] : []),
       ],
       payment_intent_data: {
         metadata,
         description: `Réservation ${tenant.name} — ${bikeName ?? bikeType}`,
+        // Sauvegarder la carte pour pré-autoriser la caution ensuite
+        ...(depositAmt > 0 ? { setup_future_usage: 'off_session' } : {}),
       },
       metadata,
       success_url: `${baseUrl}/${slug}/book?payment=success&session_id={CHECKOUT_SESSION_ID}`,
