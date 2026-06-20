@@ -123,13 +123,23 @@ export async function POST(req: NextRequest) {
         Array.isArray(rental.accessories) ? rental.accessories as { label: string; qty: number; codes?: string[] }[] : []
 
       const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
-      const fmtES   = (d: Date) => d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-      const fmtTime = (d: Date) => d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-      const firstBike = rental.bikes[0]?.bike ?? bikes[0]
+      const fmtFull = (d: Date) => d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      const fmtShortFR = (d: Date) => d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      const fmtTime = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
+      const bikeList = (rental.bikes.length > 0
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? rental.bikes.map((rb: any) => rb.bike)
+        : bikes
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ).map((b: any) => ({
+        name: b?.name ?? '', code: b?.code ?? '',
+        serialNumber: b?.serialNumber ?? null, type: b?.type ?? null,
+      }))
 
       const pdfData: ContractData = {
         contractNumber,
-        generatedAt: new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        generatedAt: new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         tenant: { name: tenant?.name ?? '', address: tenant?.address, phone: tenant?.phone, email: tenant?.email },
         customer: {
           firstName: customer.firstName, lastName: customer.lastName,
@@ -137,18 +147,16 @@ export async function POST(req: NextRequest) {
           documentType: customer.documentType, documentNumber: customer.documentNumber,
           documentPhotoUrl: customer.documentPhotoUrl,
         },
-        bike: {
-          name:         firstBike?.name         ?? '',
-          code:         firstBike?.code         ?? '',
-          serialNumber: firstBike?.serialNumber ?? null,
-          type:         firstBike?.type         ?? null,
-        },
+        bikes: bikeList,
         rental: {
-          startAt:        fmtES(rental.startAt),
-          startTime:      fmtTime(rental.startAt),
-          expectedReturn: rental.expectedReturnAt
-            ? new Date(rental.expectedReturnAt).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
-            : null,
+          startAt:            fmtShortFR(rental.startAt),
+          startAtFull:        fmtFull(rental.startAt),
+          startTime:          fmtTime(rental.startAt),
+          expectedReturn:     rental.expectedReturnAt ? fmtShortFR(rental.expectedReturnAt) : null,
+          expectedReturnFull: rental.expectedReturnAt ? fmtFull(rental.expectedReturnAt) : null,
+          endAt:              null,
+          endAtFull:          null,
+          endTime:            null,
           paymentMethod: rental.paymentMethod,
           amountPaid:    Number(rental.amountPaid ?? 0).toFixed(2),
           depositAmount: Number(rental.depositAmount ?? 0).toFixed(2),
@@ -157,6 +165,7 @@ export async function POST(req: NextRequest) {
           accessories:   accessoriesList,
           openingSignature: rental.openingSignature,
           staffSignature:   rental.staffSignature,
+          closingSignature: null,
         },
       }
 
