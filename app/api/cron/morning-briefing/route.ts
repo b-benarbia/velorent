@@ -37,6 +37,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'maintenance',
     footer: '— VeloRent',
     late: 'de retard',
+    utilization: 'Taux d\'occupation',
+    dormantAlert: '💤 Vélos dormants (>14j sans location)',
+    dpSuggestion: '💡 Conseil IA',
+    dpHighUtil: 'Votre flotte est saturée à',
+    dpSuggestEnable: '→ Activez la tarification dynamique pour maximiser vos revenus ce soir.',
+    dpLowUtil: 'Flotte peu occupée',
+    dpSuggestDiscount: '→ Activez une réduction automatique pour attirer plus de clients.',
+    maintenanceDetail: '🔧 En maintenance',
   },
   es: {
     hello: 'Hola',
@@ -59,6 +67,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'mantenimiento',
     footer: '— VeloRent',
     late: 'de retraso',
+    utilization: 'Tasa de ocupación',
+    dormantAlert: '💤 Bicis dormidas (>14d sin alquilar)',
+    dpSuggestion: '💡 Consejo IA',
+    dpHighUtil: 'Tu flota está saturada al',
+    dpSuggestEnable: '→ Activa la tarificación dinámica para maximizar ingresos.',
+    dpLowUtil: 'Flota poco ocupada',
+    dpSuggestDiscount: '→ Activa un descuento automático para atraer más clientes.',
+    maintenanceDetail: '🔧 En mantenimiento',
   },
   en: {
     hello: 'Hello',
@@ -81,6 +97,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'maintenance',
     footer: '— VeloRent',
     late: 'overdue',
+    utilization: 'Utilization rate',
+    dormantAlert: '💤 Idle bikes (>14d without rental)',
+    dpSuggestion: '💡 AI Tip',
+    dpHighUtil: 'Your fleet is',
+    dpSuggestEnable: '→ Enable dynamic pricing to maximize revenue tonight.',
+    dpLowUtil: 'Fleet underutilized',
+    dpSuggestDiscount: '→ Enable auto-discount to attract more customers.',
+    maintenanceDetail: '🔧 In maintenance',
   },
   de: {
     hello: 'Hallo',
@@ -103,6 +127,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'Wartung',
     footer: '— VeloRent',
     late: 'überfällig',
+    utilization: 'Auslastungsrate',
+    dormantAlert: '💤 Ruhende Räder (>14T ohne Buchung)',
+    dpSuggestion: '💡 KI-Tipp',
+    dpHighUtil: 'Ihre Flotte ist zu',
+    dpSuggestEnable: '→ Aktivieren Sie dynamische Preise für mehr Umsatz.',
+    dpLowUtil: 'Flotte wenig ausgelastet',
+    dpSuggestDiscount: '→ Automatischen Rabatt aktivieren.',
+    maintenanceDetail: '🔧 In Wartung',
   },
   it: {
     hello: 'Ciao',
@@ -125,6 +157,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'manutenzione',
     footer: '— VeloRent',
     late: 'in ritardo',
+    utilization: 'Tasso di utilizzo',
+    dormantAlert: '💤 Bici inattive (>14g senza noleggio)',
+    dpSuggestion: '💡 Consiglio IA',
+    dpHighUtil: 'La tua flotta è occupata al',
+    dpSuggestEnable: '→ Attiva la tariffazione dinamica.',
+    dpLowUtil: 'Flotta poco occupata',
+    dpSuggestDiscount: '→ Attiva uno sconto automatico.',
+    maintenanceDetail: '🔧 In manutenzione',
   },
   nl: {
     hello: 'Hallo',
@@ -147,6 +187,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'onderhoud',
     footer: '— VeloRent',
     late: 'te laat',
+    utilization: 'Bezettingsgraad',
+    dormantAlert: '💤 Slapende fietsen (>14d zonder verhuur)',
+    dpSuggestion: '💡 AI Tip',
+    dpHighUtil: 'Uw vloot is voor',
+    dpSuggestEnable: '→ Activeer dynamische prijzen.',
+    dpLowUtil: 'Vloot weinig bezet',
+    dpSuggestDiscount: '→ Activeer automatische korting.',
+    maintenanceDetail: '🔧 In onderhoud',
   },
   pt: {
     hello: 'Olá',
@@ -169,6 +217,14 @@ const L: Record<string, Record<string, string>> = {
     maintenance: 'manutenção',
     footer: '— VeloRent',
     late: 'em atraso',
+    utilization: 'Taxa de ocupação',
+    dormantAlert: '💤 Bikes paradas (>14d sem aluguel)',
+    dpSuggestion: '💡 Dica IA',
+    dpHighUtil: 'Sua frota está a',
+    dpSuggestEnable: '→ Ative a precificação dinâmica.',
+    dpLowUtil: 'Frota pouco ocupada',
+    dpSuggestDiscount: '→ Ative desconto automático.',
+    maintenanceDetail: '🔧 Em manutenção',
   },
 }
 
@@ -219,6 +275,10 @@ function buildMessage(opts: {
   rentedBikes: number
   maintenanceBikes: number
   currency: string
+  // Nouvelles données enrichies
+  dormantBikeNames: string[]
+  maintenanceBikeNames: string[]
+  dpEnabled: boolean
 }): string {
   const {
     locale, ownerFirstName, shopName, now,
@@ -227,6 +287,7 @@ function buildMessage(opts: {
     monthRev, lastMonthRev,
     availableBikes, rentedBikes, maintenanceBikes,
     currency,
+    dormantBikeNames, maintenanceBikeNames, dpEnabled,
   } = opts
 
   const fmt = (n: number) => `${Math.round(n)}${currency}`
@@ -275,9 +336,35 @@ function buildMessage(opts: {
   lines.push(`· ${t(locale, 'month')} : ${fmt(monthRev)}  →  📈 ${t(locale, 'projection')} ~${fmt(projected)}${projectionPct ? `  ${projectionPct} vs mois dernier` : ''}`)
 
   // ── FLOTTE ──
+  const totalBikes = availableBikes + rentedBikes + maintenanceBikes
+  const utilizationRate = totalBikes > 0 ? Math.round((rentedBikes / totalBikes) * 100) : 0
   lines.push('')
   lines.push(`*${t(locale, 'fleet')}*`)
   lines.push(`${availableBikes} ${t(locale, 'available')} · ${rentedBikes} ${t(locale, 'rented')} · ${maintenanceBikes} ${t(locale, 'maintenance')}`)
+  lines.push(`${t(locale, 'utilization')} : ${utilizationRate}% ${'█'.repeat(Math.round(utilizationRate / 10))}${'░'.repeat(10 - Math.round(utilizationRate / 10))}`)
+
+  // Vélos en maintenance depuis trop longtemps
+  if (maintenanceBikeNames.length > 0) {
+    lines.push(`${t(locale, 'maintenanceDetail')} : ${maintenanceBikeNames.slice(0, 3).join(', ')}`)
+  }
+
+  // Vélos dormants (AVAILABLE mais pas loués depuis 14j+)
+  if (dormantBikeNames.length > 0) {
+    lines.push('')
+    lines.push(`*${t(locale, 'dormantAlert')}*`)
+    lines.push(dormantBikeNames.slice(0, 4).join(', '))
+  }
+
+  // ── CONSEIL IA DYNAMIQUE ──
+  if (utilizationRate >= 80 && !dpEnabled) {
+    lines.push('')
+    lines.push(`*${t(locale, 'dpSuggestion')}*`)
+    lines.push(`${t(locale, 'dpHighUtil')} ${utilizationRate}% ! ${t(locale, 'dpSuggestEnable')}`)
+  } else if (utilizationRate <= 30 && !dpEnabled && totalBikes >= 3) {
+    lines.push('')
+    lines.push(`*${t(locale, 'dpSuggestion')}*`)
+    lines.push(`${t(locale, 'dpLowUtil')} (${utilizationRate}%). ${t(locale, 'dpSuggestDiscount')}`)
+  }
 
   lines.push('')
   lines.push(t(locale, 'footer'))
@@ -312,10 +399,19 @@ export async function GET(req: NextRequest) {
   const tomorrow    = new Date(todayStart.getTime() + 24 * 3600 * 1000)
   const tomorrowEnd = new Date(tomorrow.getTime() + 24 * 3600 * 1000 - 1)
 
-  const tenants = await prisma.tenant.findMany({
-    where: { notifWhatsapp: { not: null } },
-    select: { id: true, name: true, phone: true, notifLocale: true, notifWhatsapp: true, currency: true },
-  })
+  // notifWhatsapp ajouté via migration SQL → pas dans le client Prisma généré
+  const tenants = await prisma.$queryRaw<Array<{
+    id: string
+    name: string
+    phone: string | null
+    notifLocale: string
+    notifWhatsapp: string
+    currency: string
+  }>>`
+    SELECT id, name, phone, "notifLocale", "notifWhatsapp", currency
+    FROM tenants
+    WHERE "notifWhatsapp" IS NOT NULL
+  `
 
   const results: { tenant: string; status: string }[] = []
 
@@ -331,6 +427,8 @@ export async function GET(req: NextRequest) {
       })
       const ownerFirstName = (owner?.name ?? '').split(' ')[0] || 'vous'
 
+      const dormantThreshold  = new Date(now.getTime() - 14 * 24 * 3600 * 1000) // 14j
+
       const [
         overdueRentalsRaw,
         activeCount,
@@ -343,7 +441,8 @@ export async function GET(req: NextRequest) {
         tomorrowCount,
         availableBikes,
         rentedBikes,
-        maintenanceBikes,
+        maintenanceBikesRaw,
+        dormantBikes,
       ] = await Promise.all([
         prisma.rental.findMany({
           where: { tenantId: tenant.id, status: 'ACTIVE', expectedReturnAt: { lt: now } },
@@ -366,8 +465,40 @@ export async function GET(req: NextRequest) {
         prisma.reservation.count({ where: { tenantId: tenant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startAt: { gte: tomorrow, lt: tomorrowEnd } } }),
         prisma.bike.count({ where: { tenantId: tenant.id, status: 'AVAILABLE' } }),
         prisma.bike.count({ where: { tenantId: tenant.id, status: 'RENTED' } }),
-        prisma.bike.count({ where: { tenantId: tenant.id, status: 'MAINTENANCE' } }),
+        // Vélos en maintenance avec leur nom
+        prisma.bike.findMany({
+          where: { tenantId: tenant.id, status: 'MAINTENANCE' },
+          select: { name: true },
+          take: 5,
+        }),
+        // Vélos AVAILABLE dont la dernière location remonte à >14j (dormants)
+        prisma.bike.findMany({
+          where: {
+            tenantId: tenant.id,
+            status: 'AVAILABLE',
+            OR: [
+              // Jamais loués
+              { rentals: { none: {} } },
+              // Dernière location terminée il y a plus de 14j
+              { rentals: { every: { endAt: { lt: dormantThreshold } } } },
+            ],
+          },
+          select: { name: true },
+          take: 5,
+        }),
       ])
+
+      // Config tarification dynamique — colonne optionnelle (migration récente)
+      let dpEnabled = false
+      try {
+        const dpRows = await prisma.$queryRaw<Array<{ dynamicPricingConfig: unknown }>>`
+          SELECT "dynamicPricingConfig" FROM tenants WHERE id = ${tenant.id}
+        `
+        const dpConfig = dpRows[0]?.dynamicPricingConfig as { enabled?: boolean } | null
+        dpEnabled = !!(dpConfig?.enabled)
+      } catch { /* colonne pas encore migrée */ }
+
+      const maintenanceBikes = maintenanceBikesRaw.length
 
       const overdueRentals = overdueRentalsRaw.map(r => ({
         name: `${r.customer.firstName} ${r.customer.lastName[0]}.`,
@@ -396,6 +527,9 @@ export async function GET(req: NextRequest) {
         rentedBikes,
         maintenanceBikes,
         currency: cur,
+        dormantBikeNames: dormantBikes.map(b => b.name),
+        maintenanceBikeNames: maintenanceBikesRaw.map(b => b.name),
+        dpEnabled,
       })
 
       await sendWhatsApp(tenant.notifWhatsapp!, message)

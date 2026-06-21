@@ -6,7 +6,7 @@ import {
   Bike, Zap, Mountain, Package, Heart, Flag, Gauge,
   Shield, BatteryCharging, ShoppingBasket,
   Info, Users, Eye, EyeOff, CheckCircle2, Waves, Activity,
-  Sparkles, Store, Percent, Lock, MessageCircle,
+  Sparkles, Store, Percent, Lock, MessageCircle, TrendingUp,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -140,8 +140,27 @@ export default function SettingsPage() {
   const [stripeError, setStripeError] = useState('')
   const [showStripeSecret, setShowStripeSecret] = useState(false)
 
+  // ── Dynamic Pricing ──
+  const [dp, setDp] = useState({
+    enabled:                  false,
+    minMultiplier:            0.7,
+    maxMultiplier:            1.5,
+    weekendBonus:             0.15,
+    highUtilizationThreshold: 0.8,
+    highUtilizationPremium:   0.20,
+    lowUtilizationThreshold:  0.4,
+    lowUtilizationDiscount:   0.15,
+    seasonalRules: [
+      { months: [6, 7, 8],  factor:  0.20 },
+      { months: [12, 1, 2], factor: -0.10 },
+    ],
+  })
+  const [dpLoading, setDpLoading] = useState(false)
+  const [dpSaved,   setDpSaved]   = useState(false)
+  const [dpError,   setDpError]   = useState('')
+
   // ── Notifications ──
-  const [notif, setNotif] = useState({ notifLocale: 'es', notifWhatsapp: '' })
+  const [notif, setNotif] = useState({ notifLocale: 'es', notifWhatsapp: '', googlePlaceId: '' })
   const [notifLoading, setNotifLoading] = useState(false)
   const [notifSaved, setNotifSaved] = useState(false)
   const [notifError, setNotifError] = useState('')
@@ -181,13 +200,35 @@ export default function SettingsPage() {
     }
   }, [])
 
+  const loadDp = useCallback(async () => {
+    const res = await fetch('/api/settings/dynamic-pricing')
+    if (res.ok) {
+      const data = await res.json()
+      setDp(data.config)
+    }
+  }, [])
+
   const loadNotif = useCallback(async () => {
     const res = await fetch('/api/settings/notifications')
     if (res.ok) {
       const data = await res.json()
-      setNotif({ notifLocale: data.notifLocale ?? 'es', notifWhatsapp: data.notifWhatsapp ?? '' })
+      setNotif({ notifLocale: data.notifLocale ?? 'es', notifWhatsapp: data.notifWhatsapp ?? '', googlePlaceId: data.googlePlaceId ?? '' })
     }
   }, [])
+
+  async function saveDp() {
+    setDpLoading(true); setDpError('')
+    try {
+      const res = await fetch('/api/settings/dynamic-pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dp),
+      })
+      if (res.ok) { setDpSaved(true); setTimeout(() => setDpSaved(false), 3000) }
+      else { const d = await res.json(); setDpError(d.error ?? 'Erreur') }
+    } catch { setDpError('Erreur réseau') }
+    setDpLoading(false)
+  }
 
   async function saveNotif() {
     setNotifLoading(true); setNotifError('')
@@ -213,7 +254,7 @@ export default function SettingsPage() {
     setStripeLoading(false)
   }
 
-  useEffect(() => { loadStaff(); loadPricing(); loadShop(); loadStripe(); loadNotif() }, [loadStaff, loadPricing, loadShop, loadStripe, loadNotif])
+  useEffect(() => { loadStaff(); loadPricing(); loadShop(); loadStripe(); loadNotif(); loadDp() }, [loadStaff, loadPricing, loadShop, loadStripe, loadNotif, loadDp])
 
   // ── Pricing helpers ──
   function setPrice(bikeType: BikeTypeKey, duration: DurationKey, value: string) {
@@ -679,11 +720,225 @@ export default function SettingsPage() {
             <Sparkles size={13} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
             <p style={{ fontSize: 12, color: '#6366F1', lineHeight: 1.6 }}>{t('notifAutoDetect')}</p>
           </div>
+
+          {/* Google Place ID */}
+          <div style={{ marginTop: 20 }}>
+            <label style={labelStyle}>Identifiant Google Maps de votre boutique</label>
+            <input
+              value={notif.googlePlaceId}
+              onChange={e => setNotif(n => ({ ...n, googlePlaceId: e.target.value }))}
+              placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
+              style={inputStyle}
+            />
+            <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>
+              Permet d&apos;envoyer vos clients directement sur votre page d&apos;avis Google après chaque location.{' '}
+              <a
+                href="https://developers.google.com/maps/documentation/places/web-service/place-id#find-id"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#6366F1' }}
+              >
+                Comment trouver mon identifiant ?
+              </a>
+            </p>
+          </div>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════
-          5. STAFF
+          5. TARIFICATION DYNAMIQUE IA
+      ═══════════════════════════════════════════════════ */}
+      <div style={card}>
+        <div style={cardHead}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <SectionIcon gradient="linear-gradient(135deg,#f59e0b,#d97706)" icon={<TrendingUp size={16} color="white" />} />
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('dpTitle')}</p>
+              <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('dpSubtitle')}</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Toggle */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <div
+                onClick={() => setDp(d => ({ ...d, enabled: !d.enabled }))}
+                style={{
+                  width: 44, height: 24, borderRadius: 12, cursor: 'pointer', transition: 'background .2s',
+                  background: dp.enabled ? '#f59e0b' : '#e2e8f0',
+                  position: 'relative', flexShrink: 0,
+                }}
+              >
+                <div style={{
+                  width: 18, height: 18, borderRadius: '50%', background: 'white',
+                  position: 'absolute', top: 3, transition: 'left .2s',
+                  left: dp.enabled ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: dp.enabled ? '#d97706' : '#94a3b8' }}>
+                {dp.enabled ? t('dpActive') : t('dpInactive')}
+              </span>
+            </label>
+            <SaveBtn onClick={saveDp} loading={dpLoading} saved={dpSaved} error={dpError} label={t('save')} />
+          </div>
+        </div>
+
+        <div className="settings-card-padding">
+          {/* Banner preview multiplicateur actuel */}
+          <div style={{
+            marginBottom: 24, padding: '16px 20px',
+            background: dp.enabled
+              ? 'linear-gradient(135deg,#fffbeb,#fef3c7)'
+              : 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
+            border: `1px solid ${dp.enabled ? '#fcd34d' : '#e2e8f0'}`,
+            borderRadius: 14, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap',
+          }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: dp.enabled ? '#92400e' : '#64748b', marginBottom: 4 }}>
+                {dp.enabled ? t('dpBannerTitleOn') : t('dpBannerTitleOff')}
+              </p>
+              <p style={{ fontSize: 12, color: dp.enabled ? '#a16207' : '#94a3b8', lineHeight: 1.7 }}>
+                {dp.enabled
+                  ? `×${dp.minMultiplier} → ×${dp.maxMultiplier} · wkd +${Math.round(dp.weekendBonus * 100)}% · ${t('dpHighTitle')} +${Math.round(dp.highUtilizationPremium * 100)}%`
+                  : t('dpBannerBodyOff')}
+              </p>
+            </div>
+            {dp.enabled && (
+              <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#d97706', lineHeight: 1 }}>×{dp.maxMultiplier.toFixed(1)}</div>
+                <div style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>{t('dpMaxLabel').split('\n').map((l, i) => <span key={i}>{l}{i===0&&<br/>}</span>)}</div>
+              </div>
+            )}
+          </div>
+
+          {dp.enabled && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+              {/* Bornes min/max */}
+              <div style={{ background: '#fafbff', borderRadius: 12, padding: 16, border: '1px solid #e0e7ff' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#4338ca', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366F1', display: 'inline-block' }} />
+                  {t('dpBoundsTitle')}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={labelStyle}>{t('dpMin')}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input type="number" min={0.5} max={1} step={0.05}
+                        value={dp.minMultiplier}
+                        onChange={e => setDp(d => ({ ...d, minMultiplier: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: 70 }}
+                      />
+                      <span style={{ fontSize: 12, color: '#64748b' }}>×  (−{Math.round((1 - dp.minMultiplier) * 100)}%)</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t('dpMax')}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input type="number" min={1} max={3} step={0.05}
+                        value={dp.maxMultiplier}
+                        onChange={e => setDp(d => ({ ...d, maxMultiplier: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: 70 }}
+                      />
+                      <span style={{ fontSize: 12, color: '#64748b' }}>×  (+{Math.round((dp.maxMultiplier - 1) * 100)}%)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Week-end */}
+              <div style={{ background: '#fafbff', borderRadius: 12, padding: 16, border: '1px solid #e0e7ff' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#4338ca', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366F1', display: 'inline-block' }} />
+                  {t('dpWeekendTitle')}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input type="range" min={0} max={0.5} step={0.05}
+                    value={dp.weekendBonus}
+                    onChange={e => setDp(d => ({ ...d, weekendBonus: Number(e.target.value) }))}
+                    style={{ flex: 1, accentColor: '#f59e0b' }}
+                  />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#d97706', minWidth: 42 }}>+{Math.round(dp.weekendBonus * 100)}%</span>
+                </div>
+                <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>{t('dpWeekendHint')}</p>
+              </div>
+
+              {/* Haute utilisation */}
+              <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, border: '1px solid #fed7aa' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f97316', display: 'inline-block' }} />
+                  {t('dpHighTitle')}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={labelStyle}>{t('dpThreshold')}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input type="number" min={0.5} max={1} step={0.05}
+                        value={dp.highUtilizationThreshold}
+                        onChange={e => setDp(d => ({ ...d, highUtilizationThreshold: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: 60 }}
+                      />
+                      <span style={{ fontSize: 12, color: '#64748b' }}>≥ {Math.round(dp.highUtilizationThreshold * 100)}% {t('dpRented')}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t('dpPremium')}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input type="number" min={0} max={1} step={0.05}
+                        value={dp.highUtilizationPremium}
+                        onChange={e => setDp(d => ({ ...d, highUtilizationPremium: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: 60 }}
+                      />
+                      <span style={{ fontSize: 12, color: '#f97316', fontWeight: 700 }}>+{Math.round(dp.highUtilizationPremium * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Basse utilisation */}
+              <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, border: '1px solid #bbf7d0' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#15803d', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                  {t('dpLowTitle')}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={labelStyle}>{t('dpThreshold')}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input type="number" min={0} max={0.6} step={0.05}
+                        value={dp.lowUtilizationThreshold}
+                        onChange={e => setDp(d => ({ ...d, lowUtilizationThreshold: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: 60 }}
+                      />
+                      <span style={{ fontSize: 12, color: '#64748b' }}>≤ {Math.round(dp.lowUtilizationThreshold * 100)}% {t('dpRented')}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t('dpDiscount')}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input type="number" min={0} max={0.4} step={0.05}
+                        value={dp.lowUtilizationDiscount}
+                        onChange={e => setDp(d => ({ ...d, lowUtilizationDiscount: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: 60 }}
+                      />
+                      <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 700 }}>−{Math.round(dp.lowUtilizationDiscount * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Note info */}
+          <div style={{ marginTop: 16, padding: '10px 14px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fcd34d', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <Sparkles size={13} color="#d97706" style={{ marginTop: 1, flexShrink: 0 }} />
+            <p style={{ fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
+              {t('dpNote')}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════
+          6. STAFF
       ═══════════════════════════════════════════════════ */}
       <div style={{ ...card, marginBottom: 0 }}>
         <div style={cardHead}>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 
 // ── Démo — tous les types de vélos ───────────────────────────────────────────
@@ -54,6 +54,9 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'Vérification...', required:'Champ requis', invalidEmail:'Email invalide',
     contactShop:'Contacter le shop', included:'Inclus', popular:'Populaire',
     bestValue:'Meilleur rapport', premium:'Premium', recommended:'Recommandé',
+    scarceTitle:'🔥 Forte demande !', scarceMsg:'Il ne reste que {n} vélo(s) disponible(s) sur ces dates. Réservez vite !',
+    payOnline:'Payer en ligne', payOnSite:'paiement sur place',
+    depositTitle:'Caution de garantie', depositHint:'Bloquée sur votre carte · remboursée au retour',
   },
   en: {
     bookTitle:'Book a bike', bookSubtitle:'Real-time availability',
@@ -74,6 +77,9 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'Checking...', required:'Required field', invalidEmail:'Invalid email',
     contactShop:'Contact the shop', included:'Included', popular:'Popular',
     bestValue:'Best value', premium:'Premium', recommended:'Recommended',
+    scarceTitle:'🔥 High demand!', scarceMsg:'Only {n} bike(s) left for these dates. Book now!',
+    payOnline:'Pay online', payOnSite:'pay at pickup',
+    depositTitle:'Security deposit', depositHint:'Held on your card · refunded on return',
   },
   es: {
     bookTitle:'Reservar una bici', bookSubtitle:'Disponibilidad en tiempo real',
@@ -94,6 +100,9 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'Comprobando...', required:'Campo obligatorio', invalidEmail:'Email inválido',
     contactShop:'Contactar con la tienda', included:'Incluido', popular:'Popular',
     bestValue:'Mejor relación', premium:'Premium', recommended:'Recomendado',
+    scarceTitle:'🔥 ¡Alta demanda!', scarceMsg:'¡Solo quedan {n} bici(s) disponible(s) en estas fechas. ¡Reserva ahora!',
+    payOnline:'Pagar en línea', payOnSite:'pago en recogida',
+    depositTitle:'Depósito de garantía', depositHint:'Retenido en tu tarjeta · devuelto al entregar',
   },
   de: {
     bookTitle:'Fahrrad buchen', bookSubtitle:'Echtzeit-Verfügbarkeit',
@@ -114,6 +123,9 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'Prüfen...', required:'Pflichtfeld', invalidEmail:'Ungültige E-Mail',
     contactShop:'Geschäft kontaktieren', included:'Inklusive', popular:'Beliebt',
     bestValue:'Bestes Preis-Leistungs-Verhältnis', premium:'Premium', recommended:'Empfohlen',
+    scarceTitle:'🔥 Hohe Nachfrage!', scarceMsg:'Nur noch {n} Fahrrad/räder verfügbar für diese Daten. Jetzt buchen!',
+    payOnline:'Online bezahlen', payOnSite:'Zahlung bei Abholung',
+    depositTitle:'Sicherheitskaution', depositHint:'Auf Ihrer Karte gesperrt · bei Rückgabe erstattet',
   },
   it: {
     bookTitle:'Prenota una bici', bookSubtitle:'Disponibilità in tempo reale',
@@ -134,6 +146,9 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'Verifica...', required:'Campo obbligatorio', invalidEmail:'Email non valida',
     contactShop:'Contatta il negozio', included:'Incluso', popular:'Popolare',
     bestValue:'Miglior rapporto', premium:'Premium', recommended:'Consigliato',
+    scarceTitle:'🔥 Alta domanda!', scarceMsg:'Rimaste solo {n} bici disponibili per queste date. Prenota subito!',
+    payOnline:'Paga online', payOnSite:'pagamento al ritiro',
+    depositTitle:'Deposito cauzionale', depositHint:'Bloccato sulla tua carta · rimborsato alla restituzione',
   },
   nl: {
     bookTitle:'Fiets reserveren', bookSubtitle:'Realtime beschikbaarheid',
@@ -154,6 +169,9 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'Controleren...', required:'Verplicht veld', invalidEmail:'Ongeldig e-mailadres',
     contactShop:'Contact opnemen', included:'Inbegrepen', popular:'Populair',
     bestValue:'Beste prijs-kwaliteit', premium:'Premium', recommended:'Aanbevolen',
+    scarceTitle:'🔥 Grote vraag!', scarceMsg:'Nog maar {n} fiets(en) beschikbaar voor deze data. Boek nu!',
+    payOnline:'Online betalen', payOnSite:'betalen bij afhaling',
+    depositTitle:'Borgsom', depositHint:'Vastgehouden op uw kaart · terugbetaald bij inlevering',
   },
   pt: {
     bookTitle:'Reservar uma bicicleta', bookSubtitle:'Disponibilidade em tempo real',
@@ -174,6 +192,68 @@ const LANGS: Record<string, Record<string, string>> = {
     loading:'A verificar...', required:'Campo obrigatório', invalidEmail:'Email inválido',
     contactShop:'Contactar a loja', included:'Incluído', popular:'Popular',
     bestValue:'Melhor relação', premium:'Premium', recommended:'Recomendado',
+    scarceTitle:'🔥 Alta procura!', scarceMsg:'Apenas {n} bicicleta(s) disponível(eis) para estas datas. Reserve agora!',
+    payOnline:'Pagar online', payOnSite:'pagamento na entrega',
+    depositTitle:'Depósito de garantia', depositHint:'Retido no seu cartão · devolvido na devolução',
+  },
+}
+
+// ── Calendrier i18n ───────────────────────────────────────────────────────────
+interface CalI18n {
+  months: string[]; weekdays: string[]
+  pickStart: string; pickEnd: string
+  startTime: string; endTime: string
+  clearDates: string; selectedRange: string
+}
+const CALENDAR_I18N: Record<string, CalI18n> = {
+  fr: {
+    months: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+    weekdays: ['Lu','Ma','Me','Je','Ve','Sa','Di'],
+    pickStart: 'Choisissez votre date de départ', pickEnd: 'Choisissez votre date de retour',
+    startTime: 'Heure de départ', endTime: 'Heure de retour',
+    clearDates: 'Effacer les dates', selectedRange: 'Période sélectionnée',
+  },
+  en: {
+    months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    weekdays: ['Mo','Tu','We','Th','Fr','Sa','Su'],
+    pickStart: 'Select your start date', pickEnd: 'Select your return date',
+    startTime: 'Pickup time', endTime: 'Return time',
+    clearDates: 'Clear dates', selectedRange: 'Selected period',
+  },
+  es: {
+    months: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+    weekdays: ['Lu','Ma','Mi','Ju','Vi','Sá','Do'],
+    pickStart: 'Selecciona la fecha de inicio', pickEnd: 'Selecciona la fecha de devolución',
+    startTime: 'Hora de recogida', endTime: 'Hora de devolución',
+    clearDates: 'Borrar fechas', selectedRange: 'Período seleccionado',
+  },
+  de: {
+    months: ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+    weekdays: ['Mo','Di','Mi','Do','Fr','Sa','So'],
+    pickStart: 'Startdatum wählen', pickEnd: 'Enddatum wählen',
+    startTime: 'Abholzeit', endTime: 'Rückgabezeit',
+    clearDates: 'Daten löschen', selectedRange: 'Ausgewählter Zeitraum',
+  },
+  it: {
+    months: ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],
+    weekdays: ['Lu','Ma','Me','Gi','Ve','Sa','Do'],
+    pickStart: 'Scegli la data di inizio', pickEnd: 'Scegli la data di fine',
+    startTime: 'Orario di ritiro', endTime: 'Orario di restituzione',
+    clearDates: 'Cancella date', selectedRange: 'Periodo selezionato',
+  },
+  nl: {
+    months: ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'],
+    weekdays: ['Ma','Di','Wo','Do','Vr','Za','Zo'],
+    pickStart: 'Kies uw startdatum', pickEnd: 'Kies uw einddatum',
+    startTime: 'Ophaaltijd', endTime: 'Retourtijd',
+    clearDates: 'Datums wissen', selectedRange: 'Geselecteerde periode',
+  },
+  pt: {
+    months: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+    weekdays: ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],
+    pickStart: 'Escolha a data de início', pickEnd: 'Escolha a data de devolução',
+    startTime: 'Hora de levantamento', endTime: 'Hora de devolução',
+    clearDates: 'Limpar datas', selectedRange: 'Período selecionado',
   },
 }
 
@@ -651,6 +731,18 @@ function getDefaultEnd(start: Date): Date {
   return d
 }
 
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
+function buildDateFromStr(dateStr: string | null, hour: number): Date {
+  if (!dateStr) {
+    const d = new Date(); d.setDate(d.getDate()+1); d.setHours(hour,0,0,0); return d
+  }
+  const [y,m,dd] = dateStr.split('-').map(Number)
+  return new Date(y, m-1, dd, hour, 0, 0)
+}
+
 // Badge logique : meilleur rapport = le moins cher, premium = le plus cher (si électrique)
 function getBadge(bike: Bike, allBikes: Bike[], t: Record<string, string>): { label: string; bg: string; color: string } | null {
   if (allBikes.length === 1) return { label: t.recommended, bg: '#6366F1', color: '#fff' }
@@ -661,6 +753,222 @@ function getBadge(bike: Bike, allBikes: Bike[], t: Record<string, string>): { la
   if ((bike.totalPrice ?? 0) === maxPrice && (bike.type === 'ELECTRIC' || bike.type === 'EMTB')) return { label: t.premium, bg: '#F59E0B', color: '#fff' }
   if (allBikes.indexOf(bike) === 0 && allBikes.length >= 3) return { label: t.popular, bg: '#6366F1', color: '#fff' }
   return null
+}
+
+// ── Calendrier de réservation ─────────────────────────────────────────────────
+
+interface CalendarProps {
+  startDateStr: string | null
+  endDateStr: string | null
+  onStart: (d: string) => void
+  onEnd: (d: string) => void
+  onClear: () => void
+  blockedDates: Set<string>
+  lang: string
+  purple: string
+  purpleLight: string
+  purpleDark: string
+}
+
+function BookingCalendar({
+  startDateStr, endDateStr, onStart, onEnd, onClear,
+  blockedDates, lang, purple, purpleLight, purpleDark,
+}: CalendarProps) {
+  const ci = CALENDAR_I18N[lang] ?? CALENDAR_I18N['en']
+  const todayStr = toDateStr(new Date())
+
+  const now = new Date()
+  const [viewYear,    setViewYear]    = useState(now.getFullYear())
+  const [viewMonth,   setViewMonth]   = useState(now.getMonth())  // 0-based
+  const [hoverDate,   setHoverDate]   = useState<string | null>(null)
+  const [isMobile,    setIsMobile]    = useState(false)
+  const [isVerySmall, setIsVerySmall] = useState(false)
+  const calRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const check = () => {
+      const w = calRef.current?.offsetWidth ?? 700
+      setIsMobile(w < 580)
+      setIsVerySmall(w < 340)
+    }
+    check()
+    const ro = new ResizeObserver(check)
+    if (calRef.current) ro.observe(calRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  // Selecting mode
+  const phase = !startDateStr ? 'start' : !endDateStr ? 'end' : 'done'
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y-1) }
+    else setViewMonth(m => m-1)
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y+1) }
+    else setViewMonth(m => m+1)
+  }
+
+  function handleDay(dateStr: string) {
+    if (dateStr < todayStr || blockedDates.has(dateStr)) return
+    if (phase === 'start' || phase === 'done') {
+      onStart(dateStr); onEnd('')
+    } else {
+      // phase === 'end'
+      if (dateStr <= startDateStr!) {
+        onStart(dateStr); onEnd('')
+      } else {
+        onEnd(dateStr)
+      }
+    }
+  }
+
+  function renderMonth(year: number, month: number) {
+    const firstDow = new Date(year, month, 1).getDay() // 0=Sun
+    const offset   = (firstDow + 6) % 7               // Mon-first
+    const daysInMonth = new Date(year, month+1, 0).getDate()
+    const cells: (string|null)[] = [
+      ...Array(offset).fill(null),
+      ...Array.from({ length: daysInMonth }, (_, i) => toDateStr(new Date(year, month, i+1))),
+    ]
+    while (cells.length % 7 !== 0) cells.push(null)
+
+    const rows: (string|null)[][] = []
+    for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i+7))
+
+    // Effective end for hover preview
+    const effectiveEnd = endDateStr || (phase === 'end' && hoverDate && hoverDate > (startDateStr ?? '') ? hoverDate : null)
+
+    return (
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Month label */}
+        <div style={{ textAlign:'center', fontWeight:700, color:'#0f172a', fontSize:14, marginBottom:14, letterSpacing:'-0.01em' }}>
+          {ci.months[month]} {year}
+        </div>
+        {/* Weekday headers */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(7, 1fr)' }}>
+          {ci.weekdays.map(w => (
+            <div key={w} style={{ textAlign:'center', fontSize:10, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', padding:'0 0 8px', letterSpacing:'0.04em' }}>
+              {w}
+            </div>
+          ))}
+        </div>
+        {/* Day rows */}
+        {rows.map((row, ri) => (
+          <div key={ri} style={{ display:'grid', gridTemplateColumns:'repeat(7, 1fr)' }}>
+            {row.map((ds, ci2) => {
+              if (!ds) return <div key={ci2} style={{ height:38 }} />
+
+              const isPast    = ds < todayStr
+              const isBlocked = blockedDates.has(ds)
+              const isDisabled = isPast || isBlocked
+              const isStart   = ds === startDateStr
+              const isEnd     = ds === endDateStr
+              const isToday   = ds === todayStr
+
+              // Range highlight
+              const inRange = !!(startDateStr && effectiveEnd && ds > startDateStr && ds < effectiveEnd)
+              const isHovered = ds === hoverDate && !isDisabled
+
+              // Cell bg: stretches across to show a continuous band
+              let cellBg = 'transparent'
+              if (inRange) cellBg = purpleLight
+              else if (isStart && effectiveEnd) cellBg = `linear-gradient(to right, transparent 50%, ${purpleLight} 50%)`
+              else if (isEnd) cellBg = `linear-gradient(to left, transparent 50%, ${purpleLight} 50%)`
+
+              // Circle
+              let circleBg    = 'transparent'
+              let circleColor = isDisabled ? '#d1d5db' : '#374151'
+              let fontW       = isToday ? 700 : 400
+
+              if (isStart || isEnd) {
+                circleBg = purple; circleColor = 'white'; fontW = 700
+              } else if (isHovered) {
+                circleBg = '#f1f5f9'; circleColor = '#0f172a'
+              }
+
+              const cellSize = isVerySmall ? 28 : 36
+              return (
+                <div
+                  key={ci2}
+                  onClick={() => handleDay(ds)}
+                  onMouseEnter={() => !isDisabled && setHoverDate(ds)}
+                  onMouseLeave={() => setHoverDate(null)}
+                  style={{ background: cellBg, padding:'1px 0', cursor: isDisabled ? 'default' : 'pointer' }}
+                >
+                  <div style={{
+                    width: cellSize, height: cellSize, display:'flex', alignItems:'center', justifyContent:'center',
+                    margin:'0 auto', borderRadius:'50%',
+                    background: circleBg, color: circleColor,
+                    fontSize: isVerySmall ? 11 : 13, fontWeight: fontW,
+                    outline: isToday && !isStart && !isEnd ? `2px solid ${purple}` : 'none',
+                    outlineOffset: -2,
+                    transition:'background 0.12s',
+                    position:'relative',
+                  }}>
+                    {new Date(ds + 'T12:00').getDate()}
+                    {/* Dot for fully-blocked */}
+                    {isBlocked && !isPast && (
+                      <span style={{ position:'absolute', bottom:3, left:'50%', transform:'translateX(-50%)', width:3, height:3, background:'#fca5a5', borderRadius:'50%' }} />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Second month (for desktop)
+  const [month2, year2] = viewMonth === 11 ? [0, viewYear+1] : [viewMonth+1, viewYear]
+
+  // Formatted selected range for display
+  const fmtSelected = () => {
+    if (!startDateStr) return null
+    const fmt = (s: string) => {
+      const d = new Date(s + 'T12:00')
+      return d.toLocaleDateString(lang + '-' + lang.toUpperCase(), { day:'numeric', month:'short' })
+    }
+    if (!endDateStr) return fmt(startDateStr) + ' →'
+    return `${fmt(startDateStr)} → ${fmt(endDateStr)}`
+  }
+
+  const selected = fmtSelected()
+
+  return (
+    <div ref={calRef} style={{ userSelect:'none' }}>
+      {/* ── Status hint ── */}
+      <div style={{ textAlign:'center', marginBottom:16 }}>
+        {selected ? (
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background: purpleLight, padding:'7px 16px', borderRadius:30 }}>
+            <span style={{ color: purple, fontSize:13, fontWeight:600 }}>{selected}</span>
+            <button onClick={onClear} style={{ background:'none', border:'none', color:'#9ca3af', fontSize:11, cursor:'pointer', padding:'0 0 0 4px', lineHeight:1 }}>✕</button>
+          </div>
+        ) : (
+          <p style={{ color:'#94a3b8', fontSize:13, margin:0 }}>
+            {phase === 'start' ? ci.pickStart : ci.pickEnd}
+          </p>
+        )}
+      </div>
+
+      {/* ── Month navigation ── */}
+      <div style={{ display:'flex', alignItems:'flex-start', gap: isMobile ? 0 : 24 }}>
+        {/* Prev arrow */}
+        <button onClick={prevMonth} style={{ background:'none', border:'1.5px solid #e5e7eb', borderRadius:10, width:44, height:44, cursor:'pointer', color:'#374151', fontSize:20, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', touchAction:'manipulation' }}>‹</button>
+
+        {/* Month(s) */}
+        <div style={{ flex:1, display:'flex', gap:24, minWidth:0 }}>
+          {renderMonth(viewYear, viewMonth)}
+          {!isMobile && renderMonth(year2, month2)}
+        </div>
+
+        {/* Next arrow */}
+        <button onClick={nextMonth} style={{ background:'none', border:'1.5px solid #e5e7eb', borderRadius:10, width:44, height:44, cursor:'pointer', color:'#374151', fontSize:20, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', touchAction:'manipulation' }}>›</button>
+      </div>
+    </div>
+  )
 }
 
 // ── Composant principal ───────────────────────────────────────────────────────
@@ -678,14 +986,44 @@ export default function BookPage() {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
 
-  const [startAt, setStartAt]   = useState<Date>(getDefaultStart)
-  const [endAt, setEndAt]       = useState<Date>(() => getDefaultEnd(getDefaultStart()))
+  // Calendrier — état de sélection
+  const [startDateStr, setStartDateStr] = useState<string | null>(null)
+  const [endDateStr, setEndDateStr]     = useState<string | null>(null)
+  const [startHour, setStartHour]       = useState(9)   // 9h par défaut
+  const [endHour, setEndHour]           = useState(18)  // 18h par défaut
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set())
+
+  // Dates dérivées (utilisées par le reste du code)
+  const startAt = buildDateFromStr(startDateStr, startHour)
+  const endAt   = buildDateFromStr(endDateStr, endHour)
+
   const [bikes, setBikes]       = useState<Bike[]>(isPreview ? DEMO_BIKES : [])
 
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null)
   const [form, setForm]         = useState({ name: '', email: '', phone: '' })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [confirmationCode, setConfirmationCode] = useState('')
+
+  // ── AI Advisor ────────────────────────────────────────────────────────────
+  const [advisor, setAdvisor] = useState<{
+    location: string
+    weather: {
+      days: Array<{ date: string; emoji: string; description: string; tempMax: number; tempMin: number; rain: number; windMax: number }>
+      avgTempMax: number
+      avgRain: number
+    } | null
+    advice: { headline: string; body: string; tips: string[]; badge: 'perfect' | 'good' | 'caution' | 'warning' }
+  } | null>(null)
+  const [advisorLoading, setAdvisorLoading] = useState(false)
+  const [scarcityCount, setScarcityCount]   = useState<number | null>(null)
+  const [isMobile, setIsMobile]             = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 480)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const t           = LANGS[lang]          ?? LANGS['en']
   const bikeLabels  = BIKE_TYPE_LABELS[lang] ?? BIKE_TYPE_LABELS['en']
@@ -709,8 +1047,48 @@ export default function BookPage() {
       .catch(() => {})
   }, [tenantSlug, isPreview])
 
+  // Charger les dates bloquées (flotte 100% occupée)
+  useEffect(() => {
+    if (!tenantSlug || isPreview) return
+    const from = toDateStr(new Date())
+    const future = new Date(); future.setMonth(future.getMonth() + 4)
+    const to = toDateStr(future)
+    fetch(`/api/public/${tenantSlug}/calendar?from=${from}&to=${to}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.blockedDates)) setBlockedDates(new Set(d.blockedDates)) })
+      .catch(() => {})
+  }, [tenantSlug, isPreview])
+
+  // ── Fetch silencieux du nombre de vélos dispo (scarcité) ─────────────────────
+  useEffect(() => {
+    if (!tenantSlug || !startDateStr || !endDateStr || isPreview) { setScarcityCount(null); return }
+    const start = new Date(`${startDateStr}T${String(startHour).padStart(2,'0')}:00`)
+    const end   = new Date(`${endDateStr}T${String(endHour).padStart(2,'0')}:00`)
+    if (end <= start) { setScarcityCount(null); return }
+    const ctrl = new AbortController()
+    fetch(`/api/public/${tenantSlug}/availability?startAt=${start.toISOString()}&endAt=${end.toISOString()}`, { signal: ctrl.signal })
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.bikes)) setScarcityCount(d.bikes.length) })
+      .catch(() => {})
+    return () => ctrl.abort()
+  }, [tenantSlug, startDateStr, endDateStr, startHour, endHour, isPreview])
+
+  // Déclenche le conseiller IA dès que les deux dates sont sélectionnées
+  useEffect(() => {
+    if (!tenantSlug || !startDateStr || !endDateStr || isPreview) return
+    setAdvisor(null)
+    setAdvisorLoading(true)
+    const start = new Date(`${startDateStr}T${String(startHour).padStart(2,'0')}:00`)
+    const end   = new Date(`${endDateStr}T${String(endHour).padStart(2,'0')}:00`)
+    fetch(`/api/public/${tenantSlug}/ai-advisor?startAt=${start.toISOString()}&endAt=${end.toISOString()}&lang=${lang}`)
+      .then(r => r.json())
+      .then(d => { if (d.advice) setAdvisor(d) })
+      .catch(() => {})
+      .finally(() => setAdvisorLoading(false))
+  }, [tenantSlug, startDateStr, endDateStr, startHour, endHour, lang, isPreview])
+
   const searchAvailability = useCallback(async () => {
-    if (!tenantSlug || endAt <= startAt) return
+    if (!tenantSlug || !startDateStr || !endDateStr || endAt <= startAt) return
     setLoading(true); setError('')
     try {
       const url = `/api/public/${tenantSlug}/availability?startAt=${startAt.toISOString()}&endAt=${endAt.toISOString()}`
@@ -721,7 +1099,7 @@ export default function BookPage() {
       setStep(2)
     } catch { setError('Erreur réseau') }
     finally { setLoading(false) }
-  }, [tenantSlug, startAt, endAt])
+  }, [tenantSlug, startAt, endAt, startDateStr, endDateStr])
 
   const submitReservation = useCallback(async () => {
     const errs: Record<string, string> = {}
@@ -758,11 +1136,13 @@ export default function BookPage() {
     setStep(1); setBikes([]); setSelectedBike(null)
     setForm({ name: '', email: '', phone: '' }); setFormErrors({})
     setConfirmationCode(''); setError('')
-    setStartAt(getDefaultStart()); setEndAt(getDefaultEnd(getDefaultStart()))
+    setStartDateStr(null); setEndDateStr(null); setStartHour(9); setEndHour(18)
   }
 
   const currency     = tenant?.currency ?? 'EUR'
-  const durationHours = (endAt.getTime() - startAt.getTime()) / 3600000
+  const durationHours = endAt > startAt
+    ? (endAt.getTime() - startAt.getTime()) / 3600000
+    : 0
   const steps        = [t.step1, t.step2, t.step3, t.step4]
   const currentStepIndex = step === 'success' ? 4 : (step as number) - 1
 
@@ -778,17 +1158,17 @@ export default function BookPage() {
 
       {/* ── Header ── */}
       <div style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
           {tenant?.logoUrl ? (
-            <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover' }} />
+            <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
           ) : (
-            <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <BikeSVG type="CITY" width={22} color="white"/>
             </div>
           )}
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{tenant?.name ?? '...'}</div>
-            {tenant?.address && <div style={{ fontSize: 11, color: '#94a3b8' }}>{tenant.address}</div>}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tenant?.name ?? '...'}</div>
+            {tenant?.address && <div style={{ fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tenant.address}</div>}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -807,8 +1187,8 @@ export default function BookPage() {
             <option value="pt">🇵🇹 PT</option>
           </select>
           {tenant?.phone && (
-            <a href={`tel:${tenant.phone}`} style={{ color: PURPLE, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: PURPLE_LIGHT, padding: '6px 12px', borderRadius: 8 }}>
-              {tenant.phone}
+            <a href={`tel:${tenant.phone}`} style={{ color: PURPLE, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: PURPLE_LIGHT, padding: '6px 12px', borderRadius: 8, whiteSpace: 'nowrap' }}>
+              {isMobile ? '📞' : tenant.phone}
             </a>
           )}
         </div>
@@ -851,42 +1231,212 @@ export default function BookPage() {
           </div>
         )}
 
-        {/* ── STEP 1 : Dates ── */}
+        {/* ── STEP 1 : Calendrier ── */}
         {step === 1 && (
           <div>
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>{t.bookTitle}</h1>
               <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>{t.bookSubtitle}</p>
             </div>
-            <div style={{ background: 'white', borderRadius: 20, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'grid', gap: 18 }}>
-                {[
-                  { label: t.startDate, val: startAt, onChange: (d: Date) => { setStartAt(d); if (d >= endAt) setEndAt(getDefaultEnd(d)) } },
-                  { label: t.endDate,   val: endAt,   onChange: (d: Date) => { if (d > startAt) setEndAt(d) }, min: new Date(startAt.getTime() + 3600000) },
-                ].map(({ label, val, onChange, min }) => (
-                  <div key={label}>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>{label}</label>
-                    <input type="datetime-local" value={toLocalInputValue(val)}
-                      min={min ? toLocalInputValue(min) : toLocalInputValue(new Date())}
-                      onChange={e => { const d = new Date(e.target.value); if (!isNaN(d.getTime())) onChange(d) }}
-                      style={{ width: '100%', padding: '13px 15px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 15, outline: 'none', boxSizing: 'border-box', color: '#0f172a', background: '#fafbff' }}
-                      onFocus={e => e.target.style.borderColor = PURPLE}
-                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-                    />
-                  </div>
-                ))}
-                {endAt > startAt && (
-                  <div style={{ background: PURPLE_LIGHT, borderRadius: 10, padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+            {/* ── Calendrier ── */}
+            <div style={{ background: 'white', borderRadius: 20, padding: isMobile ? '16px 10px' : '24px 20px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', marginBottom: 14 }}>
+              <BookingCalendar
+                startDateStr={startDateStr}
+                endDateStr={endDateStr}
+                onStart={d => { setStartDateStr(d); setEndDateStr(null) }}
+                onEnd={d => setEndDateStr(d || null)}
+                onClear={() => { setStartDateStr(null); setEndDateStr(null) }}
+                blockedDates={blockedDates}
+                lang={lang}
+                purple={PURPLE}
+                purpleLight='#DDD6FE'
+                purpleDark={PURPLE_DARK}
+              />
+            </div>
+
+            {/* ── Heures de départ / retour ── */}
+            {startDateStr && endDateStr && (
+              <div style={{ background: 'white', borderRadius: 16, padding: '18px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9', marginBottom: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  {[
+                    { label: (CALENDAR_I18N[lang] ?? CALENDAR_I18N['en']).startTime, val: startHour, set: setStartHour },
+                    { label: (CALENDAR_I18N[lang] ?? CALENDAR_I18N['en']).endTime,   val: endHour,   set: setEndHour   },
+                  ].map(({ label, val, set }) => (
+                    <div key={label}>
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                        {label}
+                      </label>
+                      <select
+                        value={val}
+                        onChange={e => set(Number(e.target.value))}
+                        style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 14, fontWeight: 600, color: '#0f172a', background: '#fafbff', outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236366f1' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                      >
+                        {Array.from({ length: 16 }, (_, i) => i + 7).map(h => (
+                          <option key={h} value={h}>{String(h).padStart(2,'0')}:00</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Durée */}
+                {durationHours > 0 && (
+                  <div style={{ marginTop: 12, background: PURPLE_LIGHT, borderRadius: 10, padding: '9px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: PURPLE, fontSize: 13, fontWeight: 600 }}>{t.duration}</span>
                     <span style={{ color: PURPLE_DARK, fontSize: 14, fontWeight: 700 }}>{fmtDuration(durationHours, t)}</span>
                   </div>
                 )}
-                <button onClick={searchAvailability} disabled={loading || endAt <= startAt}
-                  style={{ background: loading ? '#c7d2fe' : `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'white', border: 'none', borderRadius: 14, padding: '16px', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(99,102,241,0.35)', width: '100%', transition: 'all 0.2s' }}>
-                  {loading ? t.loading : t.checkAvailability}
-                </button>
               </div>
-            </div>
+            )}
+
+            {/* ── AI Advisor ── */}
+            {(advisorLoading || advisor) && startDateStr && endDateStr && (
+              <div style={{
+                borderRadius: 18, marginBottom: 14, overflow: 'hidden',
+                background: advisor
+                  ? advisor.advice.badge === 'perfect' ? 'linear-gradient(135deg,#ecfdf5,#d1fae5)'
+                  : advisor.advice.badge === 'good'    ? 'linear-gradient(135deg,#eff6ff,#dbeafe)'
+                  : advisor.advice.badge === 'caution' ? 'linear-gradient(135deg,#fffbeb,#fef3c7)'
+                  : 'linear-gradient(135deg,#fff1f2,#ffe4e6)'
+                  : 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
+                border: advisor
+                  ? advisor.advice.badge === 'perfect' ? '1.5px solid #6ee7b7'
+                  : advisor.advice.badge === 'good'    ? '1.5px solid #93c5fd'
+                  : advisor.advice.badge === 'caution' ? '1.5px solid #fcd34d'
+                  : '1.5px solid #fca5a5'
+                  : '1.5px solid #e2e8f0',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+              }}>
+                {/* Header */}
+                <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: advisor
+                      ? advisor.advice.badge === 'perfect' ? 'linear-gradient(135deg,#10b981,#059669)'
+                      : advisor.advice.badge === 'good'    ? 'linear-gradient(135deg,#3b82f6,#2563eb)'
+                      : advisor.advice.badge === 'caution' ? 'linear-gradient(135deg,#f59e0b,#d97706)'
+                      : 'linear-gradient(135deg,#ef4444,#dc2626)'
+                      : 'linear-gradient(135deg,#94a3b8,#64748b)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 16,
+                  }}>
+                    {advisorLoading ? '🤔' : advisor?.advice.badge === 'perfect' ? '✨' : advisor?.advice.badge === 'good' ? '👍' : advisor?.advice.badge === 'caution' ? '⚠️' : '🌧️'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 2 }}>
+                      Conseiller IA • {advisor?.location ?? '…'}
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>
+                      {advisorLoading ? 'Analyse de la météo en cours…' : advisor?.advice.headline}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Loading skeleton */}
+                {advisorLoading && (
+                  <div style={{ padding: '0 16px 16px' }}>
+                    {[80, 60, 90].map((w, i) => (
+                      <div key={i} style={{ height: 10, borderRadius: 6, marginBottom: 8, background: 'rgba(0,0,0,0.07)', width: `${w}%`, animation: 'pulse 1.5s infinite' }} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Advice body */}
+                {advisor && (
+                  <>
+                    <div style={{ padding: '0 16px 12px', fontSize: 13, color: '#374151', lineHeight: 1.65 }}>
+                      {advisor.advice.body}
+                    </div>
+
+                    {/* Tips pills */}
+                    <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {advisor.advice.tips.map((tip, i) => (
+                        <span key={i} style={{
+                          fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 20,
+                          background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(4px)',
+                          color: '#374151', border: '1px solid rgba(0,0,0,0.08)',
+                        }}>
+                          {tip}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Weather strip (si dispo) */}
+                    {advisor.weather?.days && advisor.weather.days.length > 0 && (
+                      <div style={{
+                        borderTop: '1px solid rgba(0,0,0,0.06)',
+                        padding: '10px 16px',
+                        display: 'flex', gap: 8, overflowX: 'auto',
+                        scrollbarWidth: 'none',
+                      }}>
+                        {advisor.weather.days.slice(0, 6).map((day) => (
+                          <div key={day.date} style={{
+                            flexShrink: 0, textAlign: 'center', minWidth: 52,
+                            background: 'rgba(255,255,255,0.6)', borderRadius: 10, padding: '8px 6px',
+                          }}>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', marginBottom: 4, textTransform: 'uppercase' }}>
+                              {new Date(day.date + 'T12:00').toLocaleDateString(lang, { weekday: 'short' })}
+                            </div>
+                            <div style={{ fontSize: 18, marginBottom: 4 }}>{day.emoji}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{day.tempMax}°</div>
+                            <div style={{ fontSize: 10, color: '#94a3b8' }}>{day.tempMin}°</div>
+                            {day.rain > 0 && (
+                              <div style={{ fontSize: 9, color: '#3b82f6', marginTop: 2 }}>💧{day.rain}mm</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Bandeau scarcité (Step 1) ── */}
+            {scarcityCount !== null && scarcityCount > 0 && scarcityCount < 3 && (
+              <div style={{
+                background: 'linear-gradient(135deg, #fff7ed, #ffedd5)',
+                border: '1.5px solid #fb923c',
+                borderRadius: 14,
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                animation: 'scarcePulse 2s ease-in-out infinite',
+              }}>
+                <div style={{ fontSize: 28, flexShrink: 0 }}>🔥</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#c2410c', marginBottom: 2 }}>
+                    {t.scarceTitle}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#9a3412', lineHeight: 1.4 }}>
+                    {t.scarceMsg.replace('{n}', String(scarcityCount))}
+                  </div>
+                </div>
+                <div style={{ marginLeft: 'auto', flexShrink: 0, background: '#ea580c', color: 'white', borderRadius: 20, padding: '5px 14px', fontSize: 11, fontWeight: 800 }}>
+                  {scarcityCount}
+                </div>
+              </div>
+            )}
+
+            {/* ── CTA ── */}
+            <button
+              onClick={searchAvailability}
+              disabled={loading || !startDateStr || !endDateStr || endAt <= startAt}
+              style={{
+                background: (loading || !startDateStr || !endDateStr)
+                  ? '#c7d2fe'
+                  : `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
+                color: 'white', border: 'none', borderRadius: 14, padding: '16px',
+                fontSize: 15, fontWeight: 700,
+                cursor: (loading || !startDateStr || !endDateStr) ? 'not-allowed' : 'pointer',
+                boxShadow: (startDateStr && endDateStr) ? '0 4px 16px rgba(99,102,241,0.35)' : 'none',
+                width: '100%', transition: 'all 0.2s',
+              }}
+            >
+              {loading ? t.loading : t.checkAvailability}
+            </button>
           </div>
         )}
 
@@ -908,6 +1458,27 @@ export default function BookPage() {
               </button>
             </div>
 
+            {/* ── Bandeau scarcité (Step 2) ── */}
+            {bikes.length > 0 && bikes.length < 3 && (
+              <div style={{
+                background: 'linear-gradient(135deg, #fff7ed, #ffedd5)',
+                border: '1.5px solid #fb923c',
+                borderRadius: 14,
+                padding: '12px 16px',
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                animation: 'scarcePulse 2s ease-in-out infinite',
+              }}>
+                <div style={{ fontSize: 26, flexShrink: 0 }}>🔥</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#c2410c', marginBottom: 2 }}>{t.scarceTitle}</div>
+                  <div style={{ fontSize: 12, color: '#9a3412', lineHeight: 1.4 }}>{t.scarceMsg.replace('{n}', String(bikes.length))}</div>
+                </div>
+              </div>
+            )}
+
             {bikes.length === 0 ? (
               <div style={{ background: 'white', borderRadius: 20, padding: 40, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>😔</div>
@@ -918,7 +1489,7 @@ export default function BookPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
                 {bikes.map(bike => {
                   const colors = BIKE_COLORS[bike.type] ?? BIKE_COLORS['CITY']
                   const badge  = getBadge(bike, bikes, t)
@@ -1109,9 +1680,9 @@ export default function BookPage() {
                   { label: t.yourEmail, value: form.email },
                   ...(form.phone ? [{ label: t.yourPhone, value: form.phone }] : []),
                 ].map(({ label, value }, i, arr) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < arr.length - 1 ? '1px solid #f8fafc' : 'none' }}>
-                    <span style={{ color: '#94a3b8', fontSize: 13 }}>{label}</span>
-                    <span style={{ color: '#0f172a', fontSize: 13, fontWeight: 600 }}>{value}</span>
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: i < arr.length - 1 ? '1px solid #f8fafc' : 'none' }}>
+                    <span style={{ color: '#94a3b8', fontSize: 13, flexShrink: 0 }}>{label}</span>
+                    <span style={{ color: '#0f172a', fontSize: 13, fontWeight: 600, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</span>
                   </div>
                 ))}
 
@@ -1122,8 +1693,8 @@ export default function BookPage() {
                   return (
                     <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d' }}>Caution de garantie</div>
-                        <div style={{ fontSize: 11, color: '#166534' }}>Bloquée sur votre carte — remboursée au retour</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d' }}>{t.depositTitle}</div>
+                        <div style={{ fontSize: 11, color: '#166534' }}>{t.depositHint}</div>
                       </div>
                       <div style={{ fontWeight: 800, fontSize: 15, color: '#15803d' }}>{depositAmt} {currency}</div>
                     </div>
@@ -1167,14 +1738,14 @@ export default function BookPage() {
                   {loading ? t.loading : (
                     <>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 8H2M2 12h20M2 16h6M12 16h4M18 16h4" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-                      Payer en ligne — {selectedBike.totalPrice ?? ''} {currency}
+                      {t.payOnline} — {selectedBike.totalPrice ?? ''} {currency}
                     </>
                   )}
                 </button>
                 {/* Option sans paiement (réservation classique) */}
                 <button onClick={submitReservation} disabled={loading}
                   style={{ background: 'white', color: '#64748b', border: '1.5px solid #e5e7eb', borderRadius: 14, padding: '13px', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', width: '100%' }}>
-                  {t.confirmBooking} (paiement sur place)
+                  {t.confirmBooking} ({t.payOnSite})
                 </button>
               </div>
             ) : (

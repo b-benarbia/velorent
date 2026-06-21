@@ -138,7 +138,11 @@
     "details": "Details",
     "startedOn": "Started on",
     "at": "at",
-    "closingInProgress": "Closing..."
+    "closingInProgress": "Closing...",
+    "reviewReceived": "Review received ({score}/5)",
+    "reviewRequestSent": "Review request sent",
+    "requestReview": "Request a Google review",
+    "reviewSending": "Sending…"
   },
   "newRental": {
     "title": "New rental",
@@ -452,7 +456,27 @@
     "stripeSecretConfigured": "Secret key configured",
     "stripeSecretPlaceholder": "Key already set — type to update",
     "stripeNoAccount": "No Stripe account yet? It's free, no monthly subscription.",
-    "stripeCreateAccount": "Create an account →"
+    "stripeCreateAccount": "Create an account →",
+    "dpTitle": "Smart pricing",
+    "dpSubtitle": "Automatically adjusts prices based on demand and season",
+    "dpActive": "Active",
+    "dpInactive": "Inactive",
+    "dpBannerTitleOn": "How pricing works",
+    "dpBannerTitleOff": "Dynamic pricing disabled",
+    "dpBannerBodyOff": "Enable to let your prices adjust based on demand, weekends and season — effortlessly.",
+    "dpMaxLabel": "max peak season\nbusy weekend",
+    "dpBoundsTitle": "Price bounds",
+    "dpMin": "Minimum",
+    "dpMax": "Maximum",
+    "dpWeekendTitle": "Weekend (Sat. & Sun.)",
+    "dpWeekendHint": "Surcharge applied on Saturday and Sunday",
+    "dpHighTitle": "Fleet at capacity",
+    "dpThreshold": "Threshold",
+    "dpPremium": "Surcharge",
+    "dpLowTitle": "Low fleet occupancy",
+    "dpDiscount": "Discount",
+    "dpNote": "Pricing is applied automatically on the booking widget. Customers see the final price, never the multiplier. Peak season: Jun–Aug +20%, winter Dec–Feb −10%.",
+    "dpRented": "rented"
   },
   "contract": {
     "title": "Rental contract",

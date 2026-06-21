@@ -138,7 +138,11 @@
     "details": "Details",
     "startedOn": "Started on",
     "at": "at",
-    "closingInProgress": "Encerrando..."
+    "closingInProgress": "Encerrando...",
+    "reviewReceived": "Avaliação recebida ({score}/5)",
+    "reviewRequestSent": "Pedido de avaliação enviado",
+    "requestReview": "Pedir avaliação no Google",
+    "reviewSending": "A enviar…"
   },
   "newRental": {
     "title": "Novo aluguel",
@@ -452,7 +456,27 @@
     "stripeSecretConfigured": "Chave secreta configurada",
     "stripeSecretPlaceholder": "Chave já configurada — escrever para atualizar",
     "stripeNoAccount": "Ainda sem conta Stripe? É gratuito, sem subscrição mensal.",
-    "stripeCreateAccount": "Criar conta →"
+    "stripeCreateAccount": "Criar conta →",
+    "dpTitle": "Preços inteligentes",
+    "dpSubtitle": "Ajusta automaticamente os preços com base na demanda e na temporada",
+    "dpActive": "Ativo",
+    "dpInactive": "Inativo",
+    "dpBannerTitleOn": "Como funciona a precificação",
+    "dpBannerTitleOff": "Preços dinâmicos desativados",
+    "dpBannerBodyOff": "Ative para que seus preços se ajustem conforme a demanda, os fins de semana e a temporada.",
+    "dpMaxLabel": "máx alta temporada\nfim de semana cheio",
+    "dpBoundsTitle": "Limites de preço",
+    "dpMin": "Mínimo",
+    "dpMax": "Máximo",
+    "dpWeekendTitle": "Fim de semana (sáb. & dom.)",
+    "dpWeekendHint": "Acréscimo aplicado no sábado e domingo",
+    "dpHighTitle": "Frota saturada",
+    "dpThreshold": "Limite",
+    "dpPremium": "Acréscimo",
+    "dpLowTitle": "Frota pouco ocupada",
+    "dpDiscount": "Desconto",
+    "dpNote": "A precificação é aplicada automaticamente no widget de reserva. Os clientes veem o preço final, nunca o multiplicador. Alta temporada: jun–ago +20%, inverno dez–fev −10%.",
+    "dpRented": "alugadas"
   },
   "contract": {
     "title": "Contrato de aluguer",

@@ -5,8 +5,11 @@
  * Utilisé par le widget de réservation public /[tenant]/book
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse }                from 'next/server'
+import { prisma }                                   from '@/lib/prisma'
+import { calculateMultiplier, applyMultiplier }     from '@/lib/dynamicPricing'
+import type { DynamicPricingConfig }                from '@/lib/dynamicPricingConfig'
+import { DEFAULT_CONFIG }                           from '@/lib/dynamicPricingConfig'
 
 export async function GET(
   req: NextRequest,
@@ -25,13 +28,26 @@ export async function GET(
         id: true, name: true, address: true, phone: true, email: true,
         website: true, logoUrl: true, currency: true,
         pricingGrid: true, depositConfig: true, insuranceConfig: true,
-        stripeSecretKey: true, // pour indiquer si Stripe est actif (ne pas renvoyer la clé !)
       },
     })
 
     if (!tenant) {
       return NextResponse.json({ error: 'Shop introuvable' }, { status: 404 })
     }
+
+    // Champs ajoutés via SQL migration — non disponibles dans le client Prisma généré
+    const extraRows = await prisma.$queryRaw<Array<{
+      stripeSecretKey:       string | null
+      dynamicPricingConfig:  unknown
+    }>>`
+      SELECT "stripeSecretKey", "dynamicPricingConfig"
+      FROM tenants WHERE id = ${tenant.id}
+    `
+    const stripeSecretKey = extraRows[0]?.stripeSecretKey ?? null
+    const hasStripe       = !!stripeSecretKey
+    const dpConfig: DynamicPricingConfig = extraRows[0]?.dynamicPricingConfig
+      ? { ...DEFAULT_CONFIG, ...(extraRows[0].dynamicPricingConfig as object) }
+      : DEFAULT_CONFIG
 
     // Sans dates → retourne juste les infos du shop + tous les vélos dispo
     if (!startAt || !endAt) {
@@ -40,8 +56,7 @@ export async function GET(
         select: { id: true, name: true, type: true, dailyRate: true, hourlyRate: true, imageUrl: true },
         orderBy: { type: 'asc' },
       })
-      const { stripeSecretKey: sk, ...tp } = tenant as typeof tenant & { stripeSecretKey?: string }
-      return NextResponse.json({ tenant: { ...tp, hasStripe: !!sk }, bikes, available: true })
+      return NextResponse.json({ tenant: { ...tenant, hasStripe }, bikes, available: true })
     }
 
     const start = new Date(startAt)
@@ -69,16 +84,22 @@ export async function GET(
           expectedReturnAt: { gt: start },
           startAt: { lt: end },
         },
-        select: { bikeId: true, bikes: { select: { bikeId: true } } },
+        select: { id: true, bikeId: true },
       }),
     ])
 
+    // Récupérer aussi les vélos multi-bike via rental_bikes (raw pour compat client Prisma)
+    const activeRentalIds = activeRentals.map(r => r.id)
+    const multiBikeRows: Array<{ bike_id: string }> = activeRentalIds.length > 0
+      ? await prisma.$queryRaw`
+          SELECT bike_id FROM rental_bikes WHERE rental_id = ANY(${activeRentalIds}::uuid[])
+        `
+      : []
+
     const busyBikeIds = new Set<string>([
       ...busyReservations.map(r => r.bikeId!),
-      ...activeRentals.flatMap(r => [
-        ...(r.bikeId ? [r.bikeId] : []),
-        ...r.bikes.map(b => b.bikeId),
-      ]),
+      ...activeRentals.filter(r => r.bikeId).map(r => r.bikeId!),
+      ...multiBikeRows.map(r => r.bike_id),
     ])
 
     // Vélos disponibles
@@ -112,43 +133,63 @@ export async function GET(
     const durationKey = getDurationKey(durationHours)
     const grid = tenant.pricingGrid as Record<string, Record<string, number>> | null
 
+    // ── Tarification dynamique ────────────────────────────────────────────
+    const totalBikes   = allBikes.length
+    const busyCount    = busyBikeIds.size
+    const utilizationRate = totalBikes > 0 ? busyCount / totalBikes : 0
+
+    const pricing = calculateMultiplier({
+      config:          dpConfig,
+      startDate:       start,
+      utilizationRate,
+    })
+
     // Calculer le prix pour chaque vélo
     const bikesWithPrice = availableBikes.map(bike => {
-      let price: number | null = null
+      let basePrice: number | null = null
       const typeKey = bike.type.toLowerCase()
 
       // 1. Chercher dans la pricingGrid
       if (grid && grid[bike.type]?.[durationKey] != null) {
-        price = grid[bike.type][durationKey]
+        basePrice = grid[bike.type][durationKey]
       } else if (grid && grid[typeKey]?.[durationKey] != null) {
-        price = grid[typeKey][durationKey]
+        basePrice = grid[typeKey][durationKey]
       }
 
       // 2. Fallback sur dailyRate × jours
-      if (price === null) {
+      if (basePrice === null) {
         const days = Math.max(1, Math.ceil(durationDays))
-        price = Number(bike.dailyRate) * days
+        basePrice = Number(bike.dailyRate) * days
       }
+
+      const totalPrice = applyMultiplier(basePrice, pricing.multiplier)
 
       return {
         ...bike,
-        dailyRate: Number(bike.dailyRate),
-        hourlyRate: bike.hourlyRate ? Number(bike.hourlyRate) : null,
-        totalPrice: Math.round(price * 100) / 100,
+        dailyRate:    Number(bike.dailyRate),
+        hourlyRate:   bike.hourlyRate ? Number(bike.hourlyRate) : null,
+        basePrice:    Math.round(basePrice * 100) / 100,
+        totalPrice,
         durationKey,
         durationHours: Math.round(durationHours * 10) / 10,
       }
     })
 
     // Sécurité : ne jamais renvoyer la clé secrète Stripe au client
-    const { stripeSecretKey, ...tenantPublic } = tenant as typeof tenant & { stripeSecretKey?: string }
-    const tenantResponse = { ...tenantPublic, hasStripe: !!stripeSecretKey }
+    const tenantResponse = { ...tenant, hasStripe }
 
     return NextResponse.json({
-      tenant: tenantResponse,
-      bikes: bikesWithPrice,
+      tenant:        tenantResponse,
+      bikes:         bikesWithPrice,
       durationHours: Math.round(durationHours * 10) / 10,
       durationKey,
+      pricing: {
+        multiplier:      pricing.multiplier,
+        label:           pricing.label,
+        badge:           pricing.badge,
+        factors:         pricing.factors,
+        utilizationRate: Math.round(utilizationRate * 100),
+      },
     })
 
   } catch (err) {

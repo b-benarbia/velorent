@@ -12,6 +12,8 @@ interface Rental {
   bike: { id: string; name: string; code: string; dailyRate: number } | null  // backward compat
   bikes: { bike: { id: string; name: string; code: string; dailyRate: number } }[]
   customer: { id: string; firstName: string; lastName: string; phone: string | null; documentPhotoUrl: string | null }
+  reviewSentAt?: string | null
+  reviewScore?: number | null
 }
 
 function PhotoModal({ src, onClose }: { src: string; onClose: () => void }) {
@@ -61,6 +63,8 @@ export default function RentalDetailPage() {
   const [hasSigned, setHasSigned] = useState(false)
   const [hasStaffSigned, setHasStaffSigned] = useState(false)
   const [photoOpen, setPhotoOpen] = useState(false)
+  const [reviewSending, setReviewSending] = useState(false)
+  const [reviewSent, setReviewSent] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const staffCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -476,6 +480,57 @@ export default function RentalDetailPage() {
             <p className="text-center text-xs text-slate-400 mt-2">
               {!hasSigned && !hasStaffSigned ? t('bothSigRequired') : !hasSigned ? t('customerSigMissing') : t('staffSigMissing')}
             </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Bouton demande d'avis Google (location COMPLETED, client a un téléphone) ── */}
+      {!isActive && rental.status === 'COMPLETED' && rental.customer.phone && (
+        <div className="mt-4">
+          {rental.reviewScore != null ? (
+            <div className="flex items-center gap-2 rounded-2xl p-4 text-sm font-semibold"
+              style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {[1,2,3,4,5].map(n => (
+                  <svg key={n} width="14" height="14" viewBox="0 0 24 24" fill={(rental.reviewScore ?? 0) >= n ? '#16a34a' : '#bbf7d0'}>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                ))}
+              </div>
+              <span>{t('reviewReceived').replace('{score}', String(rental.reviewScore))}</span>
+            </div>
+          ) : reviewSent || rental.reviewSentAt ? (
+            <div className="flex items-center gap-2 rounded-2xl p-4 text-sm font-medium"
+              style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              {t('reviewRequestSent')}
+            </div>
+          ) : (
+            <button
+              disabled={reviewSending}
+              onClick={async () => {
+                setReviewSending(true)
+                const res = await fetch(`/api/rentals/${id}/send-review`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ lang: 'en' }),
+                })
+                setReviewSending(false)
+                if (res.ok) setReviewSent(true)
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-white transition-opacity"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
+                opacity: reviewSending ? 0.6 : 1,
+              }}
+            >
+              {reviewSending
+                ? <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              }
+              {reviewSending ? t('reviewSending') : t('requestReview')}
+            </button>
           )}
         </div>
       )}

@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/late-chase",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/review-request",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

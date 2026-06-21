@@ -1,0 +1,2 @@
+-- Add dynamic pricing config to Tenant
+ALTER TABLE "tenants" ADD COLUMN IF NOT EXISTS "dynamicPricingConfig" JSONB DEFAULT '{"enabled":false,"minMultiplier":0.7,"maxMultiplier":1.5,"weekendBonus":0.15,"highUtilizationThreshold":0.8,"highUtilizationPremium":0.20,"lowUtilizationThreshold":0.4,"lowUtilizationDiscount":0.15,"seasonalRules":[{"months":[6,7,8],"factor":0.20},{"months":[12,1,2],"factor":-0.10}]}'::jsonb;

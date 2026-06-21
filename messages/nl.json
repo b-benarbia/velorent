@@ -138,7 +138,11 @@
     "details": "Details",
     "startedOn": "Started on",
     "at": "at",
-    "closingInProgress": "Sluiten..."
+    "closingInProgress": "Sluiten...",
+    "reviewReceived": "Beoordeling ontvangen ({score}/5)",
+    "reviewRequestSent": "Beoordelingsverzoek verzonden",
+    "requestReview": "Google-beoordeling aanvragen",
+    "reviewSending": "Verzenden…"
   },
   "newRental": {
     "title": "Nieuwe verhuur",
@@ -452,7 +456,27 @@
     "stripeSecretConfigured": "Geheime sleutel geconfigureerd",
     "stripeSecretPlaceholder": "Sleutel al ingesteld — typ om bij te werken",
     "stripeNoAccount": "Nog geen Stripe-account? Gratis, zonder maandelijks abonnement.",
-    "stripeCreateAccount": "Account aanmaken →"
+    "stripeCreateAccount": "Account aanmaken →",
+    "dpTitle": "Slimme prijzen",
+    "dpSubtitle": "Past prijzen automatisch aan op basis van vraag en seizoen",
+    "dpActive": "Actief",
+    "dpInactive": "Inactief",
+    "dpBannerTitleOn": "Hoe prijsstelling werkt",
+    "dpBannerTitleOff": "Dynamische prijzen uitgeschakeld",
+    "dpBannerBodyOff": "Activeer om prijzen aan te passen op basis van vraag, weekends en seizoen.",
+    "dpMaxLabel": "max hoogseizoen\ndruk weekend",
+    "dpBoundsTitle": "Prijsgrenzen",
+    "dpMin": "Minimum",
+    "dpMax": "Maximum",
+    "dpWeekendTitle": "Weekend (za. & zo.)",
+    "dpWeekendHint": "Toeslag toegepast op zaterdag en zondag",
+    "dpHighTitle": "Vloot vol",
+    "dpThreshold": "Drempelwaarde",
+    "dpPremium": "Toeslag",
+    "dpLowTitle": "Vloot weinig bezet",
+    "dpDiscount": "Korting",
+    "dpNote": "Prijsstelling wordt automatisch toegepast op de boekingswidget. Klanten zien de eindprijs, nooit de vermenigvuldiger. Hoogseizoen: jun–aug +20%, winter dec–feb −10%.",
+    "dpRented": "verhuurd"
   },
   "contract": {
     "title": "Huurovereenkomst",

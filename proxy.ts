@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
-const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/seed', '/api/book', '/book', '/_next', '/favicon', '/api/webhooks', '/api/cron', '/api/ai/voice-chase', '/api/public']
+const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/seed', '/api/book', '/book', '/_next', '/favicon', '/api/webhooks', '/api/cron', '/api/ai/voice-chase', '/api/public', '/review']
 
-// Booking public pages: /[tenant]/book (any tenant)
+// Booking + review public pages: /[tenant]/book, /review/[slug]/[token]
 const TENANT_PUBLIC_SUFFIXES = ['/book']
 
 export default async function proxy(request: NextRequest) {

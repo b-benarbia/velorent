@@ -138,7 +138,11 @@
     "details": "Détails",
     "startedOn": "Démarré le",
     "at": "à",
-    "closingInProgress": "Clôture en cours..."
+    "closingInProgress": "Clôture en cours...",
+    "reviewReceived": "Avis reçu ({score}/5)",
+    "reviewRequestSent": "Demande d'avis envoyée",
+    "requestReview": "Demander un avis Google",
+    "reviewSending": "Envoi…"
   },
   "newRental": {
     "title": "Nouvelle location",
@@ -452,7 +456,27 @@
     "stripeSecretConfigured": "Clé secrète configurée",
     "stripeSecretPlaceholder": "Clé déjà configurée — saisir pour modifier",
     "stripeNoAccount": "Pas encore de compte Stripe ? C'est gratuit, sans abonnement mensuel.",
-    "stripeCreateAccount": "Créer un compte →"
+    "stripeCreateAccount": "Créer un compte →",
+    "dpTitle": "Tarification intelligente",
+    "dpSubtitle": "Ajuste automatiquement les prix selon la demande et la saison",
+    "dpActive": "Actif",
+    "dpInactive": "Inactif",
+    "dpBannerTitleOn": "Comment fonctionne la tarification",
+    "dpBannerTitleOff": "Tarification dynamique désactivée",
+    "dpBannerBodyOff": "Activez pour que vos prix s'ajustent selon la demande, le weekend et la saison — sans effort.",
+    "dpMaxLabel": "max haute saison\nweek-end saturé",
+    "dpBoundsTitle": "Bornes de prix",
+    "dpMin": "Minimum",
+    "dpMax": "Maximum",
+    "dpWeekendTitle": "Week-end (sam. & dim.)",
+    "dpWeekendHint": "Prime appliquée le samedi et dimanche",
+    "dpHighTitle": "Flotte saturée",
+    "dpThreshold": "Seuil",
+    "dpPremium": "Prime",
+    "dpLowTitle": "Flotte peu occupée",
+    "dpDiscount": "Réduction",
+    "dpNote": "La tarification s'applique automatiquement sur le widget de réservation. Les clients voient le prix final, jamais le multiplicateur. Haute saison : juin-août +20%, hiver déc-fév −10%.",
+    "dpRented": "loués"
   },
   "contract": {
     "title": "Contrat de location",

@@ -138,7 +138,11 @@
     "details": "Details",
     "startedOn": "Started on",
     "at": "at",
-    "closingInProgress": "Schließen..."
+    "closingInProgress": "Schließen...",
+    "reviewReceived": "Bewertung erhalten ({score}/5)",
+    "reviewRequestSent": "Bewertungsanfrage gesendet",
+    "requestReview": "Google-Bewertung anfordern",
+    "reviewSending": "Senden…"
   },
   "newRental": {
     "title": "Neue Vermietung",
@@ -452,7 +456,27 @@
     "stripeSecretConfigured": "Geheimer Schlüssel konfiguriert",
     "stripeSecretPlaceholder": "Schlüssel bereits gesetzt — zum Ändern eingeben",
     "stripeNoAccount": "Noch kein Stripe-Konto? Kostenlos, ohne monatliches Abonnement.",
-    "stripeCreateAccount": "Konto erstellen →"
+    "stripeCreateAccount": "Konto erstellen →",
+    "dpTitle": "Intelligente Preise",
+    "dpSubtitle": "Passt Preise automatisch je nach Nachfrage und Saison an",
+    "dpActive": "Aktiv",
+    "dpInactive": "Inaktiv",
+    "dpBannerTitleOn": "So funktioniert die Preisgestaltung",
+    "dpBannerTitleOff": "Dynamische Preise deaktiviert",
+    "dpBannerBodyOff": "Aktivieren, damit sich Preise je nach Nachfrage, Wochenende und Saison anpassen.",
+    "dpMaxLabel": "max Hochsaison\nausgel. Wochenende",
+    "dpBoundsTitle": "Preisgrenzen",
+    "dpMin": "Minimum",
+    "dpMax": "Maximum",
+    "dpWeekendTitle": "Wochenende (Sa. & So.)",
+    "dpWeekendHint": "Aufschlag samstags und sonntags",
+    "dpHighTitle": "Flotte ausgelastet",
+    "dpThreshold": "Schwellenwert",
+    "dpPremium": "Aufschlag",
+    "dpLowTitle": "Flotte wenig ausgelastet",
+    "dpDiscount": "Rabatt",
+    "dpNote": "Die Preisgestaltung wird automatisch auf dem Buchungs-Widget angewendet. Kunden sehen den Endpreis, nie den Multiplikator. Hochsaison: Jun–Aug +20%, Winter Dez–Feb −10%.",
+    "dpRented": "vermietet"
   },
   "contract": {
     "title": "Mietvertrag",
