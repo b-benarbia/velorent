@@ -244,7 +244,7 @@ export async function POST(req: NextRequest) {
     const bookingMatch = aiText.match(/##BOOKING##(\{.*?\})##/)
     if (bookingMatch) {
       // Retirer le bloc JSON du message visible
-      aiText = aiText.replace(/##BOOKING##.*?##/s, '').trim()
+      aiText = aiText.replace(/##BOOKING##[\s\S]*?##/, '').trim()
 
       try {
         const bookingData = JSON.parse(bookingMatch[1])

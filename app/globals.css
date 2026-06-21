@@ -3,7 +3,9 @@
 :root {
   --background: #F8FAFC;
   --foreground: #0f172a;
-  --accent: #6366F1;
+  --accent: #0D9488;
+  --accent-dark: #0F766E;
+  --accent-light: #F0FDFA;
   --font-sans: var(--font-inter);
   --spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
@@ -16,11 +18,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  /* Prevent any accidental horizontal scroll on mobile */
   overflow-x: hidden;
 }
 
-/* Ensure the root never causes horizontal scroll */
 html {
   overflow-x: hidden;
 }
@@ -38,7 +38,7 @@ html {
 * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
 
 /* ── Sélection texte ── */
-::selection { background: rgba(99, 102, 241, 0.15); color: #4338ca; }
+::selection { background: rgba(13, 148, 136, 0.15); color: #0F766E; }
 
 /* ── Inputs ── */
 input, select, textarea {
@@ -53,7 +53,7 @@ input::placeholder, textarea::placeholder {
 ───────────────────────────────────────── */
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -83,8 +83,8 @@ input::placeholder, textarea::placeholder {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-  50%       { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15); }
 }
 
 @keyframes badge-pulse {
@@ -113,16 +113,16 @@ input::placeholder, textarea::placeholder {
 ───────────────────────────────────────── */
 
 main > * {
-  animation: fadeUp 0.45s var(--spring) both;
+  animation: fadeUp 0.38s var(--spring) both;
 }
 main > *:nth-child(1) { animation-delay: 0ms; }
-main > *:nth-child(2) { animation-delay: 50ms; }
-main > *:nth-child(3) { animation-delay: 90ms; }
-main > *:nth-child(4) { animation-delay: 130ms; }
-main > *:nth-child(5) { animation-delay: 165ms; }
-main > *:nth-child(6) { animation-delay: 195ms; }
-main > *:nth-child(7) { animation-delay: 220ms; }
-main > *:nth-child(8) { animation-delay: 240ms; }
+main > *:nth-child(2) { animation-delay: 40ms; }
+main > *:nth-child(3) { animation-delay: 75ms; }
+main > *:nth-child(4) { animation-delay: 105ms; }
+main > *:nth-child(5) { animation-delay: 132ms; }
+main > *:nth-child(6) { animation-delay: 156ms; }
+main > *:nth-child(7) { animation-delay: 177ms; }
+main > *:nth-child(8) { animation-delay: 195ms; }
 
 /* Stagger utility — pour les listes de cards */
 .stagger > * {
@@ -144,16 +144,33 @@ main > *:nth-child(8) { animation-delay: 240ms; }
 ───────────────────────────────────────── */
 
 .card-hover {
-  transition: transform 0.25s var(--spring), box-shadow 0.25s var(--spring), border-color 0.2s ease;
+  transition: transform 0.22s var(--spring), box-shadow 0.22s var(--spring), border-color 0.18s ease;
   will-change: transform;
 }
 .card-hover:hover {
-  transform: translateY(-3px) scale(1.005);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(99,102,241,0.06);
+  transform: translateY(-2px) scale(1.003);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.09), 0 2px 6px rgba(13, 148, 136, 0.07);
 }
 .card-hover:active {
-  transform: translateY(-1px) scale(0.998);
-  transition-duration: 0.1s;
+  transform: translateY(0px) scale(0.998);
+  transition-duration: 0.08s;
+}
+
+/* ── Table row hover ── */
+.row-hover {
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+.row-hover:hover { background: #F8FAFB !important; }
+
+/* ── Interactive chip / pill ── */
+.chip-hover {
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  cursor: pointer;
+}
+.chip-hover:hover {
+  background: rgba(13,148,136,0.06) !important;
+  border-color: rgba(13,148,136,0.2) !important;
 }
 
 /* ── Button press ── */
@@ -178,14 +195,14 @@ a[class*="rounded"]:active {
 
 /* ── Glow on active nav ── */
 .nav-active-glow {
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 12px rgba(99,102,241,0.25);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 12px rgba(13, 148, 136, 0.3);
 }
 
 /* ── Focus ring premium ── */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  border-color: #0D9488 !important;
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
@@ -196,7 +213,7 @@ a, button {
 
 /* ── Gradient text ── */
 .gradient-text {
-  background: linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #0D9488 0%, #0891B2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -217,6 +234,46 @@ a, button {
 /* ── Safe area iOS (encoche / home indicator) ── */
 .safe-area-pb {
   padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* ── Main content area — subtle premium bg ── */
+main {
+  background: linear-gradient(180deg, #F7F9FB 0%, #F8FAFC 100%);
+}
+
+/* ── Number counter animation ── */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.count-animate {
+  animation: countUp 0.4s var(--spring) both;
+}
+
+/* ── Subtle underline link ── */
+.link-hover {
+  position: relative;
+}
+.link-hover::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -1px;
+  width: 0; height: 1px;
+  background: #0D9488;
+  transition: width 0.2s ease;
+}
+.link-hover:hover::after { width: 100%; }
+
+/* ── Premium table ── */
+.table-premium tbody tr {
+  transition: background 0.1s ease;
+  border-bottom: 1px solid #F1F5F9;
+}
+.table-premium tbody tr:hover {
+  background: #F8FAFB;
+}
+.table-premium tbody tr:last-child {
+  border-bottom: none;
 }
 
 /* ── Grid pattern utility ── */

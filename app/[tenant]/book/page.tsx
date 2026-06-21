@@ -385,7 +385,7 @@ const BIKE_DEFAULT_IMAGES: Record<string, string> = {
 
 // Couleur de fond pour l'illustration par type
 const BIKE_COLORS: Record<string, { bg: string; accent: string; stroke: string }> = {
-  CITY:     { bg: '#EEF2FF', accent: '#6366F1', stroke: '#4F46E5' },
+  CITY:     { bg: '#F0FDFA', accent: '#0D9488', stroke: '#0F766E' },
   ELECTRIC: { bg: '#FFF7ED', accent: '#F59E0B', stroke: '#D97706' },
   MOUNTAIN: { bg: '#F0FDF4', accent: '#22C55E', stroke: '#16A34A' },
   ROAD:     { bg: '#FFF1F2', accent: '#F43F5E', stroke: '#E11D48' },
@@ -394,12 +394,12 @@ const BIKE_COLORS: Record<string, { bg: string; accent: string; stroke: string }
   TANDEM:   { bg: '#FFF7ED', accent: '#F97316', stroke: '#EA580C' },
   FATBIKE:  { bg: '#F0FDF4', accent: '#10B981', stroke: '#059669' },
   EMTB:     { bg: '#FFF7ED', accent: '#F59E0B', stroke: '#D97706' },
-  ESCOOTER: { bg: '#EEF2FF', accent: '#6366F1', stroke: '#4F46E5' },
+  ESCOOTER: { bg: '#F0FDFA', accent: '#0D9488', stroke: '#0F766E' },
 }
 
 // ── Illustrations SVG par type de vélo ───────────────────────────────────────
 
-function BikeSVG({ type, width = 110, color = '#6366F1' }: { type: string; width?: number; color?: string }) {
+function BikeSVG({ type, width = 110, color = '#0D9488' }: { type: string; width?: number; color?: string }) {
   const h = Math.round(width * 0.65)
   const s = 2.2  // stroke width
   const sl = 1.5 // light stroke
@@ -745,13 +745,13 @@ function buildDateFromStr(dateStr: string | null, hour: number): Date {
 
 // Badge logique : meilleur rapport = le moins cher, premium = le plus cher (si électrique)
 function getBadge(bike: Bike, allBikes: Bike[], t: Record<string, string>): { label: string; bg: string; color: string } | null {
-  if (allBikes.length === 1) return { label: t.recommended, bg: '#6366F1', color: '#fff' }
+  if (allBikes.length === 1) return { label: t.recommended, bg: '#0D9488', color: '#fff' }
   const prices = allBikes.map(b => b.totalPrice ?? 0).filter(p => p > 0)
   const minPrice = Math.min(...prices)
   const maxPrice = Math.max(...prices)
   if ((bike.totalPrice ?? 0) === minPrice) return { label: t.bestValue, bg: '#10B981', color: '#fff' }
   if ((bike.totalPrice ?? 0) === maxPrice && (bike.type === 'ELECTRIC' || bike.type === 'EMTB')) return { label: t.premium, bg: '#F59E0B', color: '#fff' }
-  if (allBikes.indexOf(bike) === 0 && allBikes.length >= 3) return { label: t.popular, bg: '#6366F1', color: '#fff' }
+  if (allBikes.indexOf(bike) === 0 && allBikes.length >= 3) return { label: t.popular, bg: '#0D9488', color: '#fff' }
   return null
 }
 
@@ -1029,9 +1029,9 @@ export default function BookPage() {
   const bikeLabels  = BIKE_TYPE_LABELS[lang] ?? BIKE_TYPE_LABELS['en']
   const bikeDescs   = BIKE_DESCRIPTIONS[lang] ?? BIKE_DESCRIPTIONS['en']
 
-  const PURPLE      = '#6366F1'
-  const PURPLE_DARK = '#4F46E5'
-  const PURPLE_LIGHT= '#EEF2FF'
+  const PURPLE      = '#0D9488'
+  const PURPLE_DARK = '#0F766E'
+  const PURPLE_LIGHT= '#F0FDFA'
 
   useEffect(() => { setLang(detectLang()) }, [])
 
@@ -1147,7 +1147,7 @@ export default function BookPage() {
   const currentStepIndex = step === 'success' ? 4 : (step as number) - 1
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8faff 0%, #eef2ff 100%)', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8faff 0%, #F0FDFA 100%)', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
 
       {/* ── Bannière preview ── */}
       {isPreview && (
@@ -1426,12 +1426,12 @@ export default function BookPage() {
               disabled={loading || !startDateStr || !endDateStr || endAt <= startAt}
               style={{
                 background: (loading || !startDateStr || !endDateStr)
-                  ? '#c7d2fe'
+                  ? '#99F6E4'
                   : `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
                 color: 'white', border: 'none', borderRadius: 14, padding: '16px',
                 fontSize: 15, fontWeight: 700,
                 cursor: (loading || !startDateStr || !endDateStr) ? 'not-allowed' : 'pointer',
-                boxShadow: (startDateStr && endDateStr) ? '0 4px 16px rgba(99,102,241,0.35)' : 'none',
+                boxShadow: (startDateStr && endDateStr) ? '0 4px 16px rgba(13,148,136,0.35)' : 'none',
                 width: '100%', transition: 'all 0.2s',
               }}
             >
@@ -1619,7 +1619,7 @@ export default function BookPage() {
                   </div>
                 ))}
                 <button
-                  style={{ background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'white', border: 'none', borderRadius: 14, padding: '15px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(99,102,241,0.35)', width: '100%' }}
+                  style={{ background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'white', border: 'none', borderRadius: 14, padding: '15px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(13,148,136,0.35)', width: '100%' }}
                   onClick={() => {
                     const errs: Record<string, string> = {}
                     if (!form.name.trim()) errs.name = t.required
@@ -1733,7 +1733,7 @@ export default function BookPage() {
                     } catch { setError('Erreur réseau') }
                     finally { setLoading(false) }
                   }}
-                  style={{ background: loading ? '#c7d2fe' : 'linear-gradient(135deg,#635BFF,#7C3AED)', color: 'white', border: 'none', borderRadius: 14, padding: '17px', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(99,91,255,0.35)', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  style={{ background: loading ? '#99F6E4' : 'linear-gradient(135deg,#635BFF,#7C3AED)', color: 'white', border: 'none', borderRadius: 14, padding: '17px', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(13,148,136,0.35)', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   {loading ? t.loading : (
                     <>
@@ -1750,7 +1750,7 @@ export default function BookPage() {
               </div>
             ) : (
               <button onClick={submitReservation} disabled={loading}
-                style={{ background: loading ? '#c7d2fe' : `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'white', border: 'none', borderRadius: 14, padding: '17px', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(99,102,241,0.35)', width: '100%' }}>
+                style={{ background: loading ? '#99F6E4' : `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'white', border: 'none', borderRadius: 14, padding: '17px', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(13,148,136,0.35)', width: '100%' }}>
                 {loading ? t.loading : t.confirmBooking}
               </button>
             )}
@@ -1782,7 +1782,7 @@ export default function BookPage() {
       </div>
 
       <div style={{ textAlign: 'center', padding: '20px 16px 32px', color: '#cbd5e1', fontSize: 12 }}>
-        Propulsé par <span style={{ fontWeight: 700, color: '#94a3b8' }}>VeloRent</span>
+        Propulsé par <span style={{ fontWeight: 700, color: '#0D9488' }}>Runivo</span>
       </div>
     </div>
   )

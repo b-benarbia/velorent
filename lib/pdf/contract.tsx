@@ -55,10 +55,10 @@ interface ContractData {
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────
-const INDIGO   = '#6366F1'
-const INDIGO_D = '#4338CA'
-const INDIGO_BG = '#EEF2FF'
-const INDIGO_BORDER = '#C7D2FE'
+const INDIGO   = '#0D9488'
+const INDIGO_D = '#134E4A'
+const INDIGO_BG = '#F0FDFA'
+const INDIGO_BORDER = '#99F6E4'
 const SLATE_900 = '#0F172A'
 const SLATE_700 = '#1E293B'
 const SLATE_500 = '#64748B'
@@ -118,7 +118,7 @@ const s = StyleSheet.create({
 
   // Payment
   amtBox: { backgroundColor: INDIGO_BG, borderWidth: 1, borderColor: INDIGO_BORDER, borderRadius: 10, padding: '10 14', marginBottom: 8 },
-  amtLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: '#818CF8', marginBottom: 5 },
+  amtLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase', color: '#2DD4BF', marginBottom: 5 },
   amtVal: { fontSize: 24, fontFamily: 'Helvetica-Bold', color: INDIGO_D, letterSpacing: -0.5 },
   amtCur: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: INDIGO_D },
   amtPay: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1, textTransform: 'uppercase', color: INDIGO, marginTop: 5 },
@@ -166,7 +166,7 @@ const s = StyleSheet.create({
   clauseTxt: { fontSize: 9, lineHeight: 1.55, flex: 1 },
 
   // Signatures
-  sigSection: { borderTopWidth: 1, borderTopColor: '#EEF2FF', backgroundColor: '#FAFBFF', paddingLeft: 22, paddingRight: 22, paddingBottom: 14 },
+  sigSection: { borderTopWidth: 1, borderTopColor: '#F0FDFA', backgroundColor: '#FAFBFF', paddingLeft: 22, paddingRight: 22, paddingBottom: 14 },
   sigRow: { flexDirection: 'row', gap: 12 },
   sigBox: { flex: 1 },
   sigLbl: { fontSize: 7, fontFamily: 'Helvetica-Bold', letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 5 },
@@ -525,7 +525,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
                   <Image src={rental.staffSignature} style={{ maxHeight: 80, objectFit: 'contain', padding: 6 }} />
                 </View>
               ) : (
-                <View style={{ ...s.sigCanvas, borderColor: '#C7D2FE', backgroundColor: '#FAFBFF' }} />
+                <View style={{ ...s.sigCanvas, borderColor: '#99F6E4', backgroundColor: '#FAFBFF' }} />
               )}
               <View style={{ ...s.sigLine, borderTopColor: rental.staffSignature ? INDIGO_D : SLATE_200 }}>
                 <Text style={{ ...s.sigDate, color: rental.staffSignature ? INDIGO_D : SLATE_400 }}>{tenant.name}</Text>

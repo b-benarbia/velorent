@@ -128,22 +128,22 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
         style={{
           width: '100%', textAlign: 'left', boxSizing: 'border-box',
           background: open ? '#f8faff' : 'white',
-          border: `1.5px solid ${open ? '#6366f1' : '#e2e8f0'}`,
+          border: `1.5px solid ${open ? '#0d9488' : '#e2e8f0'}`,
           borderRadius: 12, padding: '13px 14px', minHeight: 48,
           color: displayVal ? '#0f172a' : '#94a3b8',
           cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
           display: 'flex', alignItems: 'center', gap: 8,
-          boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.1)' : 'none',
+          boxShadow: open ? '0 0 0 3px rgba(13,148,136,0.1)' : 'none',
           transition: 'border-color .15s, box-shadow .15s',
         }}
       >
-        <CalendarDays size={14} style={{ color: open || displayVal ? '#6366f1' : '#94a3b8', flexShrink: 0 }} />
+        <CalendarDays size={14} style={{ color: open || displayVal ? '#0d9488' : '#94a3b8', flexShrink: 0 }} />
         <span style={{ flex: 1, fontWeight: displayVal ? 500 : 400 }}>
           {displayVal || placeholder || '—'}
         </span>
         {displayVal && (
           <span style={{
-            fontSize: 11, color: '#6366f1', background: '#eef2ff',
+            fontSize: 11, color: '#0d9488', background: '#F0FDFA',
             padding: '2px 8px', borderRadius: 6, fontWeight: 700, flexShrink: 0,
           }}>
             {selTime}
@@ -168,14 +168,14 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
                 const d = new Date(m.year, m.month - 1)
                 return { year: d.getFullYear(), month: d.getMonth() }
               })} style={{ border: '1.5px solid #e2e8f0', background: 'white', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <ChevronLeft size={13} style={{ color: '#6366f1' }} />
+                <ChevronLeft size={13} style={{ color: '#0d9488' }} />
               </button>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{monthLabel}</span>
               <button type="button" onClick={() => setCalMonth(m => {
                 const d = new Date(m.year, m.month + 1)
                 return { year: d.getFullYear(), month: d.getMonth() }
               })} style={{ border: '1.5px solid #e2e8f0', background: 'white', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <ChevronRight size={13} style={{ color: '#6366f1' }} />
+                <ChevronRight size={13} style={{ color: '#0d9488' }} />
               </button>
             </div>
 
@@ -200,9 +200,9 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
                   <button key={i} type="button" onClick={() => pickDate(dk)} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     minHeight: 44, borderRadius: 9, border: 'none', cursor: 'pointer',
-                    background: isSel ? '#6366f1' : isTd ? '#eef2ff' : 'transparent',
+                    background: isSel ? '#0d9488' : isTd ? '#F0FDFA' : 'transparent',
                     fontSize: 13, fontWeight: isSel || isTd ? 700 : 400,
-                    color: isSel ? 'white' : isTd ? '#6366f1' : '#334155',
+                    color: isSel ? 'white' : isTd ? '#0d9488' : '#334155',
                     WebkitTapHighlightColor: 'transparent',
                   }}>
                     {day}
@@ -218,7 +218,7 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
           {/* ── Time slots ── */}
           <div style={{ padding: '12px 16px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-              <Clock size={12} style={{ color: '#6366f1' }} />
+              <Clock size={12} style={{ color: '#0d9488' }} />
               <span style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                 Heure
               </span>
@@ -240,8 +240,8 @@ export default function DateTimePicker({ value, onChange, label, locale, placeho
                     disabled={!selDate}
                     style={{
                       padding: '10px 4px', borderRadius: 9,
-                      border: `1.5px solid ${isSel ? '#6366f1' : '#e2e8f0'}`,
-                      background: isSel ? '#6366f1' : 'white',
+                      border: `1.5px solid ${isSel ? '#0d9488' : '#e2e8f0'}`,
+                      background: isSel ? '#0d9488' : 'white',
                       color: isSel ? 'white' : selDate ? '#334155' : '#c4c9d4',
                       fontSize: 13, fontWeight: isSel ? 700 : 400,
                       cursor: selDate ? 'pointer' : 'default',

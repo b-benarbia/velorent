@@ -43,7 +43,7 @@ export default async function StaffPage({
       <div style={{ background: '#0F172A', padding: '20px 20px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 700, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#6366F1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#0D9488,#0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Bike size={16} color="white" />
             </div>
             <div>
@@ -67,10 +67,10 @@ export default async function StaffPage({
           href={`/${tenant}/rentals/new`}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-            background: 'linear-gradient(135deg,#6366F1 0%,#8b5cf6 100%)',
+            background: 'linear-gradient(135deg,#0D9488 0%,#0891B2 100%)',
             color: 'white', borderRadius: 16, padding: '20px 24px',
             textDecoration: 'none', marginBottom: 24,
-            boxShadow: '0 4px 20px rgba(99,102,241,0.35)',
+            boxShadow: '0 4px 20px rgba(13,148,136,0.35)',
             fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em',
           }}
         >
@@ -105,7 +105,7 @@ export default async function StaffPage({
                       {r.customer.firstName} {r.customer.lastName}
                     </p>
                     <p style={{ fontSize: 13, color: '#991b1b' }}>
-                      {r.bike.name} · {r.bike.code}
+                      {r.bike?.name} · {r.bike?.code}
                     </p>
                     <p style={{ fontSize: 12, color: '#b91c1c', marginTop: 3 }}>
                       Sorti à {fmtTime(r.startAt)} · {fmtDuration(r.startAt)} de retard
@@ -126,8 +126,8 @@ export default async function StaffPage({
         {/* Locations actives */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <Clock size={14} color="#6366F1" />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6366F1' }}>
+            <Clock size={14} color="#0D9488" />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#0D9488' }}>
               {t('inProgress')} ({active.length})
             </span>
           </div>
@@ -157,7 +157,7 @@ export default async function StaffPage({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
                     <div style={{
                       width: 42, height: 42, borderRadius: 10, flexShrink: 0,
-                      background: 'linear-gradient(135deg,#6366F1,#8b5cf6)',
+                      background: 'linear-gradient(135deg,#0D9488,#0891B2)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 14, fontWeight: 700, color: 'white',
                     }}>
@@ -168,14 +168,14 @@ export default async function StaffPage({
                         {r.customer.firstName} {r.customer.lastName}
                       </p>
                       <p style={{ fontSize: 13, color: '#64748b' }}>
-                        {r.bike.name}
-                        {r.bike.code && <span style={{ color: '#94a3b8' }}> · {r.bike.code}</span>}
+                        {r.bike?.name}
+                        {r.bike?.code && <span style={{ color: '#94a3b8' }}> · {r.bike?.code}</span>}
                       </p>
                       <div style={{ display: 'flex', gap: 10, marginTop: 3, alignItems: 'center' }}>
                         <span style={{ fontSize: 12, color: '#94a3b8' }}>
                           {t('exitAt')} {fmtTime(r.startAt)}
                         </span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#6366F1' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#0D9488' }}>
                           {fmtDuration(r.startAt)}
                         </span>
                         {r.expectedReturnAt && (

@@ -420,16 +420,12 @@ export async function GET(req: NextRequest) {
       const locale = tenant.notifLocale || detectLocale({ phone: tenant.phone, fallback: 'es' })
       const cur    = tenant.currency ?? 'EUR'
 
-      // Récupérer le prénom du owner
-      const owner = await prisma.user.findFirst({
-        where: { tenantId: tenant.id, role: 'OWNER' },
-        select: { name: true },
-      })
-      const ownerFirstName = (owner?.name ?? '').split(' ')[0] || 'vous'
-
       const dormantThreshold  = new Date(now.getTime() - 14 * 24 * 3600 * 1000) // 14j
 
+      // Tout en parallèle — owner + dpConfig + toutes les données métier
       const [
+        owner,
+        dpRowsSafe,
         overdueRentalsRaw,
         activeCount,
         pendingCount,
@@ -444,6 +440,14 @@ export async function GET(req: NextRequest) {
         maintenanceBikesRaw,
         dormantBikes,
       ] = await Promise.all([
+        prisma.user.findFirst({
+          where: { tenantId: tenant.id, role: 'OWNER' },
+          select: { name: true },
+        }),
+        // Colonne optionnelle — catch silencieux si migration pas encore appliquée
+        prisma.$queryRaw<Array<{ dynamicPricingConfig: unknown }>>`
+          SELECT "dynamicPricingConfig" FROM tenants WHERE id = ${tenant.id}
+        `.catch(() => [] as Array<{ dynamicPricingConfig: unknown }>),
         prisma.rental.findMany({
           where: { tenantId: tenant.id, status: 'ACTIVE', expectedReturnAt: { lt: now } },
           include: { customer: true, bikes: { include: { bike: true }, take: 1 }, bike: true },
@@ -488,15 +492,9 @@ export async function GET(req: NextRequest) {
         }),
       ])
 
-      // Config tarification dynamique — colonne optionnelle (migration récente)
-      let dpEnabled = false
-      try {
-        const dpRows = await prisma.$queryRaw<Array<{ dynamicPricingConfig: unknown }>>`
-          SELECT "dynamicPricingConfig" FROM tenants WHERE id = ${tenant.id}
-        `
-        const dpConfig = dpRows[0]?.dynamicPricingConfig as { enabled?: boolean } | null
-        dpEnabled = !!(dpConfig?.enabled)
-      } catch { /* colonne pas encore migrée */ }
+      const ownerFirstName = (owner?.name ?? '').split(' ')[0] || 'vous'
+      const dpConfig = dpRowsSafe[0]?.dynamicPricingConfig as { enabled?: boolean } | null
+      const dpEnabled = !!(dpConfig?.enabled)
 
       const maintenanceBikes = maintenanceBikesRaw.length
 

@@ -50,7 +50,7 @@ export async function POST(
     return NextResponse.json({ error: 'Stripe non configuré' }, { status: 422 })
   }
 
-  const stripe = new Stripe(tenant.stripeSecretKey, { apiVersion: '2025-05-28.basil' })
+  const stripe = new Stripe(tenant.stripeSecretKey, { apiVersion: '2026-05-27.dahlia' })
 
   try {
     if (action === 'capture') {

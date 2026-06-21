@@ -54,7 +54,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-[family-name:var(--font-inter)]">
-        <NextTopLoader color="#6366F1" height={2} showSpinner={false} />
+        <NextTopLoader color="#0D9488" height={2} showSpinner={false} />
         <Toaster position="bottom-right" richColors />
         <IntlProvider locale={locale} messages={messages}>
           {children}

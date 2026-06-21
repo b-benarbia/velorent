@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Link2, CalendarDays } from 'lucide-react'
 import { useLocale } from 'next-intl'
@@ -26,7 +27,7 @@ type PlanningLabels = {
 
 // ── Palette ──────────────────────────────────────────────────────────────
 const ACCENT_COLORS = [
-  '#6366f1','#14b8a6','#f97316','#ec4899',
+  '#0d9488','#14b8a6','#f97316','#ec4899',
   '#f59e0b','#0ea5e9','#a855f7','#84cc16',
 ]
 function accentColor(id: string): string {
@@ -36,7 +37,7 @@ function accentColor(id: string): string {
 }
 
 const STATUS: Record<string, { bg: string; hover: string; border: string; text: string; dot: string }> = {
-  ACTIVE:    { bg:'#eef2ff', hover:'#6366f1', border:'#6366f1', text:'#3730a3', dot:'#6366f1' },
+  ACTIVE:    { bg:'#F0FDFA', hover:'#0d9488', border:'#0d9488', text:'#3730a3', dot:'#0d9488' },
   OVERDUE:   { bg:'#fff1f2', hover:'#f43f5e', border:'#f43f5e', text:'#9f1239', dot:'#f43f5e' },
   COMPLETED: { bg:'#f1f5f9', hover:'#475569', border:'#cbd5e1', text:'#475569', dot:'#94a3b8' },
   CANCELLED: { bg:'#f8fafc', hover:'#94a3b8', border:'#e2e8f0', text:'#94a3b8', dot:'#cbd5e1' },
@@ -84,6 +85,8 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
   const [weekOffset, setWeekOffset] = useState(0)
   const [typeFilter, setTypeFilter]  = useState('ALL')
+  const [hoveredCell, setHoveredCell] = useState<string|null>(null)
+  const router = useRouter()
 
   // ── Week days ─────────────────────────────────────────────────────
   const weekStart = useMemo(() => addDays(getMondayOfWeek(today), weekOffset * 7), [today, weekOffset])
@@ -218,12 +221,12 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <CalendarDays size={17} style={{ color:'#6366f1' }} />
+            <CalendarDays size={17} style={{ color:'#0d9488' }} />
             <span style={{ fontSize:16, fontWeight:700, color:'#0f172a' }}>{labels.title}</span>
           </div>
           <button onClick={() => setDayOffset(0)}
             style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:8,
-              border:'1.5px solid #6366f1', background:'#eef2ff', cursor:'pointer', color:'#6366f1' }}>
+              border:'1.5px solid #0d9488', background:'#F0FDFA', cursor:'pointer', color:'#0d9488' }}>
             {labels.today}
           </button>
         </div>
@@ -234,7 +237,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
           <button onClick={() => setDayOffset(d => d-1)}
             style={{ border:'1.5px solid #e2e8f0', background:'#f8fafc', borderRadius:8,
               padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center' }}>
-            <ChevronLeft size={16} style={{ color:'#6366f1' }} />
+            <ChevronLeft size={16} style={{ color:'#0d9488' }} />
           </button>
           <div style={{ flex:1, textAlign:'center' }}>
             <p style={{ fontSize:13, fontWeight:700, color:'#0f172a', textTransform:'capitalize' }}>
@@ -244,14 +247,14 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
           <button onClick={() => setDayOffset(d => d+1)}
             style={{ border:'1.5px solid #e2e8f0', background:'#f8fafc', borderRadius:8,
               padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center' }}>
-            <ChevronRight size={16} style={{ color:'#6366f1' }} />
+            <ChevronRight size={16} style={{ color:'#0d9488' }} />
           </button>
         </div>
 
         {/* KPI strip */}
         <div style={{ display:'flex', gap:8, marginBottom:14 }}>
           {[
-            { label:labels.kpiActive,    val:mobileDayStats.active,    c:'#6366f1', bg:'#eef2ff', bc:'#c7d2fe' },
+            { label:labels.kpiActive,    val:mobileDayStats.active,    c:'#0d9488', bg:'#F0FDFA', bc:'#99F6E4' },
             { label:labels.kpiOverdue,   val:mobileDayStats.overdue,   c:'#f43f5e', bg:'#fff1f2', bc:'#fecdd3' },
             { label:labels.kpiAvailable, val:mobileDayStats.available, c:'#16a34a', bg:'#f0fdf4', bc:'#bbf7d0' },
           ].map(k => (
@@ -264,11 +267,16 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
 
         {/* Rentals list for the day */}
         {mobileDayRentals.length === 0 ? (
-          <div style={{ background:'#fff', border:'1.5px solid #e2e8f0', borderRadius:16, padding:'40px 16px', textAlign:'center' }}>
-            <div style={{ width:40, height:40, borderRadius:'50%', background:'#f0fdf4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
-              <div style={{ width:8, height:8, borderRadius:'50%', background:'#d1fae5' }} />
+          <div style={{ background:'#fff', border:'1.5px solid #e2e8f0', borderRadius:16, padding:'48px 16px', textAlign:'center' }}>
+            <div style={{ position:'relative', width:52, height:52, margin:'0 auto 16px' }}>
+              <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'rgba(13,148,136,0.06)' }} />
+              <div style={{ position:'absolute', inset:6, borderRadius:'50%', background:'rgba(13,148,136,0.1)' }} />
+              <div style={{ position:'absolute', inset:13, borderRadius:'50%', background:'rgba(13,148,136,0.18)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
             </div>
-            <p style={{ fontSize:14, color:'#94a3b8', fontWeight:500 }}>{labels.legendAvailable}</p>
+            <p style={{ fontSize:13, fontWeight:600, color:'#334155', margin:'0 0 4px' }}>{labels.legendAvailable}</p>
+            <p style={{ fontSize:11, color:'#94a3b8', margin:0 }}>Aucune location ce jour</p>
           </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
@@ -311,7 +319,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
         {/* Legend */}
         <div style={{ display:'flex', gap:12, marginTop:14, flexWrap:'wrap' }}>
           {[
-            { label:labels.legendActive,    bg:'#eef2ff', dot:'#6366f1' },
+            { label:labels.legendActive,    bg:'#F0FDFA', dot:'#0d9488' },
             { label:labels.legendOverdue,   bg:'#fff1f2', dot:'#f43f5e' },
             { label:labels.legendCompleted, bg:'#f1f5f9', dot:'#94a3b8' },
           ].map(l => (
@@ -327,45 +335,62 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
       <div className="hidden md:block">
 
       {/* ── Header ── */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14, flexWrap:'wrap', gap:10 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <CalendarDays size={18} style={{ color:'#6366f1' }} />
-          <span style={{ fontSize:18, fontWeight:600, color:'#0f172a' }}>{labels.title}</span>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
+        <div>
+          <h1 style={{ fontSize:22, fontWeight:700, color:'#0f172a', letterSpacing:'-0.03em', margin:0, lineHeight:1.2 }}>{labels.title}</h1>
+          <p style={{ fontSize:13, color:'#94A3B8', margin:'3px 0 0', fontWeight:400 }}>{weekLabel}</p>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
           <button onClick={() => setWeekOffset(0)}
-            style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:8,
-              border:'1.5px solid #e2e8f0', background:'#fff', cursor:'pointer', color:'#6366f1' }}>
+            style={{ fontSize:11, fontWeight:600, padding:'6px 12px', borderRadius:8,
+              border:'1.5px solid #e2e8f0', background:'white', cursor:'pointer', color:'#0d9488',
+              transition:'all .15s' }}>
             {labels.today}
           </button>
-          <button onClick={() => setWeekOffset(w => w-1)}
-            style={{ border:'1.5px solid #e2e8f0', background:'#fff', borderRadius:8,
-              padding:'4px 7px', cursor:'pointer', display:'flex', alignItems:'center' }}>
-            <ChevronLeft size={15} style={{ color:'#6366f1' }} />
-          </button>
-          <span style={{ fontSize:12, fontWeight:600, color:'#1e293b', minWidth:110, textAlign:'center' }}>
-            {weekLabel}
-          </span>
-          <button onClick={() => setWeekOffset(w => w+1)}
-            style={{ border:'1.5px solid #e2e8f0', background:'#fff', borderRadius:8,
-              padding:'4px 7px', cursor:'pointer', display:'flex', alignItems:'center' }}>
-            <ChevronRight size={15} style={{ color:'#6366f1' }} />
-          </button>
+          <div style={{ display:'flex', alignItems:'center', background:'white', border:'1.5px solid #e2e8f0', borderRadius:9, overflow:'hidden' }}>
+            <button onClick={() => setWeekOffset(w => w-1)}
+              style={{ border:'none', background:'transparent', padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center', borderRight:'1px solid #f1f5f9' }}>
+              <ChevronLeft size={14} style={{ color:'#0d9488' }} />
+            </button>
+            <button onClick={() => setWeekOffset(w => w+1)}
+              style={{ border:'none', background:'transparent', padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center' }}>
+              <ChevronRight size={14} style={{ color:'#0d9488' }} />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── KPI strip ── */}
-      <div style={{ display:'flex', gap:8, marginBottom:14 }}>
-        {[
-          { label:labels.kpiActive,    val:weekStats.active,    c:'#6366f1', bg:'#eef2ff', bc:'#c7d2fe' },
-          { label:labels.kpiOverdue,   val:weekStats.overdue,   c:'#f43f5e', bg:'#fff1f2', bc:'#fecdd3' },
-          { label:labels.kpiAvailable, val:weekStats.available, c:'#16a34a', bg:'#f0fdf4', bc:'#bbf7d0' },
-        ].map(k => (
-          <div key={k.label} style={{ flex:1, background:k.bg, border:`1px solid ${k.bc}`, borderRadius:12, padding:'10px 12px' }}>
-            <p style={{ fontSize:10, fontWeight:700, color:k.c, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{k.label}</p>
-            <p style={{ fontSize:20, fontWeight:800, color:'#0f172a' }}>{k.val}</p>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:16 }}>
+        {/* EN COURS — dark hero */}
+        <div style={{ position:'relative', overflow:'hidden', background:'#0F172A', borderRadius:16, padding:'14px 16px' }}>
+          <div style={{ position:'absolute', top:0, right:0, width:60, height:60, background:'radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 70%)', transform:'translate(20%,-20%)', pointerEvents:'none' }} />
+          <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:8 }}>
+            <div style={{ width:6, height:6, borderRadius:'50%', background:'#0D9488', boxShadow:'0 0 5px #0D9488' }} />
+            <p style={{ fontSize:9, fontWeight:700, color:'#5EEAD4', textTransform:'uppercase', letterSpacing:'0.1em' }}>{labels.kpiActive}</p>
           </div>
-        ))}
+          <p style={{ fontSize:28, fontWeight:800, color:'white', letterSpacing:'-0.03em', lineHeight:1 }}>{weekStats.active}</p>
+          <p style={{ fontSize:10, color:'#475569', marginTop:4 }}>en ce moment</p>
+        </div>
+
+        {/* EN RETARD — conditional red */}
+        <div style={{
+          borderRadius:16, padding:'14px 16px',
+          background: weekStats.overdue > 0 ? '#FEF2F2' : 'white',
+          border: weekStats.overdue > 0 ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0',
+          borderTop: weekStats.overdue > 0 ? '4px solid #EF4444' : '4px solid #E2E8F0',
+        }}>
+          <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8, color: weekStats.overdue > 0 ? '#EF4444' : '#94A3B8' }}>{labels.kpiOverdue}</p>
+          <p style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', lineHeight:1, color: weekStats.overdue > 0 ? '#EF4444' : '#CBD5E1' }}>{weekStats.overdue}</p>
+          <p style={{ fontSize:10, marginTop:4, color: weekStats.overdue > 0 ? '#FCA5A5' : '#94A3B8' }}>retards actifs</p>
+        </div>
+
+        {/* DISPONIBLES — white + green border */}
+        <div style={{ borderRadius:16, padding:'14px 16px', background:'white', border:'1.5px solid #E2E8F0', borderTop:'4px solid #10B981' }}>
+          <p style={{ fontSize:9, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 }}>{labels.kpiAvailable}</p>
+          <p style={{ fontSize:28, fontWeight:800, color:'#10B981', letterSpacing:'-0.03em', lineHeight:1 }}>{weekStats.available}</p>
+          <p style={{ fontSize:10, color:'#94A3B8', marginTop:4 }}>prêts à louer</p>
+        </div>
       </div>
 
       {/* ── Type filter chips ── */}
@@ -375,8 +400,8 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
           return (
             <button key={t} onClick={() => setTypeFilter(t)}
               style={{ flexShrink:0, padding:'5px 12px', borderRadius:20, fontSize:12, fontWeight:600,
-                border:`1.5px solid ${active ? '#6366f1' : '#e2e8f0'}`,
-                background: active ? '#6366f1' : '#fff',
+                border:`1.5px solid ${active ? '#0d9488' : '#e2e8f0'}`,
+                background: active ? '#0d9488' : '#fff',
                 color: active ? '#fff' : '#64748b', cursor:'pointer', transition:'all .15s' }}>
               {t === 'ALL' ? labels.filterAll : (TYPE_LABEL[t] ?? t)}
             </button>
@@ -398,11 +423,11 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
             return (
               <div key={i} style={{ flex:1, textAlign:'center', padding:'6px 2px',
                 borderRight: i<6 ? '1px solid #f1f5f9' : 'none',
-                background: isToday ? '#f5f3ff' : 'transparent' }}>
+                background: isToday ? 'rgba(13,148,136,0.05)' : 'transparent' }}>
                 <p style={{ fontSize:10, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:2,
-                  color: isToday ? '#6366f1' : '#94a3b8' }}>{dow}</p>
+                  color: isToday ? '#0d9488' : '#94a3b8' }}>{dow}</p>
                 <div style={{ width:24, height:24, borderRadius:'50%', margin:'0 auto',
-                  background: isToday ? '#6366f1' : 'transparent',
+                  background: isToday ? '#0d9488' : 'transparent',
                   display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <p style={{ fontSize:13, fontWeight: isToday ? 700 : 500,
                     color: isToday ? '#fff' : '#1e293b' }}>{d.getDate()}</p>
@@ -414,8 +439,16 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
 
         {/* Bike rows — grouped by type ── */}
         {visibleBikes.length === 0 ? (
-          <div style={{ padding:40, textAlign:'center', color:'#94a3b8', fontSize:14 }}>
-            {labels.noBikes}
+          <div style={{ padding:'56px 40px', textAlign:'center' }}>
+            <div style={{ position:'relative', width:56, height:56, margin:'0 auto 20px' }}>
+              <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'rgba(13,148,136,0.06)' }} />
+              <div style={{ position:'absolute', inset:6, borderRadius:'50%', background:'rgba(13,148,136,0.1)' }} />
+              <div style={{ position:'absolute', inset:13, borderRadius:'50%', background:'rgba(13,148,136,0.18)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+              </div>
+            </div>
+            <p style={{ fontSize:14, fontWeight:600, color:'#334155', margin:'0 0 6px' }}>{labels.noBikes}</p>
+            <p style={{ fontSize:12, color:'#94A3B8', margin:0 }}>Ajoutez des véhicules à votre flotte pour voir le planning</p>
           </div>
         ) : bikeGroups.map((group, gi) => (
           <div key={group.type}>
@@ -428,7 +461,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
               <div style={{ width:72, flexShrink:0, padding:'5px 10px', borderRight:'1px solid #e2e8f0',
                 display:'flex', alignItems:'center' }}>
                 <span style={{ fontSize:10, fontWeight:800, textTransform:'uppercase',
-                  letterSpacing:'0.08em', color:'#6366f1' }}>
+                  letterSpacing:'0.08em', color:'#0d9488' }}>
                   {TYPE_LABEL[group.type] ?? group.type}
                 </span>
               </div>
@@ -462,21 +495,42 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
                       {days.map((d, i) => (
                         <div key={i} style={{ flex:1, height:'100%',
                           borderRight: i<6 ? '1px solid #f9fafb' : 'none',
-                          background: sameDay(d, today) ? '#f5f3ff' : 'transparent' }} />
+                          background: sameDay(d, today) ? 'rgba(13,148,136,0.05)' : 'transparent' }} />
                       ))}
                     </div>
 
-                    {/* Free-slot dots */}
-                    <div style={{ position:'absolute', inset:0, display:'flex', pointerEvents:'none', zIndex:1 }}>
+                    {/* Interactive available cells */}
+                    <div style={{ position:'absolute', inset:0, display:'flex', zIndex:1 }}>
                       {days.map((d, i) => {
                         const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999)
                         const busy = bikeRentals.some(r => {
                           const rs = new Date(r.startAt), re = new Date(r.endAt)
                           return rs <= dayEnd && re >= d
                         })
+                        if (busy) return <div key={i} style={{ flex:1, pointerEvents:'none' }} />
+                        const cellKey = `${bike.id}-${i}`
+                        const isHov = hoveredCell === cellKey
                         return (
-                          <div key={i} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            {!busy && <div style={{ width:5, height:5, borderRadius:'50%', background:'#d1fae5' }} />}
+                          <div
+                            key={i}
+                            style={{
+                              flex:1, cursor:'pointer',
+                              background: isHov ? 'rgba(16,185,129,0.09)' : 'transparent',
+                              transition:'background 0.12s ease',
+                              display:'flex', alignItems:'center', justifyContent:'center',
+                            }}
+                            onMouseEnter={() => setHoveredCell(cellKey)}
+                            onMouseLeave={() => setHoveredCell(null)}
+                            onClick={() => router.push(`/${tenant}/rentals/new?bikeId=${bike.id}&startDate=${d.toISOString().slice(0,10)}`)}
+                            title={`Nouvelle location — ${bike.code}`}
+                          >
+                            {isHov ? (
+                              <div style={{ width:18, height:18, borderRadius:'50%', border:'1.5px dashed rgba(16,185,129,0.55)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.85)" strokeWidth="3.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              </div>
+                            ) : (
+                              <div style={{ width:4, height:4, borderRadius:'50%', background:'rgba(16,185,129,0.22)' }} />
+                            )}
                           </div>
                         )
                       })}
@@ -535,7 +589,7 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
       {/* ── Legend ── */}
       <div style={{ display:'flex', gap:16, marginTop:12, flexWrap:'wrap' }}>
         {[
-          { label:labels.legendActive,    bg:'#eef2ff', dot:'#6366f1' },
+          { label:labels.legendActive,    bg:'#F0FDFA', dot:'#0d9488' },
           { label:labels.legendOverdue,   bg:'#fff1f2', dot:'#f43f5e' },
           { label:labels.legendCompleted, bg:'#f1f5f9', dot:'#94a3b8' },
         ].map(l => (
@@ -546,11 +600,13 @@ export default function PlanningClient({ tenant, bikes, rentals, labels }: Props
           </div>
         ))}
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:6, height:6, borderRadius:'50%', background:'#d1fae5', border:'1px solid #86efac' }} />
-          <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{labels.legendAvailable}</span>
+          <div style={{ width:16, height:16, borderRadius:'50%', border:'1.5px dashed rgba(16,185,129,0.5)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.7)" strokeWidth="3.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{labels.legendAvailable} — cliquez pour créer</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <Link2 size={12} style={{ color:'#6366f1' }} />
+          <Link2 size={12} style={{ color:'#0d9488' }} />
           <span style={{ fontSize:11, color:'#64748b', fontWeight:500 }}>{labels.legendGroup}</span>
         </div>
       </div>

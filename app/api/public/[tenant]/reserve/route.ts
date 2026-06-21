@@ -134,7 +134,7 @@ export async function POST(
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <div style="max-width:560px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    <div style="background:linear-gradient(135deg,#6366F1,#4F46E5);padding:40px 32px;text-align:center">
+    <div style="background:linear-gradient(135deg,#0D9488,#0F766E);padding:40px 32px;text-align:center">
       <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:28px">🚲</div>
       <h1 style="color:white;margin:0;font-size:24px;font-weight:700">Réservation reçue</h1>
       <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px">${tenant.name}</p>
@@ -146,7 +146,7 @@ export async function POST(
       <div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:24px">
         <div style="display:flex;justify-content:space-between;margin-bottom:12px">
           <span style="color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Code</span>
-          <span style="color:#6366F1;font-size:15px;font-weight:700;font-family:monospace">${confirmationCode}</span>
+          <span style="color:#0D9488;font-size:15px;font-weight:700;font-family:monospace">${confirmationCode}</span>
         </div>
         <div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
         <div style="margin-bottom:8px">
@@ -167,7 +167,7 @@ export async function POST(
 
       ${tenant.email || tenant.name ? `
       <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0">
-        Des questions ? Contactez <strong>${tenant.name}</strong>${tenant.email ? ` à <a href="mailto:${tenant.email}" style="color:#6366F1">${tenant.email}</a>` : ''}.
+        Des questions ? Contactez <strong>${tenant.name}</strong>${tenant.email ? ` à <a href="mailto:${tenant.email}" style="color:#0D9488">${tenant.email}</a>` : ''}.
       </p>` : ''}
     </div>
     <div style="background:#f8fafc;padding:20px 32px;text-align:center;border-top:1px solid #e5e7eb">

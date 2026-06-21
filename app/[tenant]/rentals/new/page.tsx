@@ -352,7 +352,7 @@ export default function NewRentalPage() {
             key={s}
             className="flex-1 text-center text-xs py-1.5 rounded-full font-semibold transition-all"
             style={{
-              background: step === i + 1 ? '#6366F1' : step > i + 1 ? '#ecfdf5' : '#f1f5f9',
+              background: step === i + 1 ? '#0D9488' : step > i + 1 ? '#ecfdf5' : '#f1f5f9',
               color: step === i + 1 ? 'white' : step > i + 1 ? '#059669' : '#94a3b8',
             }}
           >
@@ -372,7 +372,7 @@ export default function NewRentalPage() {
           <div className="flex justify-between items-center">
             <h2 className="font-semibold text-slate-900 text-sm">{t('customerInfo')}</h2>
             <button type="button" onClick={() => { setNewCustomer(!newCustomer); setForm(f => ({ ...f, customerId: '' })) }}
-              className="text-xs font-semibold hover:underline" style={{ color: '#6366F1' }}>
+              className="text-xs font-semibold hover:underline" style={{ color: '#0D9488' }}>
               {newCustomer ? t('existingCustomer') : t('newCustomer')}
             </button>
           </div>
@@ -486,7 +486,7 @@ export default function NewRentalPage() {
                     background: '#f8fafc', border: '1px solid #e2e8f0',
                   }}>
                     <div style={{
-                      width: 32, height: 32, borderRadius: '50%', background: '#6366f1',
+                      width: 32, height: 32, borderRadius: '50%', background: '#0d9488',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontWeight: 700, fontSize: '13px', flexShrink: 0,
                     }}>
@@ -505,7 +505,7 @@ export default function NewRentalPage() {
 
           <button onClick={() => { setStepDir('fwd'); setStep(2) }} disabled={!canNextStep1}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-all active:scale-95"
-            style={{ background: '#6366F1' }}>
+            style={{ background: '#0D9488' }}>
             {t('continue')}
           </button>
         </div>
@@ -525,7 +525,7 @@ export default function NewRentalPage() {
               <h2 className="text-base font-semibold text-slate-900">{t('chooseABike')}</h2>
               <div className="flex items-center gap-2">
                 {selectedBikeIds.length > 0 && (
-                  <span className="text-xs font-semibold text-white px-2.5 py-1 rounded-full" style={{ background: '#6366F1' }}>
+                  <span className="text-xs font-semibold text-white px-2.5 py-1 rounded-full" style={{ background: '#0D9488' }}>
                     {selectedBikeIds.length} {t('selectedCount')}
                   </span>
                 )}
@@ -574,7 +574,7 @@ export default function NewRentalPage() {
                                 ? 'border-transparent shadow-sm'
                                 : 'border-slate-200 bg-white hover:border-indigo-300'
                             }`}
-                            style={selected ? { background: '#6366F1' } : {}}
+                            style={selected ? { background: '#0D9488' } : {}}
                           >
                             <span className={`text-sm font-bold leading-tight ${selected ? 'text-white' : 'text-slate-900'}`}>
                               {bike.code}
@@ -600,7 +600,7 @@ export default function NewRentalPage() {
 
             <button onClick={() => { setStepDir('fwd'); setStep(3) }} disabled={!canNextStep2}
               className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-all active:scale-95"
-              style={{ background: '#6366F1' }}>
+              style={{ background: '#0D9488' }}>
               {t('continue')}
             </button>
           </div>
@@ -614,7 +614,7 @@ export default function NewRentalPage() {
 
           {/* Selected bikes */}
           {selectedBikes.length > 0 && (
-            <div className="rounded-xl border border-indigo-100 p-3 space-y-1" style={{ background: '#eef2ff' }}>
+            <div className="rounded-xl border border-indigo-100 p-3 space-y-1" style={{ background: '#F0FDFA' }}>
               {selectedBikes.map(bike => (
                 <div key={bike.id} className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-indigo-900">{bike.name}</p>
@@ -654,7 +654,7 @@ export default function NewRentalPage() {
                           ? 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'
                           : 'border-dashed border-slate-200 bg-slate-50 text-slate-400'
                     }`}
-                    style={isSelected ? { background: '#6366F1' } : {}}
+                    style={isSelected ? { background: '#0D9488' } : {}}
                   >
                     <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-slate-700'}`}>{DUR_LABEL[dur.key] ?? dur.label}</p>
                     {price !== undefined ? (
@@ -673,7 +673,7 @@ export default function NewRentalPage() {
                     ? 'border-transparent text-white'
                     : 'border-dashed border-slate-300 text-slate-500 hover:border-slate-400'
                 }`}
-                style={selectedDuration === 'custom' ? { background: '#6366F1' } : {}}
+                style={selectedDuration === 'custom' ? { background: '#0D9488' } : {}}
               >
                 <p className="text-xs font-semibold">{t('customDuration')}</p>
                 <p className="text-xs mt-0.5 text-slate-300">{t('manualDuration')}</p>
@@ -690,10 +690,10 @@ export default function NewRentalPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '10px 14px', borderRadius: '12px',
-                background: 'linear-gradient(135deg,#eef2ff,#f0fdf4)',
-                border: '1px solid #c7d2fe',
+                background: 'linear-gradient(135deg,#F0FDFA,#f0fdf4)',
+                border: '1px solid #99F6E4',
               }}>
-                <CalendarDays size={15} style={{ color: '#6366f1', flexShrink: 0 }} />
+                <CalendarDays size={15} style={{ color: '#0d9488', flexShrink: 0 }} />
                 <span style={{ fontSize: '13px', color: '#3730a3', fontWeight: 600 }}>
                   {t('returnExpected')} {new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(returnDate)}
                 </span>
@@ -717,7 +717,7 @@ export default function NewRentalPage() {
                 color: form.expectedReturnAt ? '#0f172a' : '#94a3b8',
               }}
             >
-              <CalendarDays size={16} style={{ color: '#6366f1', flexShrink: 0 }} />
+              <CalendarDays size={16} style={{ color: '#0d9488', flexShrink: 0 }} />
               <span style={{ flex: 1 }}>
                 {form.expectedReturnAt
                   ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(form.expectedReturnAt))
@@ -738,7 +738,7 @@ export default function NewRentalPage() {
                   <button type="button"
                     onClick={() => setPickerMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
                     style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px' }}>
-                    <ChevronLeft size={18} style={{ color: '#6366f1' }} />
+                    <ChevronLeft size={18} style={{ color: '#0d9488' }} />
                   </button>
                   <span style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>
                     {new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(pickerMonth)}
@@ -746,7 +746,7 @@ export default function NewRentalPage() {
                   <button type="button"
                     onClick={() => setPickerMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
                     style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px' }}>
-                    <ChevronRight size={18} style={{ color: '#6366f1' }} />
+                    <ChevronRight size={18} style={{ color: '#0d9488' }} />
                   </button>
                 </div>
 
@@ -786,8 +786,8 @@ export default function NewRentalPage() {
                                 style={{
                                   width: '100%', aspectRatio: '1', border: 'none', cursor: 'pointer',
                                   borderRadius: '8px', fontSize: '13px', fontWeight: isSelected ? 700 : 400,
-                                  background: isSelected ? '#6366f1' : isToday ? '#eef2ff' : 'transparent',
-                                  color: isSelected ? '#fff' : isToday ? '#6366f1' : '#1e293b',
+                                  background: isSelected ? '#0d9488' : isToday ? '#F0FDFA' : 'transparent',
+                                  color: isSelected ? '#fff' : isToday ? '#0d9488' : '#1e293b',
                                 }}>
                                 {day}
                               </button>
@@ -808,17 +808,17 @@ export default function NewRentalPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button type="button" onClick={() => pickHour(-1)}
                       style={{ border: '1.5px solid #e2e8f0', background: '#f8fafc', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                      <ChevronLeft size={14} style={{ color: '#6366f1' }} />
+                      <ChevronLeft size={14} style={{ color: '#0d9488' }} />
                     </button>
                     <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '20px', fontWeight: 700, color: '#1e293b' }}>
                       {String(getReturnDate()?.getHours() ?? 12).padStart(2, '0')}
                     </span>
                     <button type="button" onClick={() => pickHour(1)}
                       style={{ border: '1.5px solid #e2e8f0', background: '#f8fafc', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                      <ChevronRight size={14} style={{ color: '#6366f1' }} />
+                      <ChevronRight size={14} style={{ color: '#0d9488' }} />
                     </button>
                   </div>
-                  <span style={{ fontSize: '20px', fontWeight: 700, color: '#6366f1' }}>:</span>
+                  <span style={{ fontSize: '20px', fontWeight: 700, color: '#0d9488' }}>:</span>
                   {/* Minute chips */}
                   <div style={{ display: 'flex', gap: '6px' }}>
                     {[0, 15, 30, 45].map(m => {
@@ -829,8 +829,8 @@ export default function NewRentalPage() {
                           style={{
                             padding: '6px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
                             border: '1.5px solid', cursor: 'pointer',
-                            borderColor: active ? '#6366f1' : '#e2e8f0',
-                            background: active ? '#6366f1' : '#f8fafc',
+                            borderColor: active ? '#0d9488' : '#e2e8f0',
+                            background: active ? '#0d9488' : '#f8fafc',
                             color: active ? '#fff' : '#475569',
                           }}>
                           {String(m).padStart(2, '0')}
@@ -844,7 +844,7 @@ export default function NewRentalPage() {
                 <button type="button" onClick={() => setShowReturnPicker(false)}
                   style={{
                     marginTop: '14px', width: '100%', padding: '10px', borderRadius: '10px',
-                    background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                    background: '#0d9488', color: '#fff', border: 'none', cursor: 'pointer',
                     fontWeight: 600, fontSize: '14px',
                   }}>
                   ✓ {t('confirmPicker')}
@@ -880,7 +880,7 @@ export default function NewRentalPage() {
                         <span className={`w-5 text-center text-sm font-bold ${qty > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>{qty}</span>
                         <button type="button" onClick={() => changeQty(acc.type, 1, acc.hasCode)}
                           className="w-7 h-7 rounded-full border text-sm font-bold flex items-center justify-center transition-colors"
-                          style={{ borderColor: '#6366F1', color: '#6366F1' }}>+</button>
+                          style={{ borderColor: '#0D9488', color: '#0D9488' }}>+</button>
                       </div>
                     </div>
                     {qty > 0 && acc.hasCode && (
@@ -934,7 +934,7 @@ export default function NewRentalPage() {
               <label className="block text-xs font-semibold text-slate-500">{t('amountCollected')}</label>
               {calculatedTotal !== null && manualPrice && (
                 <button type="button" onClick={() => { setManualPrice(false); setForm(f => ({ ...f, amountPaid: calculatedTotal.toFixed(2) })) }}
-                  className="text-xs font-semibold hover:underline" style={{ color: '#6366F1' }}>
+                  className="text-xs font-semibold hover:underline" style={{ color: '#0D9488' }}>
                   {t('resetPrice')} {calculatedTotal.toFixed(2)} €
                 </button>
               )}
@@ -990,7 +990,7 @@ export default function NewRentalPage() {
                       padding: '7px 16px', borderRadius: 10, border: 'none', fontSize: 12, fontWeight: 600,
                       cursor: 'pointer', transition: 'all .15s',
                       background: depositType === opt.value ? 'white' : 'transparent',
-                      color: depositType === opt.value ? '#4f46e5' : '#64748b',
+                      color: depositType === opt.value ? '#0f766e' : '#64748b',
                       boxShadow: depositType === opt.value ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
                     }}>
                     <OptIcon size={13} /> {opt.label}
@@ -1038,9 +1038,9 @@ export default function NewRentalPage() {
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         padding: '10px 8px', borderRadius: 10,
-                        border: `1.5px solid ${active ? '#6366F1' : '#e2e8f0'}`,
-                        background: active ? '#eef2ff' : 'white',
-                        color: active ? '#4f46e5' : '#64748b',
+                        border: `1.5px solid ${active ? '#0D9488' : '#e2e8f0'}`,
+                        background: active ? '#F0FDFA' : 'white',
+                        color: active ? '#0f766e' : '#64748b',
                         fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all .15s',
                       }}>
                       <FileText size={12} />
@@ -1061,7 +1061,7 @@ export default function NewRentalPage() {
 
           <button onClick={() => { setStepDir('fwd'); setStep(4) }} disabled={!canNextStep3}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-all active:scale-95"
-            style={{ background: '#6366F1' }}>
+            style={{ background: '#0D9488' }}>
             {t('continueSig')}
           </button>
         </div>
@@ -1093,7 +1093,7 @@ export default function NewRentalPage() {
             )}
             {depositType === 'ID' && (
               <p className="text-slate-500 text-xs" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {t('deposit')} : <FileText size={12} color="#4f46e5" style={{ flexShrink: 0 }} />
+                {t('deposit')} : <FileText size={12} color="#0f766e" style={{ flexShrink: 0 }} />
                 <span className="text-indigo-700 font-semibold">{depositIdType.replace('_', ' ')}</span>
               </p>
             )}
@@ -1172,11 +1172,11 @@ export default function NewRentalPage() {
               </div>
 
               {/* ── Signature staff ── */}
-              <div style={{ background: '#fafbff', border: '1.5px solid #c7d2fe', borderRadius: 14, padding: '14px 16px' }}>
+              <div style={{ background: '#fafbff', border: '1.5px solid #99F6E4', borderRadius: 14, padding: '14px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#4338ca' }}>Signature responsable / Staff</p>
-                    <p style={{ fontSize: 11, color: '#a5b4fc', marginTop: 2 }}>Engagement du loueur</p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#134e4a' }}>Signature responsable / Staff</p>
+                    <p style={{ fontSize: 11, color: '#5EEAD4', marginTop: 2 }}>Engagement du loueur</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {staffSigned && <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 20, padding: '2px 10px' }}>✓ Signé</span>}
@@ -1188,7 +1188,7 @@ export default function NewRentalPage() {
                 </div>
                 <SignaturePad
                   ref={staffPadRef}
-                  color="#4338ca"
+                  color="#134e4a"
                   onChange={notEmpty => setStaffSigned(notEmpty)}
                   placeholder="Signature du responsable / Staff signature"
                 />
@@ -1204,7 +1204,7 @@ export default function NewRentalPage() {
 
           <button onClick={handleSubmit} disabled={loading || !clientSigned || !staffSigned}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity flex items-center justify-center gap-2"
-            style={{ background: '#6366F1' }}>
+            style={{ background: '#0D9488' }}>
             {loading ? t('creating') : <><Check size={15} />{t('confirmOpen')}</>}
           </button>
         </div>
@@ -1225,9 +1225,9 @@ export default function NewRentalPage() {
           `}</style>
           <div className="success-pop" style={{
             width: 72, height: 72, borderRadius: '50%',
-            background: 'linear-gradient(135deg,#6366f1,#22c55e)',
+            background: 'linear-gradient(135deg,#0d9488,#22c55e)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 32px rgba(99,102,241,0.35)',
+            boxShadow: '0 8px 32px rgba(13,148,136,0.35)',
           }}>
             <Check size={36} color="#fff" strokeWidth={3} />
           </div>

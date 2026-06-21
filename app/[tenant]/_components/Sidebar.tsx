@@ -18,6 +18,13 @@ import CommandPalette from './CommandPalette'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useTranslations } from 'next-intl'
 
+const RunivoMark = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+    <rect x="3" y="3" width="2.5" height="12" rx="1.25" fill="white" />
+    <path d="M8.5 5L13.5 9L8.5 13" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 const NAV_KEYS = [
   { key: 'dashboard',    tKey: 'dashboard',    icon: LayoutDashboard, section: 'principal', badgeKey: null },
   { key: 'rentals',      tKey: 'rentals',      icon: Bike,            section: 'principal', badgeKey: 'rentals' },
@@ -51,23 +58,7 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
     ...(role === 'OWNER' ? [{ key: 'settings', tKey: 'settings', label: t('settings'), icon: Settings, section: 'acces', badgeKey: null }] : []),
   ]
 
-  // Mobile nav: dashboard, rentals, reservations, planning, bikes (+ accounting if 6th)
-  // We pick the 5 most important — settings can be reached via the top bar "..." or separately
   const mobileNav = nav.filter(i => ['dashboard','rentals','reservations','planning','bikes'].includes(i.key))
-
-  const SECTION_LABELS: Record<string, string> = {
-    principal: 'Principal',
-    gestion: 'Gestion',
-    acces: 'Accès',
-  }
-
-  const sections: { label: string; items: typeof nav }[] = []
-  for (const item of nav) {
-    const secLabel = SECTION_LABELS[item.section] ?? item.section
-    const sec = sections.find(s => s.label === secLabel)
-    if (sec) sec.items.push(item)
-    else sections.push({ label: secLabel, items: [item] })
-  }
 
   return (
     <>
@@ -76,136 +67,256 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
       {/* ── DESKTOP SIDEBAR ── */}
       <aside
         className="hidden md:flex w-56 flex-col fixed h-full z-10 overflow-hidden"
-        style={{ background: '#0F172A' }}
+        style={{
+          background: 'linear-gradient(200deg, #0A0F1C 0%, #070B14 60%, #060912 100%)',
+          boxShadow: '4px 0 32px rgba(0,0,0,0.6), inset -1px 0 0 rgba(255,255,255,0.04)',
+        }}
       >
-        {/* Subtle grid pattern overlay */}
-        <div className="absolute inset-0 grid-pattern pointer-events-none" />
+        {/* Ambient glow — top-left (logo area) */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -60, left: -60, width: 220, height: 220,
+            background: 'radial-gradient(ellipse, rgba(13,148,136,0.12) 0%, transparent 65%)',
+          }}
+        />
+        {/* Ambient glow — bottom-right */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            bottom: -40, right: -40, width: 180, height: 180,
+            background: 'radial-gradient(ellipse, rgba(8,145,178,0.07) 0%, transparent 65%)',
+          }}
+        />
 
-        {/* Logo */}
-        <div className="relative px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                background: 'linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%)',
-                boxShadow: '0 0 12px rgba(99,102,241,0.4)',
-              }}
-            >
-              <Bike size={15} className="text-white" />
+        {/* ── Logo area ── */}
+        <div className="relative px-4 pt-5 pb-4">
+          <div className="flex items-center gap-3">
+            {/* Mark with glow ring */}
+            <div className="relative flex-shrink-0">
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{ background: 'rgba(13,148,136,0.2)', filter: 'blur(8px)', transform: 'scale(1.3)' }}
+              />
+              <div
+                className="relative w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)',
+                  boxShadow: '0 2px 8px rgba(13,148,136,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                }}
+              >
+                <RunivoMark size={16} />
+              </div>
             </div>
             <div>
-              <span className="font-semibold text-white text-[15px] tracking-tight block leading-tight">VeloRent</span>
-              <span className="text-[11px] truncate font-mono" style={{ color: '#475569' }}>{tenantSlug}</span>
+              <p className="font-bold text-white leading-none mb-0.5" style={{ fontSize: 15, letterSpacing: '-0.03em' }}>Runivo</p>
+              <p className="font-mono leading-none" style={{ fontSize: 10, color: '#2A4A6A' }}>{tenantSlug}</p>
             </div>
           </div>
         </div>
 
-        {/* Cmd+K search trigger */}
-        <div className="relative px-3 pt-3 pb-1">
+        {/* ── Search ── */}
+        <div className="relative px-3 pb-3">
           <button
             onClick={() => {
               const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
               window.dispatchEvent(event)
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors group"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: '#475569' }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#2A4A6A' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.05)' }}
           >
-            <Search size={12} style={{ color: '#334155' }} />
+            <Search size={11} style={{ color: '#1A3050' }} />
             <span className="flex-1 text-left">{t('search')}</span>
-            <kbd className="text-[10px] font-mono" style={{ color: '#1e3a5f' }}>⌘K</kbd>
+            <kbd className="text-[9px] font-mono px-1 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.04)', color: '#162840', border: '1px solid rgba(255,255,255,0.06)' }}>⌘K</kbd>
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="relative flex-1 px-3 py-3 overflow-y-auto">
-          {sections.map((section, si) => (
-            <div key={section.label} className={si > 0 ? 'mt-5' : ''}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] px-2 mb-1.5" style={{ color: '#1e3a5f' }}>
-                {section.label}
-              </p>
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
+        {/* ── Nav ── */}
+        <nav className="relative flex-1 px-2 overflow-y-auto">
+
+          {/* Group 1 — principal */}
+          <div className="space-y-px">
+            {nav.filter(i => i.section === 'principal').map((item) => {
+              const href = `/${tenant}/${item.key}`
+              const isActive = pathname.startsWith(href)
+              const Icon = item.icon
+              const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0
+              return (
+                <Link
+                  key={item.key}
+                  href={href}
+                  className="flex items-center gap-2.5 px-2.5 py-[8px] rounded-lg text-[13px] font-medium relative transition-all duration-100"
+                  style={{
+                    background: isActive
+                      ? 'rgba(255,255,255,0.07)'
+                      : 'transparent',
+                    color: isActive ? '#ffffff' : '#3D5578',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
+                    if (!isActive) (e.currentTarget as HTMLElement).style.color = '#4A6480'
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'
+                    if (!isActive) (e.currentTarget as HTMLElement).style.color = '#3D5578'
+                  }}
+                >
+                  <Icon
+                    size={15}
+                    strokeWidth={isActive ? 2 : 1.6}
+                    style={{
+                      color: isActive ? '#0D9488' : '#2A4A6A',
+                      filter: isActive ? 'drop-shadow(0 0 6px rgba(13,148,136,0.6))' : 'none',
+                      transition: 'filter 0.2s',
+                    }}
+                  />
+                  <span className="flex-1 tracking-tight">{item.label}</span>
+                  {badgeCount > 0 && (
+                    <span
+                      className="text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-1"
+                      style={{
+                        background: isActive ? 'rgba(13,148,136,0.25)' : 'rgba(255,255,255,0.05)',
+                        color: isActive ? '#2DD4BF' : '#3D5578',
+                      }}
+                    >
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Divider */}
+          <div className="my-3 mx-2" style={{ height: 1, background: 'rgba(255,255,255,0.04)' }} />
+
+          {/* Group 2 — gestion */}
+          <div className="space-y-px">
+            {nav.filter(i => i.section === 'gestion').map((item) => {
+              const href = `/${tenant}/${item.key}`
+              const isActive = pathname.startsWith(href)
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.key}
+                  href={href}
+                  className="flex items-center gap-2.5 px-2.5 py-[8px] rounded-lg text-[13px] font-medium relative transition-all duration-100"
+                  style={{
+                    background: isActive ? 'rgba(255,255,255,0.07)' : 'transparent',
+                    color: isActive ? '#ffffff' : '#3D5578',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
+                    if (!isActive) (e.currentTarget as HTMLElement).style.color = '#4A6480'
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'
+                    if (!isActive) (e.currentTarget as HTMLElement).style.color = '#3D5578'
+                  }}
+                >
+                  <Icon
+                    size={15}
+                    strokeWidth={isActive ? 2 : 1.6}
+                    style={{
+                      color: isActive ? '#0D9488' : '#2A4A6A',
+                      filter: isActive ? 'drop-shadow(0 0 6px rgba(13,148,136,0.6))' : 'none',
+                      transition: 'filter 0.2s',
+                    }}
+                  />
+                  <span className="flex-1 tracking-tight">{item.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Settings — accès */}
+          {nav.filter(i => i.section === 'acces').length > 0 && (
+            <>
+              <div className="my-3 mx-2" style={{ height: 1, background: 'rgba(255,255,255,0.04)' }} />
+              <div className="space-y-px">
+                {nav.filter(i => i.section === 'acces').map((item) => {
                   const href = `/${tenant}/${item.key}`
                   const isActive = pathname.startsWith(href)
                   const Icon = item.icon
-                  const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0
                   return (
                     <Link
                       key={item.key}
                       href={href}
-                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium group relative overflow-hidden"
+                      className="flex items-center gap-2.5 px-2.5 py-[8px] rounded-lg text-[13px] font-medium relative transition-all duration-100"
                       style={{
-                        background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
-                        color: isActive ? '#a5b4fc' : '#475569',
+                        background: isActive ? 'rgba(255,255,255,0.07)' : 'transparent',
+                        color: isActive ? '#ffffff' : '#3D5578',
+                      }}
+                      onMouseEnter={e => {
+                        if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
+                        if (!isActive) (e.currentTarget as HTMLElement).style.color = '#4A6480'
+                      }}
+                      onMouseLeave={e => {
+                        if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'
+                        if (!isActive) (e.currentTarget as HTMLElement).style.color = '#3D5578'
                       }}
                     >
-                      {/* Active left border glow */}
-                      {isActive && (
-                        <div
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full"
-                          style={{ background: 'linear-gradient(180deg, #6366F1 0%, #8b5cf6 100%)', boxShadow: '0 0 6px #6366F1' }}
-                        />
-                      )}
                       <Icon
                         size={15}
-                        strokeWidth={isActive ? 2.5 : 1.8}
-                        style={{ color: isActive ? '#6366F1' : '#334155' }}
-                        className="transition-colors duration-150 group-hover:text-slate-300"
+                        strokeWidth={isActive ? 2 : 1.6}
+                        style={{
+                          color: isActive ? '#0D9488' : '#2A4A6A',
+                          filter: isActive ? 'drop-shadow(0 0 6px rgba(13,148,136,0.6))' : 'none',
+                          transition: 'filter 0.2s',
+                        }}
                       />
-                      <span className={`flex-1 transition-colors duration-150 ${isActive ? '' : 'group-hover:text-slate-300'}`}>
-                        {item.label}
-                      </span>
-                      {badgeCount > 0 && (
-                        <span
-                          className="text-[10px] font-semibold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1"
-                          style={{
-                            background: isActive ? 'rgba(99,102,241,0.3)' : 'rgba(99,102,241,0.15)',
-                            color: isActive ? '#a5b4fc' : '#6366F1',
-                          }}
-                        >
-                          {badgeCount > 99 ? '99+' : badgeCount}
-                        </span>
-                      )}
+                      <span className="flex-1 tracking-tight">{item.label}</span>
                     </Link>
                   )
                 })}
               </div>
-            </div>
-          ))}
+            </>
+          )}
         </nav>
 
-        {/* Footer */}
-        <div className="relative px-3 pb-4 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-2.5 mb-3 px-1">
+        {/* ── Footer ── */}
+        <div className="relative px-3 pb-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          {/* User row */}
+          <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg mb-2 transition-all"
+            style={{ cursor: 'default' }}
+          >
+            {/* Avatar — teal gradient */}
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-semibold"
-              style={{ background: '#1e293b', color: '#64748b', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', boxShadow: '0 0 8px rgba(13,148,136,0.3)' }}
             >
               {tenantSlug.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-white truncate">{tenantSlug}</p>
-              <p className="text-[10px]" style={{ color: '#334155' }}>{role === 'OWNER' ? t('owner') : t('employee')}</p>
+              <p className="text-[11px] font-semibold leading-tight truncate" style={{ color: '#94A3B8' }}>{tenantSlug}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10B981', boxShadow: '0 0 4px rgba(16,185,129,0.6)' }} />
+                <span style={{ fontSize: 9, color: '#1A3050' }}>{role === 'OWNER' ? t('owner') : t('employee')}</span>
+              </div>
             </div>
           </div>
+
           <LanguageSwitcher />
+
           <form action="/api/auth/logout" method="POST">
             <button
               type="submit"
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium group transition-all duration-150"
-              style={{ color: '#334155' }}
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12px] font-medium transition-all duration-150"
+              style={{ color: '#1A3050' }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement
                 el.style.color = '#f87171'
-                el.style.background = 'rgba(239,68,68,0.08)'
+                el.style.background = 'rgba(239,68,68,0.07)'
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement
-                el.style.color = '#334155'
+                el.style.color = '#1A3050'
                 el.style.background = 'transparent'
               }}
             >
-              <LogOut size={14} />
+              <LogOut size={13} />
               {t('logout')}
             </button>
           </form>
@@ -214,19 +325,26 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
 
       {/* ── MOBILE TOP BAR ── */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 z-20 px-4 py-3 flex items-center justify-between border-b overflow-hidden"
-        style={{ background: '#0F172A', borderColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}
+        className="md:hidden fixed top-0 left-0 right-0 z-20 px-4 py-3 flex items-center justify-between"
+        style={{
+          background: 'rgba(7,11,20,0.92)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          boxShadow: '0 1px 24px rgba(0,0,0,0.4)',
+        }}
       >
-        <div className="absolute inset-0 grid-pattern pointer-events-none" />
-        <div className="relative flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%)' }}>
-            <Bike size={13} className="text-white" />
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', boxShadow: '0 0 10px rgba(13,148,136,0.4)' }}
+          >
+            <RunivoMark size={15} />
           </div>
-          <span className="font-semibold text-white text-sm">VeloRent</span>
-          <span className="text-xs font-mono" style={{ color: '#334155' }}>· {tenantSlug}</span>
+          <span className="font-bold text-white text-sm" style={{ letterSpacing: '-0.025em' }}>Runivo</span>
+          <span className="text-[11px] font-mono" style={{ color: '#2A4A6A' }}>· {tenantSlug}</span>
         </div>
-        <form action="/api/auth/logout" method="POST" className="relative">
-          <button type="submit" className="p-1.5 rounded-lg opacity-60 hover:opacity-100 transition-opacity">
+        <form action="/api/auth/logout" method="POST">
+          <button type="submit" className="p-1.5 rounded-lg transition-opacity" style={{ opacity: 0.4 }}>
             <LogOut size={16} className="text-slate-400" />
           </button>
         </form>
@@ -234,8 +352,13 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
 
       {/* ── MOBILE BOTTOM NAV ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-20 border-t px-1 py-1 safe-area-pb"
-        style={{ background: 'rgba(15,23,42,0.97)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.06)' }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-20 px-1 py-1 safe-area-pb"
+        style={{
+          background: 'rgba(7,11,20,0.94)',
+          backdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          boxShadow: '0 -1px 24px rgba(0,0,0,0.4)',
+        }}
       >
         <div className="flex justify-around items-center">
           {mobileNav.map((item) => {
@@ -248,14 +371,18 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
                 key={item.key}
                 href={href}
                 className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all relative"
-                style={{ color: isActive ? '#6366F1' : '#475569' }}
+                style={{ color: isActive ? '#0D9488' : '#2A4A6A' }}
               >
-                <Icon size={19} strokeWidth={isActive ? 2.5 : 1.8} />
+                <Icon
+                  size={19}
+                  strokeWidth={isActive ? 2 : 1.6}
+                  style={{ filter: isActive ? 'drop-shadow(0 0 5px rgba(13,148,136,0.6))' : 'none' }}
+                />
                 <span className="text-[9px] font-semibold leading-none mt-0.5">{item.label}</span>
                 {badgeCount > 0 && (
                   <span
                     className="absolute top-1 right-0.5 text-[8px] font-bold min-w-[13px] h-[13px] flex items-center justify-center rounded-full px-0.5"
-                    style={{ background: '#6366F1', color: '#fff' }}
+                    style={{ background: '#0D9488', color: '#fff' }}
                   >
                     {badgeCount > 9 ? '9+' : badgeCount}
                   </span>
@@ -263,12 +390,12 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
               </Link>
             )
           })}
-          {/* More — accounting + settings */}
-          <div className="relative group">
+          {/* More */}
+          <div className="relative">
             <button
               className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all"
               style={{
-                color: (pathname.includes('/accounting') || pathname.includes('/settings')) ? '#6366F1' : '#475569',
+                color: (pathname.includes('/accounting') || pathname.includes('/settings')) ? '#0D9488' : '#2A4A6A',
                 background: 'none', border: 'none', cursor: 'pointer',
               }}
               onClick={() => {
@@ -276,22 +403,26 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
                 if (el) el.classList.toggle('hidden')
               }}
             >
-              <MoreHorizontal size={19} strokeWidth={1.8} />
+              <MoreHorizontal size={19} strokeWidth={1.6} />
               <span className="text-[9px] font-semibold leading-none mt-0.5">Plus</span>
             </button>
-            {/* More menu popup */}
             <div
               id="mobile-more-menu"
-              className="hidden absolute bottom-full right-0 mb-2 w-44 rounded-2xl border overflow-hidden shadow-2xl z-50"
-              style={{ background: '#0F172A', borderColor: 'rgba(255,255,255,0.08)' }}
+              className="hidden absolute bottom-full right-0 mb-2 w-44 rounded-2xl overflow-hidden z-50"
+              style={{
+                background: 'rgba(7,11,20,0.97)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                boxShadow: '0 -8px 40px rgba(0,0,0,0.5)',
+              }}
             >
               <Link
                 href={`/${tenant}/accounting`}
                 onClick={() => document.getElementById('mobile-more-menu')?.classList.add('hidden')}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium border-b"
-                style={{ color: '#a5b4fc', borderColor: 'rgba(255,255,255,0.06)' }}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium"
+                style={{ color: '#94A3B8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
               >
-                <Receipt size={15} style={{ color: '#6366F1' }} />
+                <Receipt size={15} style={{ color: '#0D9488' }} />
                 {t('accounting')}
               </Link>
               {role === 'OWNER' && (
@@ -299,9 +430,9 @@ export default function Sidebar({ tenant, tenantSlug, role, activeRentalsCount, 
                   href={`/${tenant}/settings`}
                   onClick={() => document.getElementById('mobile-more-menu')?.classList.add('hidden')}
                   className="flex items-center gap-3 px-4 py-3 text-sm font-medium"
-                  style={{ color: '#a5b4fc' }}
+                  style={{ color: '#94A3B8' }}
                 >
-                  <Settings size={15} style={{ color: '#6366F1' }} />
+                  <Settings size={15} style={{ color: '#0D9488' }} />
                   {t('settings')}
                 </Link>
               )}

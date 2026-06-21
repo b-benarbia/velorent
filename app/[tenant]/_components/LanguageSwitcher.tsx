@@ -71,10 +71,10 @@ export default function LanguageSwitcher() {
                 gap: 8,
                 padding: '8px 12px',
                 border: 'none',
-                background: lang.code === locale ? 'rgba(99,102,241,0.15)' : 'transparent',
+                background: lang.code === locale ? 'rgba(13,148,136,0.15)' : 'transparent',
                 cursor: 'pointer',
                 textAlign: 'left',
-                color: lang.code === locale ? '#a5b4fc' : '#94a3b8',
+                color: lang.code === locale ? '#5EEAD4' : '#94a3b8',
                 fontSize: 13,
                 fontWeight: lang.code === locale ? 600 : 400,
               }}
@@ -83,7 +83,7 @@ export default function LanguageSwitcher() {
             >
               <span style={{ fontSize: 16 }}>{lang.flag}</span>
               <span>{lang.label}</span>
-              {lang.code === locale && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#6366F1' }}>✓</span>}
+              {lang.code === locale && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#0D9488' }}>✓</span>}
             </button>
           ))}
         </div>

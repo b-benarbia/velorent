@@ -82,8 +82,8 @@ interface ShopInfo {
 // ─── Shared UI primitives ────────────────────────────────────────────────────
 const card: React.CSSProperties = { background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24, overflow: 'hidden' }
 const cardHead: React.CSSProperties = { padding: '14px 18px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }
-const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e2e8f0', borderRadius: 10, padding: '9px 13px', fontSize: 14, color: '#0f172a', outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 5, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }
+const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid #E8EDF2', borderRadius: 12, padding: '10px 14px', fontSize: 14, color: '#0f172a', outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s, box-shadow .15s', background: '#FAFBFC' }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 6 }
 
 function SectionIcon({ gradient, icon }: { gradient: string; icon: React.ReactNode }) {
   return (
@@ -94,7 +94,7 @@ function SectionIcon({ gradient, icon }: { gradient: string; icon: React.ReactNo
 }
 
 function SaveBtn({ onClick, loading, saved, error, label }: { onClick: () => void; loading: boolean; saved: boolean; error: string; label: string }) {
-  const bg = saved ? '#f0fdf4' : error ? '#fef2f2' : 'linear-gradient(135deg,#6366F1,#8b5cf6)'
+  const bg = saved ? '#f0fdf4' : error ? '#fef2f2' : 'linear-gradient(135deg,#0D9488,#0891B2)'
   const color = saved ? '#16a34a' : error ? '#dc2626' : 'white'
   const border = saved ? '1px solid #bbf7d0' : error ? '1px solid #fecaca' : 'none'
   return (
@@ -351,7 +351,7 @@ export default function SettingsPage() {
       <div style={card}>
         <div style={cardHead}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <SectionIcon gradient="linear-gradient(135deg,#f59e0b,#f97316)" icon={<Store size={16} color="white" />} />
+            <SectionIcon gradient="linear-gradient(135deg,#0D9488,#0891B2)" icon={<Store size={16} color="white" />} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('shopTitle')}</p>
               <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('shopSubtitle')}</p>
@@ -389,7 +389,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <p style={{ fontSize: 11, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-            <Info size={11} /> Slug : <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>{tenant}</span> — {t('slugNote')}
+            <Info size={11} /> Slug : <span style={{ fontFamily: 'monospace', color: '#0D9488' }}>{tenant}</span> — {t('slugNote')}
           </p>
         </div>
       </div>
@@ -400,7 +400,7 @@ export default function SettingsPage() {
       <div style={card}>
         <div style={cardHead}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <SectionIcon gradient="linear-gradient(135deg,#10b981,#059669)" icon={<Percent size={16} color="white" />} />
+            <SectionIcon gradient="linear-gradient(135deg,#0D9488,#0F766E)" icon={<Percent size={16} color="white" />} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('taxTitle')}</p>
               <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('taxSubtitle')}</p>
@@ -450,8 +450,8 @@ export default function SettingsPage() {
               })}
             </div>
             <div style={{ marginTop: 10, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <Lock size={13} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
-              <p style={{ fontSize: 12, color: '#6366F1' }}>{t('depositNote')}</p>
+              <Lock size={13} color="#0D9488" style={{ marginTop: 1, flexShrink: 0 }} />
+              <p style={{ fontSize: 12, color: '#0D9488' }}>{t('depositNote')}</p>
             </div>
           </div>
         </div>
@@ -463,7 +463,7 @@ export default function SettingsPage() {
       <div style={card}>
         <div style={cardHead}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <SectionIcon gradient="linear-gradient(135deg,#6366F1,#8b5cf6)" icon={<Zap size={16} color="white" />} />
+            <SectionIcon gradient="linear-gradient(135deg,#0D9488,#0891B2)" icon={<Zap size={16} color="white" />} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('pricing')}</p>
               <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('pricingSubtitleNew')}</p>
@@ -480,9 +480,9 @@ export default function SettingsPage() {
               <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
                 <th style={{ textAlign: 'left', paddingBottom: 10, paddingRight: 12, fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>{t('vehicleCol')}</th>
                 {DURATIONS.map(d => (
-                  <th key={d.key} style={{ paddingBottom: 10, paddingInline: 5, textAlign: 'center', fontSize: 11, fontWeight: 700, color: d.key === '1day' ? '#6366F1' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 68 }}>
+                  <th key={d.key} style={{ paddingBottom: 10, paddingInline: 5, textAlign: 'center', fontSize: 11, fontWeight: 700, color: d.key === '1day' ? '#0D9488' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 68 }}>
                     {d.label}
-                    {d.key === '1day' && <div style={{ fontSize: 9, color: '#a5b4fc', fontWeight: 600, marginTop: 1 }}>{t('baseCol')}</div>}
+                    {d.key === '1day' && <div style={{ fontSize: 9, color: '#5EEAD4', fontWeight: 600, marginTop: 1 }}>{t('baseCol')}</div>}
                   </th>
                 ))}
                 <th style={{ paddingBottom: 10, paddingInline: 8, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 60 }}>Auto</th>
@@ -513,10 +513,10 @@ export default function SettingsPage() {
                               value={val ?? ''}
                               onChange={e => setPrice(bike.key, dur.key, e.target.value.replace(/[^0-9.]/g, ''))}
                               style={{
-                                width: '100%', border: `1px solid ${isBase ? '#c7d2fe' : isAutoFilled ? '#e0f2fe' : '#e2e8f0'}`,
+                                width: '100%', border: `1px solid ${isBase ? '#99F6E4' : isAutoFilled ? '#e0f2fe' : '#e2e8f0'}`,
                                 borderRadius: 8, padding: '6px 18px 6px 6px', textAlign: 'center',
                                 fontSize: 13, fontWeight: 600,
-                                color: isBase ? '#4f46e5' : isAutoFilled ? '#0284c7' : '#0f172a',
+                                color: isBase ? '#0f766e' : isAutoFilled ? '#0284c7' : '#0f172a',
                                 background: isBase ? '#fafaff' : isAutoFilled ? '#f0f9ff' : 'white',
                                 outline: 'none', boxSizing: 'border-box' as const,
                               }}
@@ -533,7 +533,7 @@ export default function SettingsPage() {
                         title={canAuto ? 'Calculer automatiquement depuis le tarif journalier' : 'Entrez d\'abord le tarif journalier (1 day)'}
                         style={{
                           width: 34, height: 34, borderRadius: 8,
-                          background: canAuto ? 'linear-gradient(135deg,#6366F1,#8b5cf6)' : '#f1f5f9',
+                          background: canAuto ? 'linear-gradient(135deg,#0D9488,#0891B2)' : '#f1f5f9',
                           border: 'none', cursor: canAuto ? 'pointer' : 'not-allowed',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
@@ -548,8 +548,8 @@ export default function SettingsPage() {
           </table>
 
           <div style={{ marginTop: 10, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Sparkles size={13} color="#6366F1" />
-            <p style={{ fontSize: 12, color: '#6366F1' }}>{t('pricingTip')}</p>
+            <Sparkles size={13} color="#0D9488" />
+            <p style={{ fontSize: 12, color: '#0D9488' }}>{t('pricingTip')}</p>
           </div>
         </div>
 
@@ -604,7 +604,7 @@ export default function SettingsPage() {
             <Lock size={15} color="#7C3AED" style={{ flexShrink: 0, marginTop: 1 }} />
             <div>
               <p style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 3 }}>{t('stripeBannerTitle')}</p>
-              <p style={{ fontSize: 12, color: '#6d28d9', lineHeight: 1.6 }}>{t('stripeBannerText')}</p>
+              <p style={{ fontSize: 12, color: '#0F766E', lineHeight: 1.6 }}>{t('stripeBannerText')}</p>
             </div>
           </div>
 
@@ -650,7 +650,7 @@ export default function SettingsPage() {
 
           {/* Lien dashboard Stripe */}
           <div style={{ marginTop: 14, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 12, color: '#6366F1' }}>{t('stripeNoAccount')}</p>
+            <p style={{ fontSize: 12, color: '#0D9488' }}>{t('stripeNoAccount')}</p>
             <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener noreferrer"
               style={{ fontSize: 12, fontWeight: 600, color: '#635BFF', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {t('stripeCreateAccount')}
@@ -717,8 +717,8 @@ export default function SettingsPage() {
 
           {/* Note auto-detect */}
           <div style={{ marginTop: 16, padding: '10px 14px', background: '#fafbff', borderRadius: 10, border: '1px solid #e0e7ff', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <Sparkles size={13} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
-            <p style={{ fontSize: 12, color: '#6366F1', lineHeight: 1.6 }}>{t('notifAutoDetect')}</p>
+            <Sparkles size={13} color="#0D9488" style={{ marginTop: 1, flexShrink: 0 }} />
+            <p style={{ fontSize: 12, color: '#0D9488', lineHeight: 1.6 }}>{t('notifAutoDetect')}</p>
           </div>
 
           {/* Google Place ID */}
@@ -736,7 +736,7 @@ export default function SettingsPage() {
                 href="https://developers.google.com/maps/documentation/places/web-service/place-id#find-id"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#6366F1' }}
+                style={{ color: '#0D9488' }}
               >
                 Comment trouver mon identifiant ?
               </a>
@@ -751,7 +751,7 @@ export default function SettingsPage() {
       <div style={card}>
         <div style={cardHead}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <SectionIcon gradient="linear-gradient(135deg,#f59e0b,#d97706)" icon={<TrendingUp size={16} color="white" />} />
+            <SectionIcon gradient="linear-gradient(135deg,#0D9488,#0891B2)" icon={<TrendingUp size={16} color="white" />} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t('dpTitle')}</p>
               <p style={{ fontSize: 11, color: '#94a3b8' }}>{t('dpSubtitle')}</p>
@@ -814,8 +814,8 @@ export default function SettingsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
               {/* Bornes min/max */}
               <div style={{ background: '#fafbff', borderRadius: 12, padding: 16, border: '1px solid #e0e7ff' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#4338ca', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366F1', display: 'inline-block' }} />
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#134e4a', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488', display: 'inline-block' }} />
                   {t('dpBoundsTitle')}
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -846,8 +846,8 @@ export default function SettingsPage() {
 
               {/* Week-end */}
               <div style={{ background: '#fafbff', borderRadius: 12, padding: 16, border: '1px solid #e0e7ff' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#4338ca', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366F1', display: 'inline-block' }} />
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#134e4a', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488', display: 'inline-block' }} />
                   {t('dpWeekendTitle')}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -950,15 +950,15 @@ export default function SettingsPage() {
             </div>
           </div>
           <button onClick={() => setShowForm(!showForm)}
-            style={{ background: showForm ? '#f1f5f9' : 'linear-gradient(135deg,#6366F1,#8b5cf6)', color: showForm ? '#64748b' : 'white', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ background: showForm ? '#f1f5f9' : 'linear-gradient(135deg,#0D9488,#0891B2)', color: showForm ? '#64748b' : 'white', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             {showForm ? t('cancel') : t('createAccount')}
           </button>
         </div>
 
         <div style={{ padding: '10px 24px', background: '#fafbff', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <Info size={13} color="#6366F1" style={{ marginTop: 1, flexShrink: 0 }} />
+          <Info size={13} color="#0D9488" style={{ marginTop: 1, flexShrink: 0 }} />
           <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
-            {t('staffInfo')} <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>staff@votreboutique.com</span> — page de connexion : <span style={{ fontFamily: 'monospace', color: '#6366F1' }}>/login</span>
+            {t('staffInfo')} <span style={{ fontFamily: 'monospace', color: '#0D9488' }}>staff@votreboutique.com</span> — page de connexion : <span style={{ fontFamily: 'monospace', color: '#0D9488' }}>/login</span>
           </p>
         </div>
 
@@ -990,7 +990,7 @@ export default function SettingsPage() {
             </div>
             {staffError && <p style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{staffError}</p>}
             <button type="submit" disabled={staffLoading}
-              style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)', color: 'white', border: 'none', borderRadius: 10, padding: '10px 22px', fontSize: 13, fontWeight: 600, cursor: staffLoading ? 'not-allowed' : 'pointer', opacity: staffLoading ? 0.6 : 1 }}>
+              style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)', color: 'white', border: 'none', borderRadius: 10, padding: '10px 22px', fontSize: 13, fontWeight: 600, cursor: staffLoading ? 'not-allowed' : 'pointer', opacity: staffLoading ? 0.6 : 1 }}>
               {staffLoading ? t('creating') : t('createStaff')}
             </button>
           </form>
@@ -1009,7 +1009,7 @@ export default function SettingsPage() {
             {staff.map((s, i) => (
               <div key={s.id} style={{ padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: i > 0 ? '1px solid #f1f5f9' : undefined }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,#f1f5f9,#e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#6366F1' }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,#f1f5f9,#e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#0D9488' }}>
                     {s.name.charAt(0).toUpperCase()}
                   </div>
                   <div>

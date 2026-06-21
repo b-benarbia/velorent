@@ -240,7 +240,7 @@ export default function LandingPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #f1f5f9' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#6366F1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#0D9488,#0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Bike size={18} color="white" />
             </div>
             <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.02em' }}>VeloRent</span>
@@ -250,13 +250,13 @@ export default function LandingPage() {
             <a href="#pricing" style={{ fontSize: 14, color: '#475569', textDecoration: 'none', fontWeight: 500 }}>{t.nav.pricing}</a>
             <div style={{ display: 'flex', gap: 3, background: '#f1f5f9', borderRadius: 8, padding: 3 }}>
               {(['fr', 'es', 'en'] as LangKey[]).map(l => (
-                <button key={l} onClick={() => setLang(l)} style={{ padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', background: lang === l ? '#6366F1' : 'transparent', color: lang === l ? 'white' : '#64748b', transition: 'all 0.15s' }}>
+                <button key={l} onClick={() => setLang(l)} style={{ padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', background: lang === l ? '#0D9488' : 'transparent', color: lang === l ? 'white' : '#64748b', transition: 'all 0.15s' }}>
                   {l.toUpperCase()}
                 </button>
               ))}
             </div>
             <Link href="/login" style={{ fontSize: 14, color: '#475569', textDecoration: 'none', fontWeight: 500 }}>{t.nav.login}</Link>
-            <Link href="/register" style={{ fontSize: 14, fontWeight: 700, color: 'white', background: '#6366F1', padding: '8px 18px', borderRadius: 10, textDecoration: 'none', whiteSpace: 'nowrap' }}>{t.nav.trial}</Link>
+            <Link href="/register" style={{ fontSize: 14, fontWeight: 700, color: 'white', background: '#0D9488', padding: '8px 18px', borderRadius: 10, textDecoration: 'none', whiteSpace: 'nowrap' }}>{t.nav.trial}</Link>
           </div>
         </div>
       </nav>
@@ -264,7 +264,7 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section style={{ background: 'linear-gradient(160deg,#fafbff 0%,#ede9fe 50%,#fafbff 100%)', padding: '88px 24px 72px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-block', background: '#ede9fe', border: '1px solid #c4b5fd', borderRadius: 100, padding: '6px 16px', fontSize: 13, fontWeight: 600, color: '#6d28d9', marginBottom: 28 }}>
+          <div style={{ display: 'inline-block', background: '#ede9fe', border: '1px solid #c4b5fd', borderRadius: 100, padding: '6px 16px', fontSize: 13, fontWeight: 600, color: '#0F766E', marginBottom: 28 }}>
             {t.hero.badge}
           </div>
           <h1 style={{ fontSize: 'clamp(30px,5vw,54px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}>
@@ -274,7 +274,7 @@ export default function LandingPage() {
             {t.hero.subtitle}
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
-            <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#6366F1', color: 'white', padding: '14px 28px', borderRadius: 12, fontWeight: 700, fontSize: 16, textDecoration: 'none', boxShadow: '0 4px 24px rgba(99,102,241,0.4)' }}>
+            <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0D9488', color: 'white', padding: '14px 28px', borderRadius: 12, fontWeight: 700, fontSize: 16, textDecoration: 'none', boxShadow: '0 4px 24px rgba(13,148,136,0.4)' }}>
               {t.hero.cta} <ChevronRight size={18} />
             </Link>
             <a href="#features" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'white', color: '#374151', padding: '14px 24px', borderRadius: 12, fontWeight: 600, fontSize: 15, textDecoration: 'none', border: '1px solid #e2e8f0' }}>
@@ -285,7 +285,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginTop: 56, background: 'white', borderRadius: 20, padding: '24px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(15,23,42,0.06)' }}>
             {t.stats.map((s, i) => (
               <div key={i} style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 28, fontWeight: 800, color: '#6366F1', letterSpacing: '-0.03em' }}>{s.value}</p>
+                <p style={{ fontSize: 28, fontWeight: 800, color: '#0D9488', letterSpacing: '-0.03em' }}>{s.value}</p>
                 <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{s.label}</p>
               </div>
             ))}
@@ -337,7 +337,7 @@ export default function LandingPage() {
             {t.features.items.map((f, i) => (
               <div key={i} style={{ background: 'white', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0' }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f0f0ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  <f.icon size={20} color="#6366F1" />
+                  <f.icon size={20} color="#0D9488" />
                 </div>
                 <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{f.title}</p>
                 <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{f.desc}</p>
@@ -357,7 +357,7 @@ export default function LandingPage() {
           <div style={{ borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px', background: '#0f172a', padding: '14px 24px', gap: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fonctionnalité</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#a5b4fc', textAlign: 'center' }}>VeloRent</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#5EEAD4', textAlign: 'center' }}>VeloRent</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#475569', textAlign: 'center' }}>Booqable</span>
             </div>
             {t.compare.features.map((feat, i) => (
@@ -371,9 +371,9 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px', padding: '16px 24px', gap: 8, background: '#f0f0ff', borderTop: '2px solid #c7d2fe' }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#4f46e5' }}>Prix de départ</span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#4f46e5', textAlign: 'center' }}>€19/mois</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px', padding: '16px 24px', gap: 8, background: '#f0f0ff', borderTop: '2px solid #99F6E4' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0f766e' }}>Prix de départ</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#0f766e', textAlign: 'center' }}>€19/mois</span>
               <span style={{ fontSize: 15, fontWeight: 600, color: '#94a3b8', textAlign: 'center' }}>$29/mois</span>
             </div>
           </div>
@@ -392,7 +392,7 @@ export default function LandingPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, alignItems: 'stretch' }}>
             {t.pricing.plans.map((plan, i) => (
-              <div key={i} style={{ background: plan.highlight ? '#6366F1' : 'white', borderRadius: 20, padding: '32px 28px', border: plan.highlight ? 'none' : '1px solid #e2e8f0', position: 'relative', boxShadow: plan.highlight ? '0 8px 40px rgba(99,102,241,0.35)' : 'none', transform: plan.highlight ? 'scale(1.04)' : 'none', display: 'flex', flexDirection: 'column' }}>
+              <div key={i} style={{ background: plan.highlight ? '#0D9488' : 'white', borderRadius: 20, padding: '32px 28px', border: plan.highlight ? 'none' : '1px solid #e2e8f0', position: 'relative', boxShadow: plan.highlight ? '0 8px 40px rgba(13,148,136,0.35)' : 'none', transform: plan.highlight ? 'scale(1.04)' : 'none', display: 'flex', flexDirection: 'column' }}>
                 {plan.badge && (
                   <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#fbbf24', color: '#78350f', fontSize: 11, fontWeight: 800, padding: '4px 14px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                     {plan.badge}
@@ -412,7 +412,7 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-                <Link href="/register" style={{ display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', background: plan.highlight ? 'white' : '#6366F1', color: plan.highlight ? '#6366F1' : 'white' }}>
+                <Link href="/register" style={{ display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', background: plan.highlight ? 'white' : '#0D9488', color: plan.highlight ? '#0D9488' : 'white' }}>
                   {plan.cta}
                 </Link>
               </div>
@@ -457,14 +457,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section style={{ padding: '72px 24px', background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+      <section style={{ padding: '72px 24px', background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
         <div style={{ maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
             <Bike size={28} color="white" />
           </div>
           <h2 style={{ fontSize: 32, fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>{t.cta.title}</h2>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 32 }}>{t.cta.sub}</p>
-          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'white', color: '#6366F1', padding: '16px 32px', borderRadius: 14, fontWeight: 800, fontSize: 16, textDecoration: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
+          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'white', color: '#0D9488', padding: '16px 32px', borderRadius: 14, fontWeight: 800, fontSize: 16, textDecoration: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
             {t.cta.btn} <ChevronRight size={18} />
           </Link>
         </div>
@@ -476,7 +476,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 40, marginBottom: 40 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#6366F1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#0D9488,#0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Bike size={16} color="white" />
                 </div>
                 <span style={{ fontWeight: 800, fontSize: 16, color: 'white' }}>VeloRent</span>

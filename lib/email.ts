@@ -87,7 +87,7 @@ export async function sendBookingConfirmationToCustomer({
     html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,-apple-system,sans-serif;">
 <div style="max-width:520px;margin:40px auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(15,23,42,0.08)">
-  <div style="background:linear-gradient(135deg,#6366F1,#8b5cf6);padding:36px 32px 32px;text-align:center">
+  <div style="background:linear-gradient(135deg,#0D9488,#0891B2);padding:36px 32px 32px;text-align:center">
     <p style="color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 6px">VeloRent · ${shopName}</p>
     <h1 style="color:white;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.02em">${T.title[l]}</h1>
   </div>
@@ -295,7 +295,7 @@ export async function sendReceiptToCustomer({
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin:20px 0">
       <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#94a3b8;margin:0 0 12px">Récapitulatif · Contrat N° ${contractNumber}</p>
       <table style="width:100%;border-collapse:collapse">
-        <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Véhicule</td><td style="padding:6px 0;text-align:right;font-size:13px;font-weight:700">${bikeName} <span style="color:#6366f1">${bikeCode}</span></td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Véhicule</td><td style="padding:6px 0;text-align:right;font-size:13px;font-weight:700">${bikeName} <span style="color:#0d9488">${bikeCode}</span></td></tr>
         <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Départ</td><td style="padding:6px 0;text-align:right;font-size:13px">${fmtFR(startAt)}</td></tr>
         <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Retour</td><td style="padding:6px 0;text-align:right;font-size:13px">${fmtFR(endAt)}</td></tr>
         <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Durée</td><td style="padding:6px 0;text-align:right;font-size:13px;font-weight:600">${duration}</td></tr>
@@ -429,8 +429,8 @@ export async function sendBookingAlertToShop({
       <h1 style="color:white;font-size:20px;font-weight:800;margin:0">🔔 Nouvelle réservation en ligne</h1>
     </div>
     <div style="padding:32px">
-      <div style="background:#f0f0ff;border:1px solid #c7d2fe;border-radius:12px;padding:20px;margin-bottom:24px">
-        <p style="color:#4338ca;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 16px">Client</p>
+      <div style="background:#f0f0ff;border:1px solid #99F6E4;border-radius:12px;padding:20px;margin-bottom:24px">
+        <p style="color:#134e4a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 16px">Client</p>
         <p style="color:#0f172a;font-size:18px;font-weight:800;margin:0 0 8px">${customerName}</p>
         ${customerPhone ? `<p style="color:#374151;font-size:14px;margin:0 0 4px">📞 ${customerPhone}</p>` : ''}
         ${customerEmail ? `<p style="color:#374151;font-size:14px;margin:0">✉️ ${customerEmail}</p>` : ''}

@@ -34,7 +34,7 @@ export default function PhotoLightbox({
           transition: 'box-shadow 0.15s',
           ...thumbStyle,
         }}
-        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 10px rgba(99,102,241,0.25)')}
+        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 10px rgba(13,148,136,0.25)')}
         onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
       />
 

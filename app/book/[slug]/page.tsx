@@ -257,8 +257,8 @@ function Calendar({
               const inRange  = !!(startDate && endDate && date > startDate && date < endDate)
               const isToday  = sameDay(date, today)
 
-              const bgColor  = isStart || isEnd ? '#6366f1' : inRange ? '#e0e7ff' : 'transparent'
-              const txtColor = isStart || isEnd ? '#fff' : inRange ? '#4338ca' : isPast ? '#e2e8f0' : '#334155'
+              const bgColor  = isStart || isEnd ? '#0d9488' : inRange ? '#e0e7ff' : 'transparent'
+              const txtColor = isStart || isEnd ? '#fff' : inRange ? '#134e4a' : isPast ? '#e2e8f0' : '#334155'
               const radius   = isStart ? '10px 0 0 10px' : isEnd ? '0 10px 10px 0' : inRange ? '0' : '8px'
               const singleDay = isStart && !endDate
 
@@ -273,7 +273,7 @@ function Calendar({
                   }}>
                   {day}
                   {isToday && !isStart && !isEnd && (
-                    <span style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#818cf8', display: 'block' }} />
+                    <span style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#2DD4BF', display: 'block' }} />
                   )}
                 </button>
               )
@@ -511,7 +511,7 @@ export default function BookingPage() {
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+              style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
               <Bike size={15} className="text-white" />
             </div>
             <div>
@@ -819,7 +819,7 @@ export default function BookingPage() {
               totalVehicles > 0 ? (
                 <button onClick={() => setStep(2)}
                   className="w-full py-4 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+                  style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
                   <span>{T.total(totalVehicles)}</span>
                   <span>·</span>
                   <span>{T.continue}</span>
@@ -835,7 +835,7 @@ export default function BookingPage() {
             {step === 2 && (
               <button disabled={!startDate || !endDate} onClick={() => setStep(3)}
                 className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all disabled:opacity-30 flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+                style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
                 {T.continue}
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
               </button>
@@ -845,7 +845,7 @@ export default function BookingPage() {
               <>
                 <button disabled={!info.firstName || !info.lastName || !info.phone || loading} onClick={handleSubmit}
                   className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all disabled:opacity-30"
-                  style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+                  style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
                   {loading ? T.sending : T.send}
                 </button>
                 <div className="flex items-center justify-center gap-1.5 mt-2.5">

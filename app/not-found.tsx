@@ -10,7 +10,7 @@ export default function NotFound() {
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: '5rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>404</h1>
           <p style={{ color: '#64748b', marginTop: 8 }}>Page not found</p>
-          <a href="/" style={{ color: '#6366F1', fontSize: 14 }}>← Go home</a>
+          <a href="/" style={{ color: '#0D9488', fontSize: 14 }}>← Go home</a>
         </div>
       </body>
     </html>

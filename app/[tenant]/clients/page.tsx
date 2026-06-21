@@ -58,8 +58,8 @@ export default function ClientsPage() {
     `${c.firstName[0] ?? ''}${c.lastName[0] ?? ''}`.toUpperCase()
 
   // Color per initials — deterministic
-  const COLORS = [
-    ['#eef2ff','#6366F1'],
+  const COLORS: [string, string][] = [
+    ['#F0FDFA','#0D9488'],
     ['#ecfdf5','#059669'],
     ['#fff7ed','#ea580c'],
     ['#fdf4ff','#9333ea'],
@@ -84,7 +84,7 @@ export default function ClientsPage() {
         <Link
           href={`/${tenant}/rentals/new`}
           className="flex items-center gap-1.5 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}
+          style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}
         >
           <Plus size={14} /> {t('newRental')}
         </Link>
@@ -119,7 +119,7 @@ export default function ClientsPage() {
             <Link
               href={`/${tenant}/rentals/new`}
               className="inline-flex items-center gap-1.5 text-xs font-semibold mt-4 px-4 py-2.5 rounded-xl text-white active:scale-95 transition-all"
-              style={{ background: '#6366F1' }}
+              style={{ background: '#0D9488' }}
             >
               <Plus size={13} /> {t('newRental')}
             </Link>

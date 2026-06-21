@@ -1,7 +1,7 @@
 import { requireSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { AlertTriangle, Clock, Plus } from 'lucide-react'
+import { AlertTriangle, Clock, Plus, ArrowRight, TrendingUp } from 'lucide-react'
 import AutoRefresh from '../_components/AutoRefresh'
 import AnimatedNumber from '../_components/AnimatedNumber'
 import { getServerT } from '@/lib/server-t'
@@ -31,7 +31,7 @@ export default async function DashboardPage({
     prisma.rental.findMany({
       where: { tenantId, status: 'ACTIVE' },
       include: {
-        bike:  true,  // backward compat
+        bike:  true,
         bikes: { include: { bike: true } },
         customer: true,
       },
@@ -55,137 +55,223 @@ export default async function DashboardPage({
   const monthRevenue = Number(monthInvoices._sum.amountTtc ?? 0)
   const overdueRentals = activeRentals.filter(r => r.expectedReturnAt && new Date(r.expectedReturnAt) < now)
   const monthName = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  const greeting = now.getHours() < 12 ? 'Bonjour' : now.getHours() < 18 ? 'Bon après-midi' : 'Bonsoir'
+  const dayLabel = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <div className="max-w-4xl mx-auto">
       <AutoRefresh />
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between mb-7">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t('title')}</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            {now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
+          <h1 className="text-[22px] font-bold text-slate-900" style={{ letterSpacing: '-0.03em' }}>
+            {greeting} <span style={{ color: '#0D9488' }}>—</span>
+          </h1>
+          <p className="text-sm mt-0.5 capitalize" style={{ color: '#94A3B8' }}>{dayLabel}</p>
         </div>
         <Link
           href={`/${tenant}/rentals/new`}
-          className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-          style={{ background: '#6366F1' }}
+          className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
+          style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', boxShadow: '0 4px 14px rgba(13,148,136,0.35)' }}
         >
           <Plus size={15} /> {tRentals('new')}
         </Link>
       </div>
 
-      {/* Overdue alert */}
+      {/* ── Overdue alert ── */}
       {overdueRentals.length > 0 && (
-        <div className="border rounded-xl p-4 mb-5" style={{ background: '#fff5f5', borderColor: '#fecaca' }}>
-          <p className="font-semibold text-red-700 mb-2 flex items-center gap-2">
-            <AlertTriangle size={15} />
-            {overdueRentals.length} {tStatus('overdue')}
-          </p>
-          <div className="space-y-1">
-            {overdueRentals.map(r => (
-              <Link key={r.id} href={`/${tenant}/rentals/${r.id}`} className="block text-sm text-red-600 hover:underline">
-                {r.customer.firstName} {r.customer.lastName} — {(r.bikes?.[0]?.bike ?? r.bike)?.name} — {new Date(r.expectedReturnAt!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-              </Link>
-            ))}
+        <div
+          className="rounded-2xl p-4 mb-5 flex items-start gap-3"
+          style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}
+        >
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#FEE2E2' }}>
+            <AlertTriangle size={15} style={{ color: '#DC2626' }} />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm mb-1.5" style={{ color: '#DC2626' }}>
+              {overdueRentals.length} retour{overdueRentals.length > 1 ? 's' : ''} en retard
+            </p>
+            <div className="space-y-1">
+              {overdueRentals.map(r => (
+                <Link key={r.id} href={`/${tenant}/rentals/${r.id}`} className="block text-xs hover:underline" style={{ color: '#EF4444' }}>
+                  {r.customer.firstName} {r.customer.lastName} — {(r.bikes?.[0]?.bike ?? r.bike)?.name} — {new Date(r.expectedReturnAt!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* KPI cards */}
+      {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 stagger">
-        <Link href={`/${tenant}/rentals`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-300 block card-hover">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{tStatus('active')}</p>
-          <p className="text-3xl font-semibold tracking-tight" style={{ color: '#6366F1' }}>
+
+        {/* EN COURS — hero dark */}
+        <Link
+          href={`/${tenant}/rentals`}
+          className="relative overflow-hidden rounded-2xl p-4 block card-hover col-span-1"
+          style={{ background: '#0F172A' }}
+        >
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+          <div className="flex items-center gap-1.5 mb-3">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#0D9488', boxShadow: '0 0 6px #0D9488', animation: 'pulse 2s infinite' }} />
+            <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#5EEAD4' }}>{tStatus('active')}</p>
+          </div>
+          <p className="text-4xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
             <AnimatedNumber value={activeRentals.length} />
           </p>
-          <p className="text-xs text-slate-400 mt-1">{t('activeRentals')}</p>
+          <p className="text-[11px] mt-1.5" style={{ color: '#475569' }}>locations actives</p>
         </Link>
 
-        <Link href={`/${tenant}/bikes`} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-emerald-300 block card-hover">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{t('availableBikes')}</p>
-          <p className="text-3xl font-semibold tracking-tight text-emerald-500">
+        {/* VÉLOS DISPONIBLES */}
+        <Link
+          href={`/${tenant}/bikes`}
+          className="rounded-2xl p-4 block card-hover"
+          style={{ background: 'white', border: '1.5px solid #E2E8F0', borderTop: '4px solid #0D9488' }}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#94A3B8' }}>{t('availableBikes')}</p>
+          <p className="text-4xl font-bold" style={{ color: '#0D9488', letterSpacing: '-0.03em' }}>
             <AnimatedNumber value={bikesAvailable} />
           </p>
-          <p className="text-xs text-slate-400 mt-1">/ {bikesTotal}</p>
+          <p className="text-[11px] mt-1.5" style={{ color: '#94A3B8' }}>/ {bikesTotal} vélos</p>
         </Link>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{t('today')}</p>
-          <p className="text-2xl font-semibold tracking-tight text-slate-900">
+        {/* AUJOURD'HUI */}
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: 'white', border: '1.5px solid #E2E8F0', borderTop: '4px solid #334155' }}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#94A3B8' }}>{t('today')}</p>
+          <p className="text-2xl font-bold text-slate-900" style={{ letterSpacing: '-0.03em' }}>
             <AnimatedNumber value={todayRevenue} decimals={2} suffix=" €" duration={800} />
           </p>
-          <p className="text-xs text-slate-400 mt-1">{todayInvoices._count} {t('closedRentals')}</p>
+          <p className="text-[11px] mt-1.5" style={{ color: '#94A3B8' }}>{todayInvoices._count} clôturée{todayInvoices._count !== 1 ? 's' : ''}</p>
         </div>
 
-        <div className={`border rounded-2xl p-4 ${overdueRentals.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-2">{tStatus('overdue')}</p>
-          <p className={`text-3xl font-semibold tracking-tight ${overdueRentals.length > 0 ? 'text-red-500' : 'text-slate-200'}`}>
+        {/* EN RETARD */}
+        <div
+          className="rounded-2xl p-4"
+          style={overdueRentals.length > 0
+            ? { background: '#FEF2F2', border: '1.5px solid #FECACA', borderTop: '4px solid #EF4444' }
+            : { background: 'white', border: '1.5px solid #E2E8F0', borderTop: '4px solid #E2E8F0' }
+          }
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: overdueRentals.length > 0 ? '#EF4444' : '#94A3B8' }}>
+            {tStatus('overdue')}
+          </p>
+          <p className="text-4xl font-bold" style={{ letterSpacing: '-0.03em', color: overdueRentals.length > 0 ? '#EF4444' : '#CBD5E1' }}>
             <AnimatedNumber value={overdueRentals.length} />
           </p>
-          <p className="text-xs text-slate-400 mt-1">{tRentals('lateReturn')}</p>
-        </div>
-      </div>
-
-      {/* Month revenue */}
-      <div className="rounded-2xl p-5 mb-5 flex items-center justify-between" style={{ background: '#6366F1' }}>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>{t('revenueLabel')} — {monthName}</p>
-          <p className="text-3xl font-semibold text-white tracking-tight">
-            <AnimatedNumber value={monthRevenue} decimals={2} suffix=" €" duration={900} />
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-[11px] mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>{t('closedRentals')}</p>
-          <p className="text-2xl font-semibold text-white">
-            <AnimatedNumber value={monthInvoices._count} duration={900} />
+          <p className="text-[11px] mt-1.5" style={{ color: overdueRentals.length > 0 ? '#FCA5A5' : '#94A3B8' }}>
+            {tRentals('lateReturn')}
           </p>
         </div>
       </div>
 
-      {/* Active rentals list */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900 text-sm">{t('activeRentals')} ({activeRentals.length})</h2>
-          <Link href={`/${tenant}/rentals`} className="text-xs font-medium hover:underline" style={{ color: '#6366F1' }}>{t('viewAll')}</Link>
+      {/* ── Month revenue banner ── */}
+      <div
+        className="rounded-2xl p-5 mb-5 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #134E4A 100%)' }}
+      >
+        {/* Decorative glow */}
+        <div className="absolute right-0 top-0 w-48 h-48 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.2) 0%, transparent 70%)', transform: 'translate(20%, -20%)' }} />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={13} style={{ color: '#5EEAD4' }} />
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#5EEAD4' }}>
+                {t('revenueLabel')} — {monthName.toUpperCase()}
+              </p>
+            </div>
+            <p className="text-3xl sm:text-4xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
+              <AnimatedNumber value={monthRevenue} decimals={2} suffix=" €" duration={900} />
+            </p>
+          </div>
+          <div className="flex sm:block items-center gap-4 sm:text-right border-t border-white/5 pt-2 sm:border-0 sm:pt-0">
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Locations clôturées</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
+              <AnimatedNumber value={monthInvoices._count} duration={900} />
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Active rentals list ── */}
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1.5px solid #E2E8F0' }}>
+        <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #F1F5F9' }}>
+          <div>
+            <h2 className="font-semibold text-slate-900 text-sm">{t('activeRentals')}</h2>
+            <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>{activeRentals.length} en cours</p>
+          </div>
+          <Link
+            href={`/${tenant}/rentals`}
+            className="flex items-center gap-1 text-xs font-medium"
+            style={{ color: '#0D9488' }}
+          >
+            {t('viewAll')} <ArrowRight size={12} />
+          </Link>
         </div>
 
         {activeRentals.length === 0 ? (
-          <div className="p-10 text-center">
-            <div className="flex justify-center mb-2"><Clock size={28} className="text-slate-200" /></div>
-            <p className="text-sm text-slate-400">{tRentals('noActive')}</p>
-            <Link href={`/${tenant}/rentals/new`} className="text-xs hover:underline mt-1 block" style={{ color: '#6366F1' }}>{tRentals('new')}</Link>
+          <div className="px-5 py-14 text-center">
+            <div className="relative w-14 h-14 mx-auto mb-5">
+              <div className="absolute inset-0 rounded-full" style={{ background: 'rgba(13,148,136,0.06)' }} />
+              <div className="absolute inset-[6px] rounded-full" style={{ background: 'rgba(13,148,136,0.1)' }} />
+              <div className="absolute inset-[13px] rounded-full flex items-center justify-center" style={{ background: 'rgba(13,148,136,0.18)' }}>
+                <Clock size={13} style={{ color: '#0D9488' }} />
+              </div>
+            </div>
+            <p className="text-[13px] font-semibold mb-1" style={{ color: '#334155' }}>{tRentals('noActive')}</p>
+            <p className="text-[11px] mb-5" style={{ color: '#94A3B8' }}>Les locations actives apparaîtront ici en temps réel</p>
+            <Link
+              href={`/${tenant}/rentals/new`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg"
+              style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', color: 'white', boxShadow: '0 2px 8px rgba(13,148,136,0.3)' }}
+            >
+              <Plus size={11} /> {tRentals('new')}
+            </Link>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50 stagger">
-            {activeRentals.map(rental => {
+          <div className="stagger">
+            {activeRentals.map((rental, i) => {
               const elapsedMs = now.getTime() - new Date(rental.startAt).getTime()
               const hours = Math.floor(elapsedMs / 3600000)
               const minutes = Math.floor((elapsedMs % 3600000) / 60000)
-              const durationLabel = hours > 0 ? `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}` : `${minutes}min`
+              const durationLabel = hours > 0 ? `${hours}h${minutes > 0 ? `${minutes}` : ''}` : `${minutes}min`
               const isOverdue = rental.expectedReturnAt && new Date(rental.expectedReturnAt) < now
+              const bikeDisplay = (rental.bikes?.[0]?.bike ?? rental.bike)
               return (
                 <Link
                   key={rental.id}
                   href={`/${tenant}/rentals/${rental.id}`}
-                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}
+                  className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50"
+                  style={{
+                    borderBottom: i < activeRentals.length - 1 ? '1px solid #F8FAFC' : 'none',
+                    background: isOverdue ? '#FFF8F8' : 'transparent',
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOverdue ? 'bg-red-400' : 'bg-emerald-400'}`} />
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ background: isOverdue ? '#EF4444' : '#10B981', boxShadow: `0 0 6px ${isOverdue ? '#EF4444' : '#10B981'}` }}
+                    />
                     <div>
-                      <p className="font-medium text-sm text-slate-900">{rental.customer.firstName} {rental.customer.lastName}</p>
-                      <p className="text-xs text-slate-400">{(rental.bikes?.[0]?.bike ?? rental.bike)?.name} · <span className="font-mono">{(rental.bikes?.[0]?.bike ?? rental.bike)?.code}</span>{(rental.bikes?.length ?? 0) > 1 ? ` +${rental.bikes.length - 1}` : ''}</p>
+                      <p className="font-semibold text-sm text-slate-900">{rental.customer.firstName} {rental.customer.lastName}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>
+                        {bikeDisplay?.name}
+                        {bikeDisplay?.code && <span className="font-mono ml-1 text-[10px]">{bikeDisplay.code}</span>}
+                        {(rental.bikes?.length ?? 0) > 1 && <span className="ml-1">+{rental.bikes.length - 1}</span>}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-semibold ${isOverdue ? 'text-red-500' : 'text-slate-700'}`}>
-                      {durationLabel} {isOverdue ? <AlertTriangle size={13} className="inline ml-1 text-red-400" /> : ''}
+                    <p className="text-sm font-semibold flex items-center gap-1 justify-end" style={{ color: isOverdue ? '#EF4444' : '#334155' }}>
+                      {isOverdue && <AlertTriangle size={12} />}
+                      {durationLabel}
                     </p>
                     {rental.expectedReturnAt && (
-                      <p className="text-xs text-slate-400">
-                        {tRentals('scheduledReturn')} {new Date(rental.expectedReturnAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      <p className="text-[11px] mt-0.5" style={{ color: '#94A3B8' }}>
+                        retour {new Date(rental.expectedReturnAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
                   </div>

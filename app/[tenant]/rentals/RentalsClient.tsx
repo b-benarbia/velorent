@@ -5,10 +5,10 @@ import Link from 'next/link'
 import { Bike, AlertTriangle, Plus, Search, TrendingUp, Clock, TriangleAlert } from 'lucide-react'
 
 const STATUS_COLOR: Record<string, string> = {
-  ACTIVE:    'bg-indigo-50 text-indigo-600',
+  ACTIVE:    'bg-teal-50 text-teal-700',
   COMPLETED: 'bg-slate-100 text-slate-500',
   OVERDUE:   'bg-red-50 text-red-500',
-  CANCELLED: 'bg-red-50 text-red-500',
+  CANCELLED: 'bg-slate-100 text-slate-400',
 }
 
 type Rental = {
@@ -72,52 +72,49 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">{labels.title}</h1>
-          <p className="text-xs text-slate-400 mt-0.5">{kpi.activeCount} {labels.inProgress}</p>
+          <h1 className="text-[22px] font-bold text-slate-900" style={{ letterSpacing: '-0.03em' }}>{labels.title}</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#94A3B8' }}>{kpi.activeCount} {labels.inProgress}</p>
         </div>
         <Link
           href={`/${tenant}/rentals/new`}
-          className="flex items-center gap-1.5 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-95"
-          style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}
+          className="flex items-center gap-1.5 text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
+          style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)', boxShadow: '0 4px 14px rgba(13,148,136,0.35)' }}
         >
           <Plus size={14} /> {labels.new}
         </Link>
       </div>
 
       {/* KPI Strip */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-        <div style={{
-          flex: 1, background: 'linear-gradient(135deg,#eef2ff,#f0fdf4)',
-          border: '1px solid #c7d2fe', borderRadius: '14px', padding: '12px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-            <TrendingUp size={13} style={{ color: '#6366f1' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{labels.kpiRevenue}</span>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 stagger">
+        {/* CA AUJOURD'HUI — dark hero */}
+        <div className="rounded-2xl p-3 sm:p-4 relative overflow-hidden" style={{ background: '#0F172A' }}>
+          <div className="absolute top-0 right-0 w-14 h-14 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 70%)', transform: 'translate(20%,-20%)' }} />
+          <div className="flex items-center gap-1.5 mb-3">
+            <TrendingUp size={11} style={{ color: '#5EEAD4' }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#5EEAD4', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{labels.kpiRevenue}</span>
           </div>
-          <p style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>{kpi.revenueToday.toFixed(0)} €</p>
+          <p className="text-lg sm:text-[22px]" style={{ fontWeight: 800, color: 'white', letterSpacing: '-0.03em' }}>{kpi.revenueToday.toFixed(0)} €</p>
         </div>
-        <div style={{
-          flex: 1, background: '#f0fdf4', border: '1px solid #bbf7d0',
-          borderRadius: '14px', padding: '12px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-            <Clock size={13} style={{ color: '#16a34a' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{labels.kpiActive}</span>
+        {/* EN COURS */}
+        <div className="rounded-2xl p-3 sm:p-4" style={{ background: 'white', border: '1.5px solid #E2E8F0', borderTop: '4px solid #0D9488' }}>
+          <div className="flex items-center gap-1.5 mb-3">
+            <Clock size={11} style={{ color: '#94A3B8' }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{labels.kpiActive}</span>
           </div>
-          <p style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>{kpi.activeCount}</p>
+          <p className="text-lg sm:text-[22px]" style={{ fontWeight: 800, color: '#0D9488', letterSpacing: '-0.03em' }}>{kpi.activeCount}</p>
         </div>
-        <div style={{
-          flex: 1, background: kpi.overdueCount > 0 ? '#fff1f2' : '#f8fafc',
-          border: `1px solid ${kpi.overdueCount > 0 ? '#fecdd3' : '#e2e8f0'}`,
-          borderRadius: '14px', padding: '12px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-            <TriangleAlert size={13} style={{ color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{labels.kpiOverdue}</span>
+        {/* EN RETARD */}
+        <div className="rounded-2xl p-3 sm:p-4" style={kpi.overdueCount > 0
+          ? { background: '#FEF2F2', border: '1.5px solid #FECACA', borderTop: '4px solid #EF4444' }
+          : { background: 'white', border: '1.5px solid #E2E8F0', borderTop: '4px solid #E2E8F0' }
+        }>
+          <div className="flex items-center gap-1.5 mb-3">
+            <TriangleAlert size={11} style={{ color: kpi.overdueCount > 0 ? '#EF4444' : '#94A3B8' }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, color: kpi.overdueCount > 0 ? '#EF4444' : '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{labels.kpiOverdue}</span>
           </div>
-          <p style={{ fontSize: '20px', fontWeight: 800, color: kpi.overdueCount > 0 ? '#ef4444' : '#94a3b8' }}>{kpi.overdueCount}</p>
+          <p className="text-lg sm:text-[22px]" style={{ fontWeight: 800, letterSpacing: '-0.03em', color: kpi.overdueCount > 0 ? '#EF4444' : '#CBD5E1' }}>{kpi.overdueCount}</p>
         </div>
       </div>
 
@@ -134,7 +131,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
             borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff',
             fontSize: '14px', color: '#1e293b', outline: 'none', boxSizing: 'border-box',
           }}
-          onFocus={e => { e.target.style.borderColor = '#6366f1' }}
+          onFocus={e => { e.target.style.borderColor = '#0d9488' }}
           onBlur={e => { e.target.style.borderColor = '#e2e8f0' }}
         />
       </div>
@@ -156,8 +153,8 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
               style={{
                 flexShrink: 0, padding: '6px 12px', borderRadius: '20px', fontSize: '12px',
                 fontWeight: 600, border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
-                borderColor: active ? '#6366f1' : '#e2e8f0',
-                background: active ? '#6366f1' : '#fff',
+                borderColor: active ? '#0d9488' : '#e2e8f0',
+                background: active ? '#0d9488' : '#fff',
                 color: active ? '#fff' : '#64748b',
               }}>
               {labels[`tab${t.charAt(0).toUpperCase() + t.slice(1)}` as keyof typeof labels]} {count > 0 && <span style={{ opacity: 0.7 }}>· {count}</span>}
@@ -169,13 +166,22 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
       {/* Active rentals */}
       {(tab === 'all' || tab === 'active' || tab === 'overdue') && (
         <div className="mb-6">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
-            {labels.active} — {activeRentals.length}
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 rounded-full" style={{ background: '#0D9488' }} />
+            <p className="text-[11px] font-bold text-slate-700 uppercase tracking-widest">{labels.active}</p>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: '#F0FDFA', color: '#0D9488', border: '1px solid #99F6E4' }}>{activeRentals.length}</span>
+          </div>
           {activeRentals.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
-              <Bike size={24} className="text-slate-200 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">{labels.noActive}</p>
+            <div className="rounded-2xl py-14 px-8 text-center" style={{ background: 'white', border: '1.5px solid #E2E8F0' }}>
+              <div className="relative w-14 h-14 mx-auto mb-5">
+                <div className="absolute inset-0 rounded-full" style={{ background: 'rgba(13,148,136,0.06)' }} />
+                <div className="absolute inset-[6px] rounded-full" style={{ background: 'rgba(13,148,136,0.1)' }} />
+                <div className="absolute inset-[13px] rounded-full flex items-center justify-center" style={{ background: 'rgba(13,148,136,0.18)' }}>
+                  <Bike size={13} style={{ color: '#0D9488' }} />
+                </div>
+              </div>
+              <p className="text-[14px] font-semibold mb-1.5" style={{ color: '#334155' }}>{labels.noActive}</p>
+              <p className="text-[12px]" style={{ color: '#94A3B8' }}>Les locations en cours apparaîtront ici</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -220,7 +226,7 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
                     <Link
                       href={`/${tenant}/rentals/${rental.id}`}
                       className="text-white text-xs font-semibold px-3 py-2 rounded-lg flex-shrink-0 active:scale-95 transition-all"
-                      style={{ background: '#6366F1' }}
+                      style={{ background: '#0D9488' }}
                     >
                       {labels.closeArrow}
                     </Link>
@@ -235,25 +241,36 @@ export default function RentalsClient({ tenant, rentals, kpi, labels, statusLabe
       {/* History */}
       {(tab === 'all' || tab === 'completed' || tab === 'cancelled') && (
         <div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">{labels.history}</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 rounded-full" style={{ background: '#94A3B8' }} />
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{labels.history}</p>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: '#F1F5F9', color: '#64748B' }}>{closedRentals.length}</span>
+          </div>
 
           {closedRentals.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
-              <Bike size={24} className="text-slate-200 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">{labels.noHistory}</p>
+            <div className="rounded-2xl py-14 px-8 text-center" style={{ background: 'white', border: '1.5px solid #E2E8F0' }}>
+              <div className="relative w-14 h-14 mx-auto mb-5">
+                <div className="absolute inset-0 rounded-full" style={{ background: 'rgba(94,116,130,0.06)' }} />
+                <div className="absolute inset-[6px] rounded-full" style={{ background: 'rgba(94,116,130,0.1)' }} />
+                <div className="absolute inset-[13px] rounded-full flex items-center justify-center" style={{ background: 'rgba(94,116,130,0.16)' }}>
+                  <Bike size={13} style={{ color: '#64748B' }} />
+                </div>
+              </div>
+              <p className="text-[14px] font-semibold mb-1.5" style={{ color: '#334155' }}>{labels.noHistory}</p>
+              <p className="text-[12px]" style={{ color: '#94A3B8' }}>L'historique des locations terminées apparaîtra ici</p>
             </div>
           ) : (
             <>
               {/* Desktop table */}
-              <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="hidden md:block rounded-2xl overflow-hidden" style={{ background: 'white', border: '1.5px solid #E2E8F0' }}>
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider px-5 py-3">{labels.client}</th>
-                      <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-3">{labels.bike}</th>
-                      <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-3">Date</th>
-                      <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-3">€</th>
-                      <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-3">Statut</th>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #F1F5F9' }}>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest px-5 py-3" style={{ color: '#94A3B8' }}>{labels.client}</th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest px-4 py-3" style={{ color: '#94A3B8' }}>{labels.bike}</th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest px-4 py-3" style={{ color: '#94A3B8' }}>Date</th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest px-4 py-3" style={{ color: '#94A3B8' }}>Montant</th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest px-4 py-3" style={{ color: '#94A3B8' }}>Statut</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">

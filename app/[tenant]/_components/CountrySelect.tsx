@@ -123,12 +123,12 @@ export default function CountrySelect({ value, onChange, className }: Props) {
           gap: 8,
           padding: '10px 12px',
           borderRadius: 10,
-          border: open ? '1.5px solid #6366F1' : '1.5px solid #e2e8f0',
+          border: open ? '1.5px solid #0D9488' : '1.5px solid #e2e8f0',
           background: 'white',
           cursor: 'pointer',
           textAlign: 'left',
           transition: 'border-color 0.15s',
-          boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.1)' : 'none',
+          boxShadow: open ? '0 0 0 3px rgba(13,148,136,0.1)' : 'none',
         }}
       >
         {selected ? (
@@ -212,12 +212,12 @@ export default function CountrySelect({ value, onChange, className }: Props) {
                   onMouseLeave={e => { if (value !== country.code) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
                   <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{country.flag}</span>
-                  <span style={{ flex: 1, fontSize: 13, fontWeight: value === country.code ? 600 : 400, color: value === country.code ? '#6366F1' : '#0f172a' }}>
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: value === country.code ? 600 : 400, color: value === country.code ? '#0D9488' : '#0f172a' }}>
                     {country.name}
                   </span>
                   <span style={{ fontSize: 11, color: '#cbd5e1', fontFamily: 'monospace' }}>{country.code}</span>
                   {value === country.code && (
-                    <span style={{ fontSize: 12, color: '#6366F1' }}>✓</span>
+                    <span style={{ fontSize: 12, color: '#0D9488' }}>✓</span>
                   )}
                 </button>
               ))

@@ -83,8 +83,8 @@ export default function RentalDetailPage() {
   useEffect(() => {
     if (rental?.status === 'ACTIVE') {
       setTimeout(() => {
-        if (canvasRef.current) initCanvas(canvasRef.current, '#6366F1')
-        if (staffCanvasRef.current) initCanvas(staffCanvasRef.current, '#6366F1')
+        if (canvasRef.current) initCanvas(canvasRef.current, '#0D9488')
+        if (staffCanvasRef.current) initCanvas(staffCanvasRef.current, '#0D9488')
       }, 100)
     }
   }, [rental])
@@ -199,15 +199,15 @@ export default function RentalDetailPage() {
           border: isOverdue ? '1px solid #fecaca' : isActive ? 'none' : '1px solid #bbf7d0',
         }}
       >
-        {isActive && !isOverdue && <div className="absolute inset-0 grid-pattern pointer-events-none" />}
+        {isActive && !isOverdue && <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.18) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />}
         <div className="relative flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{
-                  background: isOverdue ? '#fecaca' : isActive ? 'rgba(99,102,241,0.2)' : '#bbf7d0',
-                  color: isOverdue ? '#dc2626' : isActive ? '#a5b4fc' : '#16a34a',
+                  background: isOverdue ? '#fecaca' : isActive ? 'rgba(13,148,136,0.2)' : '#bbf7d0',
+                  color: isOverdue ? '#dc2626' : isActive ? '#5EEAD4' : '#16a34a',
                 }}
               >
                 {isOverdue ? t('lateLabel') : isActive ? t('activeLabel') : t('closedLabel')}
@@ -231,11 +231,11 @@ export default function RentalDetailPage() {
           {isActive && (
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center"
-              style={{ background: isOverdue ? '#fee2e2' : 'rgba(99,102,241,0.2)' }}
+              style={{ background: isOverdue ? '#fee2e2' : 'rgba(13,148,136,0.2)' }}
             >
               {isOverdue
                 ? <AlertTriangle size={22} className="text-red-500" />
-                : <Clock size={22} style={{ color: '#a5b4fc' }} />
+                : <Clock size={22} style={{ color: '#5EEAD4' }} />
               }
             </div>
           )}
@@ -280,13 +280,13 @@ export default function RentalDetailPage() {
                 <img
                   src={rental.customer.documentPhotoUrl}
                   alt="ID"
-                  style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #C7D2FE' }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #99F6E4' }}
                 />
               </button>
             ) : (
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}
+                style={{ background: 'rgba(13,148,136,0.1)', color: '#0D9488' }}
               >
                 {initials}
               </div>
@@ -309,7 +309,7 @@ export default function RentalDetailPage() {
             <button
               onClick={() => setPhotoOpen(true)}
               className="flex items-center gap-1 text-xs mt-2 transition-colors"
-              style={{ color: '#818CF8', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ color: '#2DD4BF', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
               Voir la pièce d&apos;identité
@@ -323,9 +323,9 @@ export default function RentalDetailPage() {
             <div key={b.id ?? i} className="flex items-center gap-2.5 mb-2">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(99,102,241,0.1)' }}
+                style={{ background: 'rgba(13,148,136,0.1)' }}
               >
-                <Bike size={14} style={{ color: '#6366F1' }} />
+                <Bike size={14} style={{ color: '#0D9488' }} />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 truncate">{b.name}</p>
@@ -355,10 +355,10 @@ export default function RentalDetailPage() {
               <CreditCard size={13} className="text-slate-300" /> {t('payment')}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold" style={{ color: '#6366F1' }}>
+              <span className="text-sm font-semibold" style={{ color: '#0D9488' }}>
                 {Number(rental.amountPaid ?? 0).toFixed(2)} €
               </span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(99,102,241,0.08)', color: '#6366F1' }}>
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(13,148,136,0.08)', color: '#0D9488' }}>
                 {paymentLabel}
               </span>
             </div>
@@ -386,7 +386,7 @@ export default function RentalDetailPage() {
       {isActive && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-5">
-            <PenLine size={15} style={{ color: '#6366F1' }} />
+            <PenLine size={15} style={{ color: '#0D9488' }} />
             <h2 className="text-sm font-semibold text-slate-900">{t('returnBike')}</h2>
           </div>
 
@@ -402,7 +402,7 @@ export default function RentalDetailPage() {
                 {t('clearSig')}
               </button>
             </div>
-            <div className="relative rounded-xl overflow-hidden" style={{ border: hasSigned ? '1.5px solid #6366F1' : '1.5px dashed #e2e8f0' }}>
+            <div className="relative rounded-xl overflow-hidden" style={{ border: hasSigned ? '1.5px solid #0D9488' : '1.5px dashed #e2e8f0' }}>
               <canvas
                 ref={canvasRef}
                 style={{ touchAction: 'none', width: '100%', height: '110px', background: hasSigned ? 'white' : '#fafbff', cursor: 'crosshair', display: 'block' }}
@@ -434,7 +434,7 @@ export default function RentalDetailPage() {
                 {t('clearSig')}
               </button>
             </div>
-            <div className="relative rounded-xl overflow-hidden" style={{ border: hasStaffSigned ? '1.5px solid #6366F1' : '1.5px dashed #e2e8f0' }}>
+            <div className="relative rounded-xl overflow-hidden" style={{ border: hasStaffSigned ? '1.5px solid #0D9488' : '1.5px dashed #e2e8f0' }}>
               <canvas
                 ref={staffCanvasRef}
                 style={{ touchAction: 'none', width: '100%', height: '110px', background: hasStaffSigned ? 'white' : '#fafbff', cursor: 'crosshair', display: 'block' }}
@@ -466,8 +466,8 @@ export default function RentalDetailPage() {
             disabled={loading || !hasSigned || !hasStaffSigned}
             className="w-full text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2 transition-opacity"
             style={{
-              background: 'linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%)',
-              boxShadow: (loading || !hasSigned || !hasStaffSigned) ? 'none' : '0 4px 14px rgba(99,102,241,0.35)',
+              background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)',
+              boxShadow: (loading || !hasSigned || !hasStaffSigned) ? 'none' : '0 4px 14px rgba(13,148,136,0.35)',
             }}
           >
             {loading

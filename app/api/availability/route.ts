@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
+  try {
   const sp         = new URL(req.url).searchParams
   const bikeType   = sp.get('bikeType') as BikeType | null
   const bikeId     = sp.get('bikeId')
@@ -101,8 +102,8 @@ export async function GET(req: NextRequest) {
 
   // Distinct bike IDs physically blocked
   const blockedBikeIds = new Set<string>()
-  activeRentals.forEach(r  => blockedBikeIds.add(r.bikeId))
-  completedRentals.forEach(r => blockedBikeIds.add(r.bikeId))
+  activeRentals.forEach(r  => { if (r.bikeId) blockedBikeIds.add(r.bikeId) })
+  completedRentals.forEach(r => { if (r.bikeId) blockedBikeIds.add(r.bikeId) })
   specificBikeRes.forEach(r => { if (r.bikeId) blockedBikeIds.add(r.bikeId) })
 
   // Type-level reservations (no specific bike) overlapping — each consumes one slot
@@ -122,4 +123,8 @@ export async function GET(req: NextRequest) {
   const available = Math.max(0, total - booked)
 
   return NextResponse.json({ total, booked, available })
+  } catch (e) {
+    console.error('[availability GET]', e)
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+  }
 }

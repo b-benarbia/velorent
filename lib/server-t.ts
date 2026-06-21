@@ -21,7 +21,8 @@ async function getLocale(): Promise<Locale> {
 }
 
 type Namespace = Record<string, string>
-type AllMessages = Record<string, Namespace>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AllMessages = Record<string, any>
 
 export async function getServerT(namespace: string): Promise<(key: string) => string> {
   const locale = await getLocale()

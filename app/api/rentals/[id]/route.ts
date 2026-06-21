@@ -9,18 +9,23 @@ export async function GET(
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const rental = await prisma.rental.findFirst({
-    where: { id, tenantId: session.tenantId },
-    include: {
-      bike:  true,  // backward compat
-      bikes: { include: { bike: true } },
-      customer: true,
-    },
-  })
+    const rental = await prisma.rental.findFirst({
+      where: { id, tenantId: session.tenantId },
+      include: {
+        bike:  true,  // backward compat
+        bikes: { include: { bike: true } },
+        customer: true,
+      },
+    })
 
-  if (!rental) return NextResponse.json({ error: 'Location introuvable' }, { status: 404 })
+    if (!rental) return NextResponse.json({ error: 'Location introuvable' }, { status: 404 })
 
-  return NextResponse.json(rental)
+    return NextResponse.json(rental)
+  } catch (e) {
+    console.error('[rentals/[id] GET]', e)
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+  }
 }

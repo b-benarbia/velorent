@@ -149,7 +149,7 @@ export async function POST(
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <div style="max-width:560px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    <div style="background:linear-gradient(135deg,#635BFF,#4F46E5);padding:40px 32px;text-align:center">
+    <div style="background:linear-gradient(135deg,#635BFF,#0F766E);padding:40px 32px;text-align:center">
       <h1 style="color:white;margin:0;font-size:24px;font-weight:700">Réservation confirmée</h1>
       <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px">${tenant!.name}</p>
     </div>
@@ -184,7 +184,7 @@ export async function POST(
         ${depositAmt > 0 ? `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
           <span style="color:#6b7280;font-size:13px">Caution bloquée</span>
-          <span style="color:#6366f1;font-size:14px;font-weight:600">${depositAmt.toFixed(2)} ${currency.toUpperCase()} <span style="color:#9ca3af;font-weight:400">(remboursée au retour)</span></span>
+          <span style="color:#0d9488;font-size:14px;font-weight:600">${depositAmt.toFixed(2)} ${currency.toUpperCase()} <span style="color:#9ca3af;font-weight:400">(remboursée au retour)</span></span>
         </div>` : ''}
       </div>
       ${tenant!.email || tenant!.phone ? `

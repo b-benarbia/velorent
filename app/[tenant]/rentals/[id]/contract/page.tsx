@@ -150,7 +150,7 @@ export default async function ContractPage({
       <div className="doc">
 
         {/* ══ HEADER ══════════════════════════════════════ */}
-        <div style={{ background: 'linear-gradient(135deg, #4338CA 0%, #6366F1 100%)', padding: `22px ${PX}` }}>
+        <div style={{ background: 'linear-gradient(135deg, #134E4A 0%, #0D9488 100%)', padding: `22px ${PX}` }}>
           <div className="doc-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
 
             {/* Boutique */}
@@ -279,12 +279,12 @@ export default async function ContractPage({
             {/* Paiement */}
             <div>
               {/* Montant — héros visuel */}
-              <div style={{ background: 'linear-gradient(135deg, #EEF2FF 0%, #F0F4FF 100%)', borderRadius: 12, padding: '16px 18px', marginBottom: 12, border: '1px solid #E0E7FF' }}>
-                <p className="lbl" style={{ marginBottom: 6, color: '#818CF8' }}>{t('amountPaid')}</p>
-                <p style={{ fontSize: 32, fontWeight: 800, color: '#4338CA', letterSpacing: '-0.02em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ background: 'linear-gradient(135deg, #F0FDFA 0%, #F0F4FF 100%)', borderRadius: 12, padding: '16px 18px', marginBottom: 12, border: '1px solid #E0E7FF' }}>
+                <p className="lbl" style={{ marginBottom: 6, color: '#2DD4BF' }}>{t('amountPaid')}</p>
+                <p style={{ fontSize: 32, fontWeight: 800, color: '#134E4A', letterSpacing: '-0.02em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   {Number(rental.amountPaid ?? 0).toFixed(2)}<span style={{ fontSize: 20, fontWeight: 600 }}> €</span>
                 </p>
-                <p style={{ fontSize: 11, color: '#6366F1', marginTop: 7, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <p style={{ fontSize: 11, color: '#0D9488', marginTop: 7, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                   {PAY[rental.paymentMethod] ?? rental.paymentMethod}
                 </p>
               </div>
@@ -306,7 +306,7 @@ export default async function ContractPage({
               {rental.lockNumber && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px' }}>
                   <span className="lbl" style={{ marginBottom: 0 }}>{t('lockNumber')}</span>
-                  <span className="mono" style={{ fontSize: 15, fontWeight: 800, color: '#4338CA' }}>{rental.lockNumber}</span>
+                  <span className="mono" style={{ fontSize: 15, fontWeight: 800, color: '#134E4A' }}>{rental.lockNumber}</span>
                 </div>
               )}
             </div>
@@ -329,7 +329,7 @@ export default async function ContractPage({
               <div style={{ flex: 1, minWidth: 160 }}>
                 <p style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.01em', marginBottom: 5 }}>{rentalBikes[0].name}</p>
                 {rentalBikes[0].type && (
-                  <span style={{ display: 'inline-block', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 4, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#4338CA', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                  <span style={{ display: 'inline-block', background: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: 4, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#134E4A', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                     {BIKE_TYPE[rentalBikes[0].type] ?? rentalBikes[0].type}
                   </span>
                 )}
@@ -337,7 +337,7 @@ export default async function ContractPage({
               <div style={{ display: 'flex', gap: 28 }}>
                 <div>
                   <p className="lbl">{t('vehicleCode')}</p>
-                  <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#4338CA', letterSpacing: '0.04em' }}>{rentalBikes[0].code}</p>
+                  <p className="mono" style={{ fontSize: 17, fontWeight: 800, color: '#134E4A', letterSpacing: '0.04em' }}>{rentalBikes[0].code}</p>
                 </div>
                 {rentalBikes[0].serialNumber && (
                   <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 12 }}>
@@ -365,20 +365,20 @@ export default async function ContractPage({
                   background: 'white',
                 }}>
                   {/* Numéro */}
-                  <div style={{ width: 20, height: 20, background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 10, color: '#4338CA', fontWeight: 900, lineHeight: 1 }}>{i + 1}</span>
+                  <div style={{ width: 20, height: 20, background: '#F0FDFA', border: '1.5px solid #99F6E4', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 10, color: '#134E4A', fontWeight: 900, lineHeight: 1 }}>{i + 1}</span>
                   </div>
                   {/* Nom + type */}
                   <div style={{ flex: 1 }}>
                     <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1E293B' }}>{bike.name}</span>
                     {bike.type && (
-                      <span style={{ marginLeft: 8, fontSize: 9, fontWeight: 700, color: '#4338CA', background: '#EEF2FF', borderRadius: 3, padding: '1px 6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      <span style={{ marginLeft: 8, fontSize: 9, fontWeight: 700, color: '#134E4A', background: '#F0FDFA', borderRadius: 3, padding: '1px 6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                         {BIKE_TYPE[bike.type] ?? bike.type}
                       </span>
                     )}
                   </div>
                   {/* Code */}
-                  <span className="mono" style={{ width: 72, textAlign: 'center', fontSize: 12, fontWeight: 800, color: '#4338CA' }}>{bike.code}</span>
+                  <span className="mono" style={{ width: 72, textAlign: 'center', fontSize: 12, fontWeight: 800, color: '#134E4A' }}>{bike.code}</span>
                   {/* Série */}
                   <span className="mono" style={{ width: 90, textAlign: 'right', fontSize: 10, fontWeight: 700, color: bike.serialNumber ? '#DC2626' : '#CBD5E1' }}>
                     {bike.serialNumber ?? '—'}
@@ -406,8 +406,8 @@ export default async function ContractPage({
                     background: 'white',
                   }}>
                     {/* Checkbox ✓ */}
-                    <div style={{ width: 18, height: 18, background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 10, color: '#4338CA', fontWeight: 900, lineHeight: 1 }}>✓</span>
+                    <div style={{ width: 18, height: 18, background: '#F0FDFA', border: '1.5px solid #99F6E4', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, color: '#134E4A', fontWeight: 900, lineHeight: 1 }}>✓</span>
                     </div>
                     {/* Label */}
                     <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: '#1E293B' }}>{a.label}</span>
@@ -417,7 +417,7 @@ export default async function ContractPage({
                     <div style={{ width: 72, textAlign: 'right' }}>
                       {(a.codes ?? []).filter(Boolean).length > 0
                         ? (a.codes ?? []).filter(Boolean).map(c => (
-                          <span key={c} className="mono" style={{ fontSize: 10, fontWeight: 700, color: '#4338CA' }}>#{c}</span>
+                          <span key={c} className="mono" style={{ fontSize: 10, fontWeight: 700, color: '#134E4A' }}>#{c}</span>
                         ))
                         : <span style={{ fontSize: 10, color: '#CBD5E1' }}>—</span>
                       }
@@ -464,7 +464,7 @@ export default async function ContractPage({
         </div>
 
         {/* ══ SIGNATURES ══════════════════════════════════ */}
-        <div style={{ borderTop: '1px solid #EEF2FF', background: '#FAFBFF', padding: `0 ${PX} 24px` }}>
+        <div style={{ borderTop: '1px solid #F0FDFA', background: '#FAFBFF', padding: `0 ${PX} 24px` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 18px' }}>
             <div style={{ height: 1, background: '#E2E8F0', flex: 1 }} />
             <span style={DIV_LBL}>{t('signatures')}</span>
@@ -481,9 +481,9 @@ export default async function ContractPage({
 
           <div className="doc-sig-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             {([
-              { label: t('sigClientDeparture'), sub: fmtShort(rental.startAt),                     img: rental.openingSignature,  accent: '#4338CA' },
+              { label: t('sigClientDeparture'), sub: fmtShort(rental.startAt),                     img: rental.openingSignature,  accent: '#134E4A' },
               { label: t('sigClientReturn'),    sub: rental.endAt ? fmtShort(rental.endAt) : '—', img: rental.closingSignature, accent: '#64748B' },
-              { label: t('sigResponsible'),     sub: rental.tenant.name,                            img: rental.staffSignature,    accent: '#4338CA' },
+              { label: t('sigResponsible'),     sub: rental.tenant.name,                            img: rental.staffSignature,    accent: '#134E4A' },
             ] as { label: string; sub: string; img: string | null; accent: string }[]).map((sig, i) => (
               <div key={i}>
                 <p style={{

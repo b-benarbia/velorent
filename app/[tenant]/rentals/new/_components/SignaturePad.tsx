@@ -17,7 +17,7 @@ interface Props {
 }
 
 const SignaturePad = forwardRef<SignaturePadHandle, Props>(
-  ({ onChange, color = '#6366F1', label, placeholder }, ref) => {
+  ({ onChange, color = '#0D9488', label, placeholder }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const padRef    = useRef<SignaturePadLib | null>(null)
 

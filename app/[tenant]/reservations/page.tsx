@@ -6,6 +6,7 @@ import {
   CalendarDays, Phone, Mail, Bike, Check, ArrowRight,
   Plus, Search, Star, X, ChevronLeft, ChevronRight,
   AlertCircle, Pencil, Clock, CheckCircle2, BellRing,
+  MoreHorizontal, Zap, MessageCircle, CreditCard, UserCheck, TriangleAlert,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import DateTimePicker from './_components/DateTimePicker'
@@ -63,8 +64,8 @@ const STATUS_BADGE: Record<string, { bg: string; border: string; text: string }>
   PENDING:    { bg: '#fffbeb', border: '#fde68a',  text: '#92400e' },
   CONFIRMED:  { bg: '#ecfdf5', border: '#a7f3d0',  text: '#065f46' },
   CANCELLED:  { bg: '#fef2f2', border: '#fecaca',  text: '#991b1b' },
-  CONVERTED:  { bg: '#eef2ff', border: '#c7d2fe',  text: '#3730a3' },
-  NO_SHOW:    { bg: '#fdf4ff', border: '#e9d5ff',  text: '#6b21a8' },
+  CONVERTED:  { bg: '#F0FDFA', border: '#99F6E4',  text: '#3730a3' },
+  NO_SHOW:    { bg: '#fdf4ff', border: '#e9d5ff',  text: '#134E4A' },
   CHECKED_IN: { bg: '#f0fdf4', border: '#86efac',  text: '#14532d' },
 }
 
@@ -421,9 +422,9 @@ export default function ReservationsPage() {
       <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 16,
         padding: '14px 14px 10px', marginBottom: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <button onClick={prevMonth} style={NAV_BTN}><ChevronLeft size={15} style={{ color: '#6366f1' }} /></button>
+          <button onClick={prevMonth} style={NAV_BTN}><ChevronLeft size={15} style={{ color: '#0d9488' }} /></button>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{monthFormatted}</span>
-          <button onClick={nextMonth} style={NAV_BTN}><ChevronRight size={15} style={{ color: '#6366f1' }} /></button>
+          <button onClick={nextMonth} style={NAV_BTN}><ChevronRight size={15} style={{ color: '#0d9488' }} /></button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
           {dayHdrs.map((h, i) => (
@@ -444,14 +445,14 @@ export default function ReservationsPage() {
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
                   justifyContent: 'center', padding: '5px 2px', minHeight: 44,
                   borderRadius: 8, border: 'none', cursor: 'pointer',
-                  background: isSel ? '#6366f1' : isTd ? '#eef2ff' : 'transparent' }}>
+                  background: isSel ? '#0d9488' : isTd ? '#F0FDFA' : 'transparent' }}>
                 <span style={{ fontSize: 13, lineHeight: 1, fontWeight: isSel || isTd ? 700 : 400,
-                  color: isSel ? 'white' : isTd ? '#6366f1' : '#334155' }}>{day}</span>
+                  color: isSel ? 'white' : isTd ? '#0d9488' : '#334155' }}>{day}</span>
                 {counts && (
                   <div style={{ display: 'flex', gap: 2, marginTop: 3 }}>
                     {counts.pending > 0 && (
                       <div style={{ width: 5, height: 5, borderRadius: '50%',
-                        background: isSel ? 'rgba(255,255,255,0.85)' : dk === todayStr ? '#f97316' : '#6366f1' }} />
+                        background: isSel ? 'rgba(255,255,255,0.85)' : dk === todayStr ? '#f97316' : '#0d9488' }} />
                     )}
                     {counts.past > 0 && (
                       <div style={{ width: 5, height: 5, borderRadius: '50%',
@@ -550,6 +551,44 @@ export default function ReservationsPage() {
   }
 
   // ── Shared card renderer ───────────────────────────────────────────────────
+
+  // ── AI Smart Insights (computed client-side, instant) ─────────────────────
+  type InsightType = { icon: React.ReactNode; text: string; bg: string; color: string; border: string }
+  function getInsights(r: Reservation, isToday: boolean, isTmr: boolean): InsightType[] {
+    const insights: InsightType[] = []
+    const hoursUntil = (new Date(r.startAt).getTime() - Date.now()) / 3600000
+
+    // Départ imminent (< 2h)
+    if (hoursUntil > 0 && hoursUntil < 2 && (isToday || isTmr)) {
+      insights.push({ icon: <Zap size={10} />, text: 'Départ imminent', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' })
+    }
+    // Vélo non assigné
+    if (!r.bikeId) {
+      insights.push({ icon: <Bike size={10} />, text: 'Vélo à assigner', bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' })
+    }
+    // Contact incomplet
+    if (!r.customerPhone && !r.customerEmail) {
+      insights.push({ icon: <TriangleAlert size={10} />, text: 'Contact manquant', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' })
+    }
+    // Client fidèle
+    if (returningCount(r.customerName) > 0) {
+      insights.push({ icon: <UserCheck size={10} />, text: 'Client fidèle', bg: '#F0FDFA', color: '#0F766E', border: '#99F6E4' })
+    }
+    // Source WhatsApp
+    if (r.source === 'WHATSAPP' || r.source === 'whatsapp') {
+      insights.push({ icon: <MessageCircle size={10} />, text: 'Via WhatsApp', bg: '#f0fdf4', color: '#15803d', border: '#86efac' })
+    }
+    // Caution Stripe encaissée
+    if (r.depositCaptured) {
+      insights.push({ icon: <CreditCard size={10} />, text: 'Caution encaissée', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' })
+    }
+    // Caution en attente
+    if (r.stripePaymentIntentId && !r.depositCaptured && Number(r.depositAmount ?? 0) > 0) {
+      insights.push({ icon: <CreditCard size={10} />, text: `Caution ${r.depositAmount}€`, bg: '#F0FDFA', color: '#0D9488', border: '#99F6E4' })
+    }
+    return insights.slice(0, 3) // max 3 chips
+  }
+
   function renderCard(r: Reservation, variant: 'today' | 'tomorrow' | 'upcoming') {
     const stLabel   = tStatus(r.status.toLowerCase() as Parameters<typeof tStatus>[0])
     const retCount  = returningCount(r.customerName)
@@ -560,18 +599,18 @@ export default function ReservationsPage() {
     const isT       = variant === 'today'
     const isTmr     = variant === 'tomorrow'
 
-    const cardStyle = isT ? {
-      background: '#fff7ed', border: '1.5px solid #fed7aa', borderLeft: '4px solid #f97316',
-      borderRadius: 16, padding: 16, boxShadow: '0 2px 12px rgba(249,115,22,0.08)',
-    } : isTmr ? {
-      background: '#fefce8', border: '1.5px solid #fef08a', borderLeft: '4px solid #ca8a04',
-      borderRadius: 16, padding: 16, boxShadow: '0 1px 6px rgba(202,138,4,0.06)',
-    } : {
-      background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 16, padding: 16,
+    const cardStyle = {
+      background: 'white',
+      border: '1.5px solid #e2e8f0',
+      borderLeft: isT ? '4px solid #0F172A' : isTmr ? '4px solid #475569' : '4px solid #0D9488',
+      borderRadius: 16,
+      padding: 16,
+      boxShadow: isT ? '0 2px 16px rgba(15,23,42,0.08)' : '0 1px 4px rgba(15,23,42,0.04)',
+      transition: 'box-shadow 0.2s ease, transform 0.15s ease',
     }
 
-    const iconColor  = isT ? '#f97316' : isTmr ? '#ca8a04' : '#cbd5e1'
-    const convertBg  = isT ? '#f97316' : isTmr ? '#ca8a04' : '#6366F1'
+    const iconColor  = isT ? '#0F172A' : isTmr ? '#475569' : '#0D9488'
+    const convertBg  = '#0D9488'
 
     return (
       <div key={r.id} style={cardStyle}>
@@ -584,9 +623,7 @@ export default function ReservationsPage() {
               </p>
               <span style={{
                 fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-                background: isT ? '#fff7ed' : isTmr ? '#fefce8' : stBadge.bg,
-                color:      isT ? '#c2410c' : isTmr ? '#a16207' : stBadge.text,
-                border:     `1px solid ${isT ? '#fed7aa' : isTmr ? '#fef08a' : stBadge.border}`,
+                background: stBadge.bg, color: stBadge.text, border: `1px solid ${stBadge.border}`,
                 textTransform: 'uppercase' as const, letterSpacing: '0.06em',
               }}>{stLabel}</span>
               {retCount > 0 && (
@@ -604,9 +641,8 @@ export default function ReservationsPage() {
                 <span style={{
                   display: 'flex', alignItems: 'center', gap: 4,
                   fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-                  background: isT ? '#fff7ed' : '#fefce8',
-                  color:      isT ? '#c2410c' : '#a16207',
-                  border:     `1px solid ${isT ? '#fed7aa' : '#fef08a'}`,
+                  background: '#0F172A', color: '#5EEAD4',
+                  border: '1px solid #1e293b',
                 }}>
                   <Clock size={9} />{countdown}
                 </span>
@@ -617,10 +653,10 @@ export default function ReservationsPage() {
             {(isT || isTmr) ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <span style={{ fontSize: isT ? 22 : 17, fontWeight: 800,
-                  color: isT ? '#ea580c' : '#a16207', lineHeight: 1 }}>
+                  color: isT ? '#0F172A' : '#334155', lineHeight: 1 }}>
                   {startTime}
                 </span>
-                <span style={{ fontSize: 12, color: isT ? '#fb923c' : '#ca8a04', fontWeight: 500 }}>
+                <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
                   → {endDate}
                 </span>
               </div>
@@ -642,20 +678,16 @@ export default function ReservationsPage() {
                 <a href={`tel:${r.customerPhone}`}
                   style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'inherit',
                     textDecoration: 'none', cursor: 'pointer' }}>
-                  <Phone size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  <span style={{ color: isT ? '#c2410c' : isTmr ? '#92400e' : '#475569', fontWeight: 500 }}>
-                    {r.customerPhone}
-                  </span>
+                  <Phone size={11} style={{ color: '#0D9488', flexShrink: 0 }} />
+                  <span style={{ color: '#334155', fontWeight: 500 }}>{r.customerPhone}</span>
                 </a>
               )}
               {r.customerEmail && (
                 <a href={`mailto:${r.customerEmail}`}
                   style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'inherit',
                     textDecoration: 'none', cursor: 'pointer' }}>
-                  <Mail size={11} style={{ color: iconColor, flexShrink: 0 }} />
-                  <span style={{ color: isT ? '#c2410c' : isTmr ? '#92400e' : '#475569', fontWeight: 500 }}>
-                    {r.customerEmail}
-                  </span>
+                  <Mail size={11} style={{ color: '#0D9488', flexShrink: 0 }} />
+                  <span style={{ color: '#334155', fontWeight: 500 }}>{r.customerEmail}</span>
                 </a>
               )}
               {(r.bikeType || r.bike) && (
@@ -673,73 +705,110 @@ export default function ReservationsPage() {
                 </p>
               )}
             </div>
+            {/* AI Insight chips */}
+            {(() => {
+              const chips = getInsights(r, isT, isTmr)
+              if (!chips.length) return null
+              return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 10 }}>
+                  {chips.map((chip, i) => (
+                    <span key={i} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20,
+                      background: chip.bg, color: chip.color, border: `1px solid ${chip.border}`,
+                      letterSpacing: '0.04em',
+                    }}>
+                      {chip.icon}{chip.text}
+                    </span>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
 
-          {/* Quick action buttons (top-right) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-            {r.status === 'PENDING' && (
-              <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
-                style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: 8,
-                  padding: '6px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
-                <Check size={11} />{t('confirm')}
-              </button>
-            )}
-            <button onClick={() => openEdit(r)}
-              style={{ background: 'white', color: '#6366f1', border: '1.5px solid #c7d2fe',
-                borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Pencil size={11} />{t('editReservation')}
+          {/* "..." overflow menu */}
+          <div style={{ position: 'relative', flexShrink: 0 }}
+            onMouseLeave={e => {
+              const menu = (e.currentTarget as HTMLElement).querySelector('.overflow-menu') as HTMLElement | null
+              if (menu) menu.style.display = 'none'
+            }}>
+            <button
+              onMouseEnter={e => {
+                const menu = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement | null
+                if (menu) menu.style.display = 'block'
+              }}
+              style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 8,
+                padding: '6px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                color: '#64748b' }}>
+              <MoreHorizontal size={16} />
             </button>
-            {r.customerEmail && (
-              <button
-                onClick={() => sendReminder(r.id)}
-                disabled={reminderState.get(r.id) === 'sending' || reminderState.get(r.id) === 'sent'}
-                style={{
-                  background: reminderState.get(r.id) === 'sent' ? '#f0fdf4' : 'white',
-                  color:      reminderState.get(r.id) === 'sent' ? '#15803d' : '#8b5cf6',
-                  border:     `1.5px solid ${reminderState.get(r.id) === 'sent' ? '#86efac' : '#ddd6fe'}`,
-                  borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 700,
-                  cursor: reminderState.get(r.id) ? 'default' : 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  opacity: reminderState.get(r.id) === 'sending' ? 0.6 : 1,
-                  transition: 'all .2s',
-                }}>
-                {reminderState.get(r.id) === 'sent'
-                  ? <CheckCircle2 size={11} />
-                  : <BellRing size={11} style={reminderState.get(r.id) === 'sending' ? { animation: 'todayPulse 1s infinite' } : {}} />
-                }
-                {reminderState.get(r.id) === 'sent' ? t('reminderSent') : t('sendReminder')}
+            <div className="overflow-menu" style={{ display: 'none', position: 'absolute', right: 0, top: '100%',
+              marginTop: 4, background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 160, overflow: 'hidden' }}>
+              {r.status === 'PENDING' && (
+                <button onClick={() => updateStatus(r.id, 'CONFIRMED')}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#0F766E',
+                    background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F0FDFA')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                  <Check size={13} />{t('confirm')}
+                </button>
+              )}
+              <button onClick={() => openEdit(r)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#334155',
+                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                <Pencil size={13} />{t('editReservation')}
               </button>
-            )}
+              {r.customerEmail && (
+                <button onClick={() => sendReminder(r.id)}
+                  disabled={reminderState.get(r.id) === 'sending' || reminderState.get(r.id) === 'sent'}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 14px', fontSize: 13, fontWeight: 600,
+                    color: reminderState.get(r.id) === 'sent' ? '#15803d' : '#0891B2',
+                    background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                  {reminderState.get(r.id) === 'sent' ? <CheckCircle2 size={13} /> : <BellRing size={13} />}
+                  {reminderState.get(r.id) === 'sent' ? t('reminderSent') : t('sendReminder')}
+                </button>
+              )}
+              <div style={{ height: 1, background: '#f1f5f9', margin: '4px 0' }} />
+              <button onClick={() => { if (window.confirm(t('noShow') + ' ?')) updateStatus(r.id, 'NO_SHOW') }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#475569',
+                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                <AlertCircle size={13} />{t('noShow')}
+              </button>
+              <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#dc2626',
+                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                <X size={13} />{t('cancel')}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ── Hero convert CTA + No-show ──────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        {/* ── Hero convert CTA ──────────────────────────────────────────── */}
+        <div style={{ marginTop: 12 }}>
           <button onClick={() => convertToRental(r)}
-            style={{ flex: 1, background: convertBg, color: 'white', border: 'none',
-              borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700,
+            style={{ width: '100%', background: '#0D9488', color: 'white', border: 'none',
+              borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              boxShadow: isT ? '0 2px 10px rgba(249,115,22,0.25)' : isTmr ? '0 2px 10px rgba(202,138,4,0.2)' : '0 2px 10px rgba(99,102,241,0.2)',
-            }}>
+              boxShadow: '0 2px 12px rgba(13,148,136,0.25)',
+              transition: 'box-shadow 0.15s ease, transform 0.1s ease',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(13,148,136,0.4)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(13,148,136,0.25)'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
             <Bike size={14} />{t('convert')} <ArrowRight size={12} />
-          </button>
-          <button
-            onClick={() => { if (window.confirm(t('noShow') + ' ?')) updateStatus(r.id, 'NO_SHOW') }}
-            title={t('noShow')}
-            style={{ background: 'white', border: '1.5px solid #e9d5ff',
-              borderRadius: 10, padding: '10px 12px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#6b21a8', flexShrink: 0 }}>
-            <AlertCircle size={16} />
-          </button>
-          <button onClick={() => setCancelModal({ id: r.id, name: r.customerName })}
-            style={{ background: 'white', border: '1.5px solid #fecaca',
-              borderRadius: 10, padding: '10px 12px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#dc2626', flexShrink: 0 }}>
-            <X size={16} />
           </button>
         </div>
 
@@ -1116,7 +1185,7 @@ export default function ReservationsPage() {
               </div>
               <div style={{ padding: '0 24px 24px', display: 'flex', gap: 12 }}>
                 <button type="submit" disabled={editSaving}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: '#6366f1',
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: '#0d9488',
                     color: 'white', border: 'none', fontSize: 13, fontWeight: 700,
                     cursor: editSaving ? 'not-allowed' : 'pointer', opacity: editSaving ? 0.5 : 1 }}>
                   {editSaving ? t('saving') : t('editReservation')}
@@ -1140,7 +1209,7 @@ export default function ReservationsPage() {
           </h1>
         </div>
         <button onClick={() => setShowForm(!showForm)}
-          style={{ background: '#6366F1', color: 'white', border: 'none', borderRadius: 12,
+          style={{ background: '#0D9488', color: 'white', border: 'none', borderRadius: 12,
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6 }}>
           <Plus size={15} /> {t('new')}
@@ -1149,18 +1218,33 @@ export default function ReservationsPage() {
 
       {/* ── KPI strip ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
-        {[
-          { label: t('sectionToday'),    count: kpiToday,    accent: '#f97316', bg: '#fff7ed', border: '#fed7aa' },
-          { label: t('sectionTomorrow'), count: kpiTomorrow, accent: '#ca8a04', bg: '#fefce8', border: '#fef08a' },
-          { label: t('kpiWeek'),         count: kpi7d,       accent: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
-        ].map(({ label, count, accent, bg, border }) => (
-          <div key={label} style={{ background: bg, border: `1.5px solid ${border}`,
-            borderRadius: 14, padding: '12px 14px', textAlign: 'center' }}>
-            <p style={{ fontSize: 24, fontWeight: 800, color: accent, margin: 0, lineHeight: 1 }}>{count}</p>
-            <p style={{ fontSize: 10, fontWeight: 700, color: accent, margin: '4px 0 0',
-              textTransform: 'uppercase', letterSpacing: '0.07em', opacity: 0.75 }}>{label}</p>
+        {/* TODAY — dark card = urgence premium */}
+        <div style={{ background: '#0F172A', border: '1.5px solid #1e293b',
+          borderRadius: 14, padding: '12px 14px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(13,148,136,0.15) 0%, transparent 60%)', pointerEvents: 'none' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 2 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488',
+              display: 'inline-block', boxShadow: '0 0 0 3px rgba(13,148,136,0.25)', flexShrink: 0,
+              animation: 'todayPulse 1.8s ease-in-out infinite' }} />
+            <p style={{ fontSize: 26, fontWeight: 800, color: 'white', margin: 0, lineHeight: 1 }}>{kpiToday}</p>
           </div>
-        ))}
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#5EEAD4', margin: 0,
+            textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('sectionToday')}</p>
+        </div>
+        {/* TOMORROW */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0',
+          borderRadius: 14, padding: '12px 14px', textAlign: 'center' }}>
+          <p style={{ fontSize: 26, fontWeight: 800, color: '#334155', margin: 0, lineHeight: 1, marginBottom: 2 }}>{kpiTomorrow}</p>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', margin: 0,
+            textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('sectionTomorrow')}</p>
+        </div>
+        {/* 7 JOURS */}
+        <div style={{ background: '#F0FDFA', border: '1.5px solid #99F6E4',
+          borderRadius: 14, padding: '12px 14px', textAlign: 'center' }}>
+          <p style={{ fontSize: 26, fontWeight: 800, color: '#0D9488', margin: 0, lineHeight: 1, marginBottom: 2 }}>{kpi7d}</p>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#0F766E', margin: 0,
+            textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('kpiWeek')}</p>
+        </div>
       </div>
 
       {/* ── New reservation form ──────────────────────────────────────────── */}
@@ -1285,10 +1369,10 @@ export default function ReservationsPage() {
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" disabled={saving}
-              style={{ flex: 1, background: '#6366F1', color: 'white', border: 'none', borderRadius: 12,
+              style={{ flex: 1, background: '#0D9488', color: 'white', border: 'none', borderRadius: 12,
                 padding: '12px 0', fontSize: 13, fontWeight: 700,
                 cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1,
-                boxShadow: '0 2px 10px rgba(99,102,241,0.25)' }}>
+                boxShadow: '0 2px 10px rgba(13,148,136,0.25)' }}>
               {saving ? t('saving') : t('new')}
             </button>
             <button type="button" onClick={() => setShowForm(false)}
@@ -1320,10 +1404,10 @@ export default function ReservationsPage() {
           )}
         </div>
         <button onClick={() => setShowCal(s => !s)} title={t('calBtn')}
-          style={{ border: `1.5px solid ${calActive ? '#6366f1' : '#e2e8f0'}`,
+          style={{ border: `1.5px solid ${calActive ? '#0d9488' : '#e2e8f0'}`,
             borderRadius: 12, padding: '0 14px', flexShrink: 0,
-            background: calActive ? '#eef2ff' : 'white',
-            color: calActive ? '#6366f1' : '#64748b',
+            background: calActive ? '#F0FDFA' : 'white',
+            color: calActive ? '#0d9488' : '#64748b',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
             fontSize: 13, fontWeight: 600 }}>
           <CalendarDays size={17} />
@@ -1338,16 +1422,16 @@ export default function ReservationsPage() {
       {/* Selected date chip */}
       {selectedDate && !showCal && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
-          background: '#eef2ff', border: '1.5px solid #c7d2fe', borderRadius: 10, padding: '8px 12px' }}>
-          <CalendarDays size={14} style={{ color: '#6366f1', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#4f46e5', flex: 1 }}>
+          background: '#F0FDFA', border: '1.5px solid #99F6E4', borderRadius: 10, padding: '8px 12px' }}>
+          <CalendarDays size={14} style={{ color: '#0d9488', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#0f766e', flex: 1 }}>
             {new Date(selectedDate + 'T12:00:00').toLocaleDateString(locale, {
               weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
             })}
           </span>
           <button onClick={() => setSelectedDate(null)}
             style={{ border: 'none', background: 'transparent', cursor: 'pointer',
-              color: '#6366f1', display: 'flex', alignItems: 'center', padding: 0 }}>
+              color: '#0d9488', display: 'flex', alignItems: 'center', padding: 0 }}>
             <X size={15} />
           </button>
         </div>
@@ -1389,16 +1473,16 @@ export default function ReservationsPage() {
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7,
-                      background: 'linear-gradient(90deg,#fff7ed,#fffbeb)',
-                      border: '1.5px solid #fed7aa', borderRadius: 10, padding: '5px 12px' }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f97316',
-                        display: 'inline-block', boxShadow: '0 0 0 3px #fed7aa', flexShrink: 0,
+                      background: '#0F172A', border: '1.5px solid #1e293b',
+                      borderRadius: 10, padding: '5px 12px' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488',
+                        display: 'inline-block', boxShadow: '0 0 0 3px rgba(13,148,136,0.3)', flexShrink: 0,
                         animation: 'todayPulse 1.8s ease-in-out infinite' }} />
-                      <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c',
-                        textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: 'white',
+                        textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         {t('sectionToday')}
                       </span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#fb923c' }}>· {todayPending.length}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#5EEAD4' }}>· {todayPending.length}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1412,15 +1496,15 @@ export default function ReservationsPage() {
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7,
-                      background: '#fefce8', border: '1.5px solid #fef08a',
+                      background: 'white', border: '1.5px solid #e2e8f0',
                       borderRadius: 10, padding: '5px 12px' }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ca8a04',
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569',
                         display: 'inline-block', flexShrink: 0 }} />
-                      <span style={{ fontSize: 11, fontWeight: 800, color: '#a16207',
-                        textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#334155',
+                        textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         {t('sectionTomorrow')}
                       </span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#ca8a04' }}>· {tomorrowPending.length}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>· {tomorrowPending.length}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

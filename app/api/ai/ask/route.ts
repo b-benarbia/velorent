@@ -181,7 +181,8 @@ export async function POST(req: NextRequest) {
     const retiredBikes     = allBikes.filter(b => b.status === 'RETIRED').length
     const totalBikes       = allBikes.length
 
-    const fmt = (n: number | null | undefined) => Number(n ?? 0).toFixed(2)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fmt = (n: any) => Number(n ?? 0).toFixed(2)
     const todayRev  = fmt(todayStats._sum.amountTtc)
     const weekRev   = fmt(weekStats._sum.amountTtc)
     const monthRev  = fmt(monthStats._sum.amountTtc)

@@ -174,7 +174,7 @@ export default function CommandPalette({ tenant }: Props) {
         className="w-full max-w-lg rounded-2xl overflow-hidden"
         style={{
           background: '#fff',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(99,102,241,0.12)',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(13,148,136,0.12)',
           animation: 'fadeUp 0.15s ease both',
         }}
         onClick={e => e.stopPropagation()}
@@ -184,7 +184,7 @@ export default function CommandPalette({ tenant }: Props) {
           {mode === 'loading' ? (
             <Loader2 size={16} className="text-indigo-500 flex-shrink-0 animate-spin" />
           ) : mode === 'answer' ? (
-            <Sparkles size={16} className="flex-shrink-0" style={{ color: '#6366F1' }} />
+            <Sparkles size={16} className="flex-shrink-0" style={{ color: '#0D9488' }} />
           ) : (
             <Search size={16} className="text-slate-400 flex-shrink-0" />
           )}
@@ -204,7 +204,7 @@ export default function CommandPalette({ tenant }: Props) {
         {/* ── Loading ── */}
         {mode === 'loading' && (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
               <Sparkles size={16} color="white" />
             </div>
             <p className="text-sm text-slate-400">{tCopilot('thinking')}</p>
@@ -224,10 +224,10 @@ export default function CommandPalette({ tenant }: Props) {
         {mode === 'answer' && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#6366F1,#8b5cf6)' }}>
+              <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)' }}>
                 <Sparkles size={11} color="white" />
               </div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#6366F1' }}>
+              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#0D9488' }}>
                 VeloRent Copilot
               </span>
             </div>
@@ -283,15 +283,15 @@ export default function CommandPalette({ tenant }: Props) {
                         <button
                           key={cmd.id}
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                          style={{ background: isSelected ? 'rgba(99,102,241,0.08)' : 'transparent' }}
+                          style={{ background: isSelected ? 'rgba(13,148,136,0.08)' : 'transparent' }}
                           onMouseEnter={() => setSelected(idx)}
                           onClick={() => run(cmd)}
                         >
                           <div
                             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: isSelected ? 'rgba(99,102,241,0.15)' : '#f1f5f9' }}
+                            style={{ background: isSelected ? 'rgba(13,148,136,0.15)' : '#f1f5f9' }}
                           >
-                            <Icon size={13} style={{ color: isSelected ? '#6366F1' : '#64748b' }} />
+                            <Icon size={13} style={{ color: isSelected ? '#0D9488' : '#64748b' }} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-900 truncate">{cmd.label}</p>
@@ -319,7 +319,7 @@ export default function CommandPalette({ tenant }: Props) {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all"
                         style={{
                           background: isSelected
-                            ? 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))'
+                            ? 'linear-gradient(135deg,rgba(13,148,136,0.1),rgba(139,92,246,0.1))'
                             : 'transparent',
                         }}
                         onMouseEnter={() => setSelected(aiIdx)}
@@ -329,14 +329,14 @@ export default function CommandPalette({ tenant }: Props) {
                           className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                           style={{
                             background: isSelected
-                              ? 'linear-gradient(135deg,#6366F1,#8b5cf6)'
+                              ? 'linear-gradient(135deg,#0D9488,#0891B2)'
                               : 'linear-gradient(135deg,#e0e7ff,#ede9fe)',
                           }}
                         >
-                          <Sparkles size={13} color={isSelected ? 'white' : '#6366F1'} />
+                          <Sparkles size={13} color={isSelected ? 'white' : '#0D9488'} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: '#6366F1' }}>
+                          <p className="text-sm font-semibold truncate" style={{ color: '#0D9488' }}>
                             {tCopilot('askAI')}
                           </p>
                           <p className="text-xs text-slate-400 truncate">&ldquo;{query}&rdquo;</p>
@@ -344,7 +344,7 @@ export default function CommandPalette({ tenant }: Props) {
                         {isSelected && (
                           <span
                             className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                            style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}
+                            style={{ background: 'rgba(13,148,136,0.1)', color: '#0D9488' }}
                           >
                             ↵
                           </span>

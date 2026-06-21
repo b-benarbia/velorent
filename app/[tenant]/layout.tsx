@@ -79,8 +79,8 @@ export default async function TenantLayout({
           width: 52,
           height: 52,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366F1 0%, #8b5cf6 100%)',
-          boxShadow: '0 4px 20px rgba(99,102,241,0.45)',
+          background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)',
+          boxShadow: '0 4px 20px rgba(13,148,136,0.45)',
           color: '#fff',
         }}
       >

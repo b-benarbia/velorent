@@ -278,14 +278,14 @@ export default function ReviewPage() {
   }, [slug, token, stars, badComment])
 
   // Design tokens — cohérent avec le SaaS
-  const PURPLE      = '#6366F1'
-  const PURPLE_DARK = '#4F46E5'
-  const PURPLE_LIGHT = '#EEF2FF'
+  const PURPLE      = '#0D9488'
+  const PURPLE_DARK = '#0F766E'
+  const PURPLE_LIGHT = '#F0FDFA'
   const FF = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
   const page: React.CSSProperties = { minHeight: '100svh', background: '#f8faff', fontFamily: FF, display: 'flex', flexDirection: 'column' }
-  const hdr: React.CSSProperties = { background: `linear-gradient(135deg, ${PURPLE}, #8b5cf6)`, padding: '20px 24px 32px', textAlign: 'center' }
+  const hdr: React.CSSProperties = { background: `linear-gradient(135deg, ${PURPLE}, #0891B2)`, padding: '20px 24px 32px', textAlign: 'center' }
   const card: React.CSSProperties = { background: '#fff', borderRadius: 20, margin: '-18px 16px 0', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #f1f5f9', padding: '24px 20px' }
-  const footer: React.CSSProperties = { textAlign: 'center', padding: '14px', fontSize: 10, color: '#c7d2fe', letterSpacing: '0.08em', textTransform: 'uppercase' as const }
+  const footer: React.CSSProperties = { textAlign: 'center', padding: '14px', fontSize: 10, color: '#99F6E4', letterSpacing: '0.08em', textTransform: 'uppercase' as const }
 
   const GoogleSVG = () => (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -297,7 +297,7 @@ export default function ReviewPage() {
   )
 
   // Header commun
-  const Header = ({ gradient = `linear-gradient(135deg, ${PURPLE}, #8b5cf6)`, icon, sub }: { gradient?: string; icon: React.ReactNode; sub?: string }) => (
+  const Header = ({ gradient = `linear-gradient(135deg, ${PURPLE}, #0891B2)`, icon, sub }: { gradient?: string; icon: React.ReactNode; sub?: string }) => (
     <div style={{ ...hdr, background: gradient }}>
       <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
         {icon}
@@ -382,7 +382,7 @@ export default function ReviewPage() {
 
           {googleUrl ? (
             <a href={googleUrl} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%', padding: '16px 20px', background: `linear-gradient(135deg, ${PURPLE}, #8b5cf6)`, borderRadius: 16, fontSize: 15, fontWeight: 700, color: '#fff', textDecoration: 'none', boxSizing: 'border-box', boxShadow: `0 4px 16px rgba(99,102,241,0.35)`, letterSpacing: '-0.01em' }}>
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%', padding: '16px 20px', background: `linear-gradient(135deg, ${PURPLE}, #0891B2)`, borderRadius: 16, fontSize: 15, fontWeight: 700, color: '#fff', textDecoration: 'none', boxSizing: 'border-box', boxShadow: `0 4px 16px rgba(13,148,136,0.35)`, letterSpacing: '-0.01em' }}>
               <GoogleSVG />{t.openGoogle}
             </a>
           ) : (

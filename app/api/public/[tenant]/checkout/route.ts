@@ -44,7 +44,7 @@ export async function POST(
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
 
-    const stripe = new Stripe(tenant.stripeSecretKey, { apiVersion: '2025-05-28.basil' })
+    const stripe = new Stripe(tenant.stripeSecretKey, { apiVersion: '2026-05-27.dahlia' })
     const currency = (tenant.currency ?? 'EUR').toLowerCase()
 
     // Montant caution selon le type de vélo (depuis depositConfig du shop)

@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const baseWhere = (extraWhere: Record<string, any>) => ({
-    status:    { in: ['PENDING', 'CONFIRMED'] as const },
+    status:    { in: ['PENDING', 'CONFIRMED'] as ('PENDING' | 'CONFIRMED')[] },
     ...extraWhere,
   })
 
